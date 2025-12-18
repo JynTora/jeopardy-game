@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Host – JEOPARDY</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="/style.css" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family:
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at top left, #0f172a, #020617);
+        color: #e5e7eb;
+      }
+
+      .host-wrapper {
+        background: rgba(15, 23, 42, 0.96);
+        border-radius: 24px;
+        padding: 24px 32px;
+        max-width: 900px;
+        width: 95%;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7);
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 24px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.6rem;
+      }
+
+      .room-code {
+        font-family: "SF Mono", Menlo, Monaco, Consolas, monospace;
+        font-size: 1.2rem;
+        letter-spacing: 0.2em;
+        padding: 8px 16px;
+        border-radius: 999px;
+        background: rgba(15, 118, 110, 0.15);
+        border: 1px solid rgba(45, 212, 191, 0.5);
+        display: inline-block;
+        margin-bottom: 8px;
+      }
+
+      .pill {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        background: rgba(148, 163, 184, 0.16);
+        margin-bottom: 12px;
+      }
+
+      .section-title {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        color: #9ca3af;
+        margin-bottom: 6px;
+      }
+
+      .buzz-controls button {
+        padding: 10px 16px;
+        border-radius: 999px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        margin-right: 8px;
+        margin-bottom: 8px;
+      }
+
+      #btnEnableBuzz {
+        background: linear-gradient(to right, #22c55e, #16a34a);
+        color: white;
+      }
+
+      #btnDisableBuzz {
+        background: linear-gradient(to right, #ef4444, #b91c1c);
+        color: white;
+      }
+
+      .status-line {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        margin-top: 6px;
+      }
+
+      .players-list {
+        margin-top: 12px;
+        border-radius: 16px;
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(55, 65, 81, 0.8);
+        padding: 8px 0;
+        max-height: 260px;
+        overflow: auto;
+      }
+
+      .player-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 14px;
+        font-size: 0.9rem;
+      }
+
+      .player-row:nth-child(odd) {
+        background: rgba(15, 23, 42, 0.6);
+      }
+
+      .score-controls button {
+        border: none;
+        border-radius: 999px;
+        padding: 4px 10px;
+        font-size: 0.8rem;
+        cursor: pointer;
+        margin-left: 4px;
+      }
+
+      .score-controls button.plus {
+        background: rgba(34, 197, 94, 0.18);
+        color: #bbf7d0;
+      }
+
+      .score-controls button.minus {
+        background: rgba(248, 113, 113, 0.2);
+        color: #fecaca;
+      }
+
+      /* rechte Spalte – blaues Feld */
+      .right-col {
+        border-radius: 16px;
+        background: radial-gradient(circle at top, #1d4ed8, #020617);
+        padding: 18px 18px 20px;
+        box-shadow:
+          0 0 26px rgba(59, 130, 246, 0.6),
+          0 18px 36px rgba(0, 0, 0, 0.55);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: flex-start;
+        min-height: 200px;
+      }
+
+      .right-col h2 {
+        font-size: 1.2rem;
+        margin: 0 0 10px;
+        text-align: center;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        text-shadow: 0 0 14px rgba(255, 255, 255, 0.6);
+      }
+
+      /* großer Name in der Mitte */
+      .first-buzz-name {
+        font-size: 2.5rem;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-align: center;
+        margin: 8px 0 6px;
+        text-shadow:
+          0 0 18px rgba(255, 255, 255, 0.7),
+          0 0 40px rgba(59, 130, 246, 0.7);
+        min-height: 2.8em; /* Platz reservieren, damit nichts springt */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      /* kleine Zusatzzeile unter dem Namen */
+      .first-buzz-info {
+        font-size: 0.95rem;
+        text-align: center;
+        opacity: 0.85;
+        margin-top: 4px;
+      }
+
+      .muted {
+        font-size: 0.75rem;
+        opacity: 0.7;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="host-wrapper">
+      <section>
+        <h1>Host-Panel</h1>
+        <div class="pill">Erzeuge einen Raumcode und verwalte das Spiel.</div>
+
+        <div class="section-title">Raumcode</div>
+        <div id="roomCode" class="room-code">-----</div>
+        <div class="muted">Diesen Code gibst du deinen Spielern.</div>
+
+        <div style="margin-top: 16px" class="section-title">Buzzer</div>
+        <div class="buzz-controls">
+          <button id="btnEnableBuzz">Buzzer freigeben</button>
+          <button id="btnDisableBuzz">Buzzer sperren</button>
+          <div id="buzzStatus" class="status-line">
+            Buzzer aktuell gesperrt.
+          </div>
+        </div>
+
+        <div style="margin-top: 18px" class="section-title">
+          Spieler &amp; Punkte
+        </div>
+        <div id="playersContainer" class="players-list"></div>
+      </section>
+
+      <!-- Rechte Spalte: Wer war zuerst? + großer Name -->
+      <aside class="right-col">
+        <h2>WER WAR ZUERST?</h2>
+
+        <!-- großer Name in der Mitte -->
+        <div id="firstBuzzName" class="first-buzz-name">–</div>
+
+        <!-- kleine Infozeile darunter -->
+        <div id="firstBuzzInfo" class="first-buzz-info">
+          Noch niemand hat gebuzzert.
+        </div>
+      </aside>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/host.js"></script>
+
+    <script>
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        }
+      }
+    </script>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+    <script src="/transition.js"></script>
+    <div id="hostPassModal" class="jt-modal hidden">
+      <div class="jt-modal-card">
+        <div class="jt-modal-title">Host-Passwort</div>
+        <div class="jt-modal-subtitle">
+          Bitte Passwort eingeben, um das Host-Panel zu öffnen.
+        </div>
+
+        <input
+          id="hostPassInput"
+          class="jt-modal-input"
+          type="password"
+          placeholder="Passwort…"
+        />
+
+        <div id="hostPassError" class="jt-modal-error"></div>
+
+        <div class="jt-modal-actions">
+          <button
+            id="hostPassCancel"
+            class="jt-modal-btn secondary"
+            type="button"
+          >
+            Abbrechen
+          </button>
+          <button id="hostPassOk" class="jt-modal-btn primary" type="button">
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Host Passwort Modal -->
+    <div id="hostPassModal" class="jt-modal hidden">
+      <div class="jt-modal-card">
+        <div class="jt-modal-title">Host-Passwort</div>
+        <div class="jt-modal-subtitle">
+          Bitte Passwort eingeben, um das Host-Panel zu öffnen.
+        </div>
+
+        <input
+          id="hostPassInput"
+          class="jt-modal-input"
+          type="password"
+          placeholder="Passwort…"
+          autocomplete="current-password"
+        />
+
+        <div id="hostPassError" class="jt-modal-error"></div>
+
+        <div class="jt-modal-actions">
+          <button
+            id="hostPassCancel"
+            class="jt-modal-btn secondary"
+            type="button"
+          >
+            Abbrechen
+          </button>
+          <button id="hostPassOk" class="jt-modal-btn primary" type="button">
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

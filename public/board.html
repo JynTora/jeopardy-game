@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Jyn Tora Jeopardy – Board</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Socket.io vom Server -->
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- Board-Logik -->
+    <script defer src="/board.js"></script>
+  </head>
+
+  <body class="jt-body">
+    <!-- Screen-Flash für richtig/falsch -->
+    <div id="screenFlash" class="screen-flash"></div>
+
+    <div class="jt-page">
+      <!-- Logo oben mittig -->
+      <header class="jt-header">
+        <img
+          src="/images/jt-logo.png"
+          alt="Jyn Tora Jeopardy"
+          class="jt-logo"
+        />
+      </header>
+
+      <!-- Neuer: Buzzer-Reset-Button links oben -->
+      <button
+        id="boardBuzzResetBtn"
+        class="board-buzz-btn"
+        title="Buzzer freigeben"
+      >
+        BUZZER FREI
+      </button>
+
+      <!-- Turn-Bar oben rechts: Anzeige + Start-Button -->
+      <div class="turn-bar">
+        <div id="turnIndicator" class="turn-indicator">Warte auf Spieler…</div>
+        <button id="startGameBtn" class="turn-start-btn">Spiel starten</button>
+      </div>
+
+      <div class="board-ambient-layer">
+        <!-- kleine, schnelle Orbs -->
+        <span class="ambient-orb orb-1"></span>
+        <span class="ambient-orb orb-2"></span>
+        <span class="ambient-orb orb-3"></span>
+        <span class="ambient-orb orb-4"></span>
+        <span class="ambient-orb orb-5"></span>
+        <span class="ambient-orb orb-6"></span>
+
+        <!-- eckige Elemente / Panels -->
+        <span class="ambient-rect rect-1"></span>
+        <span class="ambient-rect rect-2"></span>
+        <span class="ambient-rect rect-3"></span>
+        <span class="ambient-rect rect-4"></span>
+      </div>
+
+      <main class="jt-main">
+        <!-- Hier baut board.js das Grid rein -->
+        <div id="board" class="board-grid"></div>
+      </main>
+
+      <!-- Spieler-Leiste unten -->
+      <div id="players-bar" class="players-bar"></div>
+    </div>
+
+    <!-- Fragen-Overlay -->
+    <div id="questionOverlay" class="question-overlay hidden">
+      <div id="questionCard" class="question-card">
+        <div class="question-toprow">
+          <div id="questionPoints" class="question-points">
+            <span class="points-inner"></span>
+          </div>
+
+          <div id="estimateBoardTimer" class="estimate-board-timer hidden">
+            ⏱ –
+          </div>
+        </div>
+
+        <div id="questionText" class="question-text"></div>
+
+        <!-- ✅ Bildfrage (Wer/Was) -->
+        <div id="qMedia" class="q-media hidden">
+          <img id="qImage" class="q-image" alt="" />
+          <div class="q-hint">Klicken zum Vergrößern</div>
+        </div>
+
+        <div id="answerText" class="answer-text hidden"></div>
+
+        <div class="question-actions">
+          <button id="showAnswerBtn" class="btn btn-secondary">
+            Antwort anzeigen
+          </button>
+          <button id="correctBtn" class="btn btn-primary">
+            Richtig (Punkte geben)
+          </button>
+          <button id="wrongBtn" class="btn btn-danger">
+            Falsch (Punkte abziehen)
+          </button>
+
+          <!-- ========================= -->
+          <!-- REVEAL-BEREICH (Schätzfrage) -->
+          <!-- ========================= -->
+          <div id="estimateRevealContainer" class="estimate-reveal hidden">
+            <h3 class="estimate-reveal-title">Schätzantworten</h3>
+            <div id="estimateRevealList" class="estimate-reveal-list"></div>
+
+            <button id="btnRevealNextEstimate" class="estimate-reveal-button">
+              Nächste Antwort anzeigen
+            </button>
+
+            <div class="estimate-reveal-controls">
+              <label class="estimate-reveal-label">
+                Richtige Lösung:
+                <input
+                  id="estimateCorrectValue"
+                  type="number"
+                  class="estimate-reveal-input"
+                  placeholder="z.B. 170000"
+                />
+              </label>
+
+              <div class="estimate-reveal-buttons-row">
+                <button
+                  id="btnPickClosest"
+                  class="estimate-reveal-button secondary"
+                >
+                  Nächsten bestimmen
+                </button>
+                <button
+                  id="btnAwardClosest"
+                  class="estimate-reveal-button primary"
+                  disabled
+                >
+                  Punkte an Gewinner
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <button id="closeQuestionBtn" class="btn btn-ghost">
+            Frage schließen
+          </button>
+        </div>
+
+        <!-- Gebuzzerter Spieler ganz unten, mittig -->
+        <div id="buzzInfo" class="buzz-info hidden"></div>
+      </div>
+    </div>
+
+    <!-- ✅ Round Switch Overlay (Runde 2 Button erscheint automatisch) -->
+    <div id="roundSwitchOverlay" class="round-switch-overlay hidden">
+      <div class="round-switch-card">
+        <div class="round-switch-title">Runde 1 abgeschlossen</div>
+        <div class="round-switch-subtitle">
+          Runde 2 startet jetzt mit doppelten Punkten.
+        </div>
+        <button id="btnGoRound2" class="round-switch-btn">
+          RUNDE 2 STARTEN (x2)
+        </button>
+      </div>
+    </div>
+
+    <!-- ✅ Transition Overlay für den Switch / Navigation -->
+    <div id="boardTransitionOverlay" class="page-transition-overlay"></div>
+
+    <script>
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        }
+      }
+    </script>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+    <script src="/transition.js"></script>
+
+    <!-- ✅ FINAL PODIUM OVERLAY -->
+    <div id="finalPodiumOverlay" class="final-podium-overlay hidden">
+      <div class="final-podium-card">
+        <div class="final-title">🏆</div>
+
+        <div id="podiumWrap" class="podium">
+          <div class="podium-slot second" id="podiumSecond">
+            <div class="podium-rank">2</div>
+            <div class="podium-name" id="podiumSecondName">–</div>
+            <div class="podium-score" id="podiumSecondScore">–</div>
+          </div>
+
+          <div class="podium-slot first" id="podiumFirst">
+            <div class="podium-rank">1</div>
+            <div class="podium-name" id="podiumFirstName">–</div>
+            <div class="podium-score" id="podiumFirstScore">–</div>
+          </div>
+
+          <div class="podium-slot third" id="podiumThird">
+            <div class="podium-rank">3</div>
+            <div class="podium-name" id="podiumThirdName">–</div>
+            <div class="podium-score" id="podiumThirdScore">–</div>
+          </div>
+        </div>
+
+        <!-- ✅ Button unten mittig -->
+        <button id="btnBackToMenu" class="final-menu-btn" type="button">
+          ZURÜCK ZUM MENÜ
+        </button>
+      </div>
+    </div>
+
+    <!-- Host Passwort Modal -->
+    <div id="hostPassModal" class="jt-modal hidden">
+      <div class="jt-modal-card">
+        <div class="jt-modal-title">Host-Passwort</div>
+        <div class="jt-modal-subtitle">
+          Bitte Passwort eingeben, um das Host-Panel zu öffnen.
+        </div>
+
+        <input
+          id="hostPassInput"
+          class="jt-modal-input"
+          type="password"
+          placeholder="Passwort…"
+          autocomplete="current-password"
+        />
+
+        <div id="hostPassError" class="jt-modal-error"></div>
+
+        <div class="jt-modal-actions">
+          <button
+            id="hostPassCancel"
+            class="jt-modal-btn secondary"
+            type="button"
+          >
+            Abbrechen
+          </button>
+          <button id="hostPassOk" class="jt-modal-btn primary" type="button">
+            OK
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- ✅ Lightbox (Bild-Zoom) -->
+    <div id="lightbox" class="lightbox hidden">
+      <button id="lightboxClose" class="lightbox-close" aria-label="Close">
+        ×
+      </button>
+      <img id="lightboxImg" class="lightbox-img" alt="" />
+    </div>
+  </body>
+</html>

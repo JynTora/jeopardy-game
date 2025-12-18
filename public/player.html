@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Jyn Tora Jeopardy – Player</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="stylesheet" href="style.css" />
+
+    <!-- Socket.io vom Server -->
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- Player-Logik -->
+    <script defer src="player.js"></script>
+  </head>
+  <body class="jt-body">
+    <div class="player-page">
+      <div class="player-card">
+        <header class="player-header">
+          <h1 class="player-title">Player</h1>
+          <p class="player-subtitle">
+            Gib den Raumcode vom Host ein und deinen Spielernamen, um
+            beizutreten.
+          </p>
+        </header>
+
+        <!-- Join-Formular -->
+        <div class="player-form">
+          <input
+            id="roomCodeInput"
+            class="player-input"
+            type="text"
+            placeholder="Raumcode"
+          />
+          <input
+            id="playerNameInput"
+            class="player-input"
+            type="text"
+            placeholder="Dein Spielername"
+          />
+          <button id="joinBtn" class="player-join-btn">Beitreten</button>
+        </div>
+
+        <!-- Status / Fehlermeldungen -->
+        <div id="joinStatus" class="player-status"></div>
+
+        <!-- Buzzer-Bereich -->
+        <div class="player-buzzer-section">
+          <button id="buzzBtn" class="player-buzzer" disabled>BUZZ</button>
+          <div id="buzzStatus" class="player-buzzer-hint">
+            🦆 Buzzer gesperrt
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===========================
+         Schätzfrage-Overlay
+         =========================== -->
+    <div id="estimateModal" class="estimate-modal hidden">
+      <div class="estimate-card">
+        <div class="estimate-header">
+          <div class="estimate-label">Schätzfrage</div>
+          <div class="estimate-timer">⏱ <span id="estimateTimer">–</span></div>
+        </div>
+
+        <div id="estimateQuestionText" class="estimate-question-text"></div>
+
+        <input
+          id="estimateInput"
+          class="estimate-input"
+          type="number"
+          inputmode="numeric"
+          placeholder="Dein Tipp (Zahl)"
+        />
+
+        <button id="sendEstimateBtn" class="estimate-send-btn">
+          Antwort senden
+        </button>
+
+        <div id="estimateStatus" class="estimate-status"></div>
+      </div>
+    </div>
+    <!-- Schätzfrage-Panel (für Spieler) -->
+    <div id="jt-guess-panel" class="jt-guess-panel">
+      <div class="jt-guess-inner">
+        <div class="jt-guess-header-row">
+          <h2 class="jt-guess-title">Schätzfrage</h2>
+          <span id="jt-guess-timer" class="jt-guess-timer">–</span>
+        </div>
+
+        <p id="jt-guess-status" class="jt-guess-subtitle">
+          Gib deine Antwort ein:
+        </p>
+
+        <input
+          id="jt-guess-input"
+          type="text"
+          autocomplete="off"
+          placeholder="Deine Schätzung…"
+          class="jt-guess-input"
+        />
+
+        <button id="jt-guess-send" class="jt-guess-button">Abschicken</button>
+      </div>
+    </div>
+    <script src="/transition.js"></script>
+  </body>
+</html>

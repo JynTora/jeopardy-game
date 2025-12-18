@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>BAMAN – Games</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- dein globales Styling (Hintergrund etc.) -->
+    <link rel="stylesheet" href="style.css" />
+
+    <style>
+      /* ===== Game-Hub Layout ===== */
+
+      .gamehub-page {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 32px 16px;
+      }
+
+      .gamehub-card {
+        width: min(760px, 100%);
+        background: radial-gradient(
+          circle at top,
+          #020617,
+          #020617 45%,
+          #000 100%
+        );
+        border-radius: 26px;
+        padding: 28px 28px 32px;
+        box-shadow:
+          0 28px 70px rgba(0, 0, 0, 0.9),
+          0 0 24px rgba(15, 23, 42, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.55);
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+
+      .gamehub-header {
+        text-align: center;
+      }
+
+      .gamehub-title {
+        margin: 0;
+        font-size: 2.2rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #f9fafb;
+        text-shadow: 0 0 18px rgba(248, 250, 252, 0.8);
+      }
+
+      .gamehub-subtitle {
+        margin: 10px 0 0;
+        font-size: 0.95rem;
+        color: #9ca3af;
+      }
+
+      .gamehub-grid {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 14px;
+      }
+
+      /* einzelnes Game-Tile (Button) */
+
+      .game-tile {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 18px;
+        border-radius: 999px;
+        text-decoration: none;
+
+        background: linear-gradient(135deg, #1d4ed8, #4f46e5);
+        box-shadow:
+          0 0 24px rgba(59, 130, 246, 0.9),
+          0 18px 36px rgba(0, 0, 0, 0.85);
+
+        color: #e5e7eb;
+
+        transition:
+          transform 0.08s ease,
+          box-shadow 0.12s ease,
+          background 0.14s ease,
+          opacity 0.15s ease;
+
+        /* 🔧 HARD CLIP FIX */
+        overflow: hidden;
+        clip-path: inset(0 round 999px);
+        -webkit-clip-path: inset(0 round 999px);
+        isolation: isolate;
+      }
+
+      .game-tile:hover {
+        transform: translateY(-2px);
+        box-shadow:
+          0 0 32px rgba(59, 130, 246, 1),
+          0 22px 44px rgba(0, 0, 0, 1);
+        opacity: 0.98;
+      }
+
+      .game-tile-main {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .game-tile-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+
+      .game-tile-sub {
+        font-size: 0.85rem;
+        color: #d1d5db;
+        opacity: 0.9;
+      }
+
+      .game-tile-tag {
+        font-size: 0.8rem;
+        padding: 4px 12px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid rgba(191, 219, 254, 0.7);
+        color: #bfdbfe;
+        white-space: nowrap;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        flex: 0 0 auto;
+      }
+
+      /* ✅ Rechte Badge-Gruppe (fix gegen Überlappung) */
+      .game-tile-right {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        flex: 0 0 auto;
+        min-width: 0;
+      }
+
+      .gamehub-footer {
+        margin-top: 10px;
+        font-size: 0.8rem;
+        color: #6b7280;
+        text-align: center;
+      }
+
+      /* ===========================
+         COMING SOON
+         =========================== */
+
+      .game-tile.disabled {
+        cursor: not-allowed;
+        pointer-events: auto; /* ✅ Klicks erlaubt für Shake */
+        filter: grayscale(1) brightness(0.72);
+        opacity: 0.75;
+        box-shadow:
+          0 0 18px rgba(148, 163, 184, 0.25),
+          0 18px 36px rgba(0, 0, 0, 0.75);
+        background: linear-gradient(135deg, #334155, #0f172a);
+        user-select: none;
+      }
+
+
+      .game-tile.disabled:hover {
+        transform: none;
+        opacity: 0.75;
+        box-shadow:
+          0 0 18px rgba(148, 163, 184, 0.25),
+          0 18px 36px rgba(0, 0, 0, 0.75);
+      }
+
+      .game-tile.disabled .game-tile-tag {
+        border-color: rgba(148, 163, 184, 0.5);
+        color: rgba(203, 213, 225, 0.9);
+        background: rgba(2, 6, 23, 0.65);
+      }
+
+      /* ✅ Coming Badge ist jetzt normal im Flow (kein absolute mehr) */
+      .coming-badge {
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        background: linear-gradient(90deg, #64748b, #475569);
+        color: #020617;
+        border: 1px solid rgba(203, 213, 225, 0.6);
+        box-shadow: 0 0 18px rgba(148, 163, 184, 0.25);
+        white-space: nowrap;
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
+      }
+
+      @media (max-width: 640px) {
+        .gamehub-card {
+          padding: 22px 18px 26px;
+          border-radius: 22px;
+        }
+
+        .gamehub-title {
+          font-size: 1.9rem;
+        }
+
+        .game-tile {
+          padding: 12px 14px;
+        }
+
+        .coming-badge {
+          font-size: 0.68rem;
+          padding: 6px 10px;
+        }
+      }
+    </style>
+  </head>
+
+  <body class="jt-body">
+    <div class="gamehub-page">
+      <div class="gamehub-card">
+        <header class="gamehub-header">
+          <h1 class="gamehub-title">Baman Games</h1>
+          <p class="gamehub-subtitle">
+            Wähle ein Spiel, das du starten möchtest.
+          </p>
+        </header>
+
+        <div class="gamehub-grid">
+          <!-- Spiel 1: Jeopardy -->
+          <a href="jeopardy.html" class="game-tile" data-transition-link>
+            <div class="game-tile-main">
+              <span class="game-tile-title">JEOPARDY</span>
+              <span class="game-tile-sub">
+                Fragen zu verschiedenen Kategorien
+              </span>
+            </div>
+            <span class="game-tile-tag">Quiz · Multiplayer</span>
+          </a>
+
+          <!-- Coming Soon: Der Dümmste fliegt -->
+          <div class="game-tile disabled">
+            <div class="game-tile-main">
+              <span class="game-tile-title">DER DÜMMSTE FLIEGT</span>
+              <span class="game-tile-sub">
+                Turniermodus · Eliminationsrunde
+              </span>
+            </div>
+            <div class="game-tile-right">
+              <span class="game-tile-tag">QUIZ MULTIPLAYER</span>
+              <span class="coming-badge">COMING SOON</span>
+            </div>
+          </div>
+
+          <!-- Coming Soon: Last Man Standing -->
+          <div class="game-tile disabled">
+            <div class="game-tile-main">
+              <span class="game-tile-title">LAST MAN STANDING</span>
+              <span class="game-tile-sub">
+                Oberkategorie · Nacheinander aufzählen
+              </span>
+            </div>
+            <div class="game-tile-right">
+              <span class="game-tile-tag">FAST ELIMINATION</span>
+              <span class="coming-badge">COMING SOON</span>
+            </div>
+          </div>
+
+          <!-- Coming Soon: Impostor -->
+          <div class="game-tile disabled">
+            <div class="game-tile-main">
+              <span class="game-tile-title">IMPOSTER</span>
+              <span class="game-tile-sub">
+                Social Game · Einer spielt „falsch“
+              </span>
+            </div>
+            <div class="game-tile-right">
+              <span class="game-tile-tag">WER LÜGT?</span>
+              <span class="coming-badge">COMING SOON</span>
+            </div>
+          </div>
+
+          <!-- Coming Soon: Wer wird Millionär -->
+          <div class="game-tile disabled">
+            <div class="game-tile-main">
+              <span class="game-tile-title">WER WIRD MILLIONÄR</span>
+              <span class="game-tile-sub">
+                A–D Auswahl · Fragen werden schwerer
+              </span>
+            </div>
+            <div class="game-tile-right">
+              <span class="game-tile-tag">ABCD</span>
+              <span class="coming-badge">COMING SOON</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="gamehub-footer">
+          Weitere Games folgen – dieses Hub bleibt dein Einstiegspunkt.
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        }
+      }
+    </script>
+
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+    <script src="/transition.js"></script>
+    <script>
+      // Coming-Soon Tiles sanft wackeln lassen
+      document.querySelectorAll(".game-tile.disabled").forEach((tile) => {
+        tile.addEventListener("click", () => {
+          tile.classList.remove("shake"); // reset falls schnell geklickt
+          void tile.offsetWidth; // Reflow erzwingen
+          tile.classList.add("shake");
+        });
+      });
+    </script>
+  </body>
+</html>
