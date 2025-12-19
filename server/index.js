@@ -45,6 +45,13 @@ function emitPlayers(roomCode) {
   io.to(roomCode).emit("players-updated", game.players);
 }
 
+// Helper: immer sicherstellen, dass lockedPlayers existiert
+function ensureLockedPlayers(game) {
+  if (!game.lockedPlayers || !(game.lockedPlayers instanceof Set)) {
+    game.lockedPlayers = new Set();
+  }
+}
+
 io.on("connection", (socket) => {
   console.log("Client verbunden:", socket.id);
 
@@ -72,6 +79,9 @@ io.on("connection", (socket) => {
       // speichert playerId (nicht socketId)
       firstBuzzId: null,
 
+      // ✅ Server-seitige Locks pro Frage
+      lockedPlayers: new Set(),
+
       estimateRound: null,
     };
 
@@ -90,6 +100,8 @@ io.on("connection", (socket) => {
 
     if (!game)
       return callback?.({ success: false, error: "Room nicht gefunden" });
+
+    ensureLockedPlayers(game);
 
     const cleanName = String(name || "").trim();
     if (!cleanName)
@@ -132,6 +144,11 @@ io.on("connection", (socket) => {
     socket.join(rc);
     emitPlayers(rc);
 
+    // ✅ Wenn Player gerade gelockt ist (Frage läuft), sofort an Client melden
+    if (game.lockedPlayers.has(playerId)) {
+      socket.emit("you-are-locked");
+    }
+
     callback?.({ success: true, playerId });
 
     console.log(
@@ -150,6 +167,8 @@ io.on("connection", (socket) => {
       return;
     }
 
+    ensureLockedPlayers(game);
+
     socket.join(rc);
     console.log("Board verbunden mit Raum:", rc);
 
@@ -165,19 +184,34 @@ io.on("connection", (socket) => {
     const game = games[rc];
     if (!game || game.hostId !== socket.id) return;
 
+    ensureLockedPlayers(game);
+
     game.buzzingEnabled = !!enabled;
     game.firstBuzzId = null;
     io.to(rc).emit("buzzing-status", { enabled: game.buzzingEnabled });
   });
 
+  // Board will Buzz wieder freigeben (z.B. nach Falsch)
   socket.on("board-enable-buzz", ({ roomCode }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
     if (!game) return;
 
+    ensureLockedPlayers(game);
+
     game.buzzingEnabled = true;
     game.firstBuzzId = null;
+
+    // 1️⃣ Buzz ist wieder offen
     io.to(rc).emit("buzzing-status", { enabled: true });
+
+    // 2️⃣ ABER: gelockte Spieler explizit erneut sperren (Client-State!)
+    for (const playerId of game.lockedPlayers) {
+      const socketId = game.players[playerId]?.socketId;
+      if (socketId) {
+        io.to(socketId).emit("you-are-locked");
+      }
+    }
   });
 
   // Spieler drückt Buzzer
@@ -185,10 +219,23 @@ io.on("connection", (socket) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
     if (!game || !game.buzzingEnabled) return;
+
+    ensureLockedPlayers(game);
+
+    // wenn schon jemand gebuzzert hat -> ignorieren
     if (game.firstBuzzId) return;
 
-    const playerId = game.socketToPlayerId[socket.id];
-    const player = playerId ? game.players[playerId] : null;
+    const playerId = game.socketToPlayerId[socket.id] || socket.data.playerId;
+    if (!playerId) return;
+
+    // ✅ wenn gelockt -> darf NICHT buzzern
+    if (game.lockedPlayers.has(playerId)) {
+      // optional: nochmal an Client schicken, falls UI out-of-sync
+      socket.emit("you-are-locked");
+      return;
+    }
+
+    const player = game.players[playerId];
     if (!player || player.connected === false) return;
 
     game.firstBuzzId = playerId;
@@ -224,17 +271,37 @@ io.on("connection", (socket) => {
     }
   });
 
+  // ✅ Board sperrt einen Player für die AKTUELLE Frage
   socket.on("board-lock-player", ({ roomCode, playerId }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
     if (!game) return;
+
+    ensureLockedPlayers(game);
+
+    if (!playerId) return;
+
+    game.lockedPlayers.add(playerId);
+
+    // 1) Board/alle: optional UI-Info
     io.to(rc).emit("player-locked", { playerId });
+
+    // 2) NUR an den betroffenen Player: "du bist gesperrt"
+    const targetSocketId = game.players?.[playerId]?.socketId;
+    if (targetSocketId) {
+      io.to(targetSocketId).emit("you-are-locked");
+    }
   });
 
+  // ✅ Board setzt Locks zurück (wenn Frage geschlossen wird)
   socket.on("board-clear-locks", ({ roomCode }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
     if (!game) return;
+
+    ensureLockedPlayers(game);
+
+    game.lockedPlayers.clear();
     io.to(rc).emit("round-reset");
   });
 
