@@ -2,6 +2,24 @@
    JEOPARDY – Global
    =========================== */
 
+/* Mobile Fullscreen Fix */
+html {
+  background: #000;
+  min-height: 100%;
+  min-height: -webkit-fill-available;
+}
+
+body, .jt-body {
+  background: #000;
+}
+
+.player-page {
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  background: radial-gradient(circle at top, #1e293b 0, #020617 55%, #000 100%);
+}
 *,
 *::before,
 *::after {
