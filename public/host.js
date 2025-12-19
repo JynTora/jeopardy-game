@@ -83,7 +83,7 @@ function renderPlayers() {
       socket.emit("host-update-score", {
         roomCode: currentRoomCode,
         playerId: id,
-        delta: 100,
+        delta: 50,
       });
     };
 
@@ -95,7 +95,7 @@ function renderPlayers() {
       socket.emit("host-update-score", {
         roomCode: currentRoomCode,
         playerId: id,
-        delta: -100,
+        delta: -50,
       });
     };
 
