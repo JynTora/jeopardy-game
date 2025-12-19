@@ -107,5 +107,17 @@
       </div>
     </div>
     <script src="/transition.js"></script>
+    <script>
+  function toggleFullscreen() {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      }
+    }
+  }
+</script>
+<button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
   </body>
 </html>
