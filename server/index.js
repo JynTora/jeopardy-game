@@ -16,15 +16,6 @@ const HOST_PASSWORD = "baman187";
 const publicPath = path.join(__dirname, "..", "public");
 app.use(express.static(publicPath));
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(publicPath, "index.html"));
-});
-
-// Fallback → für alle anderen Routen wieder index.html
-app.get("*", (req, res) => {
-  res.sendFile(path.join(publicPath, "index.html"));
-});
-
 // -----------------------------
 // Game-Logik
 // -----------------------------
