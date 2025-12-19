@@ -24,6 +24,9 @@ let currentName = null;
 let joined = false;
 let buzzingEnabled = false;
 
+// ✅ Lock-State (pro Frage)
+let isLocked = false;
+
 // Schätzfrage-State
 let estimateActive = false;
 let estimateLocked = false;
@@ -55,6 +58,12 @@ function updateBuzzUI() {
   if (!joined) {
     buzzBtn.disabled = true;
     buzzStatusEl.textContent = "Bitte zuerst beitreten.";
+    return;
+  }
+
+  if (isLocked) {
+    buzzBtn.disabled = true;
+    buzzStatusEl.textContent = "❌ Du bist für diese Frage gesperrt";
     return;
   }
 
@@ -119,6 +128,7 @@ function doJoin(roomCode, name, { silent = false } = {}) {
       joined = false;
       currentRoomCode = null;
       currentName = null;
+      isLocked = false;
       unlockJoinInputs();
       updateBuzzUI();
       if (!silent)
@@ -154,7 +164,7 @@ joinBtn.addEventListener("click", () => {
 // Buzzer
 // ---------------------------
 buzzBtn.addEventListener("click", () => {
-  if (!joined || !currentRoomCode || !buzzingEnabled) return;
+  if (!joined || !currentRoomCode || !buzzingEnabled || isLocked) return;
 
   socket.emit("player-buzz", { roomCode: currentRoomCode });
 
@@ -305,6 +315,16 @@ socket.on("buzzing-status", ({ enabled }) => {
   updateBuzzUI();
 });
 
+socket.on("you-are-locked", () => {
+  isLocked = true;
+  updateBuzzUI();
+});
+
+socket.on("round-reset", () => {
+  isLocked = false;
+  updateBuzzUI();
+});
+
 socket.on("estimate-question-started", ({ question, timeLimit }) => {
   if (!joined) return;
   openEstimateModal(question, timeLimit || 30);
@@ -327,6 +347,7 @@ socket.on("game-ended", () => {
   currentRoomCode = null;
   currentName = null;
   buzzingEnabled = false;
+  isLocked = false;
 
   unlockJoinInputs();
   buzzBtn.disabled = true;
@@ -350,7 +371,6 @@ socket.on("connect", () => {
   if (room && roomCodeInput) roomCodeInput.value = room;
   if (name && playerNameInput) playerNameInput.value = name;
 
-  // Wenn wir vorher schon mal gejoint haben (oder storage vorhanden): silent rejoin
   if (room && name) {
     doJoin(room, name, { silent: true });
   }
