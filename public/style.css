@@ -71,7 +71,7 @@ html, body {
   width: auto;
   animation: floatLogo 2.4s ease-in-out infinite;
   filter: drop-shadow(0 0 18px rgba(129, 140, 248, 0.55));
-  margin-top: -30px;     /* Logo nach oben */
+  margin-top: -50px;     /* Logo nach oben */
   margin-bottom: 20px;
 }
 
@@ -237,7 +237,7 @@ html, body {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
-  margin-top: -5px;
+  margin-top: 0px;
 }
 
 .board-column {
