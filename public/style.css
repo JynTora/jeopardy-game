@@ -67,7 +67,7 @@ html, body {
 }
 
 .jt-logo {
-  height: 110px;
+  height: 180px;
   width: auto;
   animation: floatLogo 2.4s ease-in-out infinite;
   filter: drop-shadow(0 0 18px rgba(129, 140, 248, 0.55));
