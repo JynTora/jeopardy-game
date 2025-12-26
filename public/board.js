@@ -56,8 +56,7 @@ const transitionOverlay = document.getElementById("boardTransitionOverlay");
 const btnBackToMenu = document.getElementById("btnBackToMenu");
 
 // ✅ Ziel-URL fürs Games-Menü (dein Link)
-const GAMES_MENU_URL =
-  "https://1f9817b0-d9d7-4f4d-9531-2323b0787cf5-00-31mwdhe7qi072.kirk.replit.dev/";
+const GAMES_MENU_URL = "https://bamangames.onrender.com/";
 
 // ===============================
 // Turn-Indikator (oben rechts)
@@ -146,136 +145,135 @@ function flashScreen(type) {
 // Runde 1
 const categoriesRound1 = [
   {
-    name: "Jyn Tora",
+    name: "Geographie",
     questions: [
       {
         value: 100,
-        question: "In welcher Stadt hat Jyn Tora seine Wurzeln?",
-        answer: "Basel",
+        question: "Was ist die Hauptstadt von Frankreich?",
+        answer: "Paris",
       },
       {
         value: 200,
-        question: "Wie heißt Jyn Toras Crew / Label?",
-        answer: "Baman Records",
+        question: "Auf welchem Kontinent liegt Ägypten?",
+        answer: "Afrika",
       },
       {
         value: 300,
-        question: "Welches Tier ist das Symbol von Jyn Tora?",
-        answer: "Tiger",
+        question: "Welcher ist der längste Fluss der Welt?",
+        answer: "Nil (oder Amazonas)",
       },
       {
         value: 400,
-        question: "Wie heißt die geplante EP mit AlKo 04?",
-        answer: "Echo",
+        question: "Wie viele Bundesländer hat Deutschland?",
+        answer: "16",
       },
       {
         value: 500,
-        question: "Wie lautet Jyn Toras Künstlername komplett?",
-        answer: "Jyn Tora",
+        question: "Welches Land hat die meisten Einwohner der Welt?",
+        answer: "Indien (seit 2023)",
       },
     ],
   },
   {
-    name: "Musik",
+    name: "Filme & Serien",
     questions: [
       {
         value: 100,
-        question: "Welches Genre beschreibt Jyn Toras Sound am ehesten?",
-        answer: "Deutschrap / Trap mit RAF-Camora-Vibes",
+        question: "Wie heisst der Schneemann in 'Die Eiskönigin'?",
+        answer: "Olaf",
       },
       {
         value: 200,
-        question: "Auf welcher Plattform released Jyn Tora u.a. seine Musik?",
-        answer: "Spotify",
+        question: "Wer spielt Iron Man im Marvel-Universum?",
+        answer: "Robert Downey Jr.",
       },
       {
         value: 300,
-        question: "Wie heißt eine Single von Jyn Tora x AlKo 04?",
-        answer: "z.B. Abriss, Schatten, Sternenmeer, Sehnsucht",
+        question: "In welcher Stadt spielt die Serie 'Friends'?",
+        answer: "New York",
       },
       {
         value: 400,
-        question: "Welches Social-Media-Format ist für Promo wichtig?",
-        answer: "TikTok",
+        question: "Wie heisst der Planet, auf dem die Na'vi in 'Avatar' leben?",
+        answer: "Pandora",
       },
       {
         value: 500,
-        question: "Welches große Festival ist ein Ziel von Jyn?",
-        answer: "Openair Frauenfeld",
+        question: "Welcher Film gewann 2023 den Oscar für den besten Film?",
+        answer: "Everything Everywhere All at Once",
       },
     ],
   },
   {
-    name: "Basel",
+    name: "Sport",
     questions: [
       {
         value: 100,
-        question: "Wie heißt der bekannte Fußballclub aus Basel?",
-        answer: "FC Basel",
+        question: "Wie viele Spieler hat eine Fussballmannschaft auf dem Feld?",
+        answer: "11",
       },
       {
         value: 200,
-        question: "Durch welche zwei Kantone ist Basel aufgeteilt?",
-        answer: "Basel-Stadt und Basel-Land",
+        question: "In welchem Land fanden die Olympischen Spiele 2021 statt?",
+        answer: "Japan (Tokio)",
       },
       {
         value: 300,
-        question: "Welcher Fluss fließt durch Basel?",
-        answer: "Rhein",
+        question: "Wie heisst der berühmteste Tennisplatz in London?",
+        answer: "Wimbledon",
       },
       {
         value: 400,
-        question: "Wie heißt das mythische Tier, das Basel symbolisiert?",
-        answer: "Basilisk",
+        question: "Welches Land hat die meisten Fussball-Weltmeisterschaften gewonnen?",
+        answer: "Brasilien (5 Titel)",
       },
       {
         value: 500,
-        question: "Wie heißt das Land, in dem Basel liegt?",
-        answer: "Schweiz",
+        question: "Wie lange dauert ein Marathon in Kilometern?",
+        answer: "42,195 km",
       },
     ],
   },
   {
-    name: "Wer oder was",
+    name: "Wer oder Was",
     questions: [
       {
         value: 100,
         type: "image",
         question: "Wer oder was ist das?",
-        answer: "MR. BEAN",
+        answer: "Mr. Bean / Rowan Atkinson",
         imageUrl: "/images/questions/werwas_100.jpg",
       },
       {
         value: 200,
         type: "image",
         question: "Wer oder was ist das?",
-        answer: "Platzhalter-Antwort (du passt später an)",
+        answer: "Eiffelturm",
         imageUrl: "/images/questions/werwas_200.jpg",
       },
       {
         value: 300,
         type: "image",
         question: "Wer oder was ist das?",
-        answer: "Platzhalter-Antwort (du passt später an)",
+        answer: "Dwayne The Rock Johnson",
         imageUrl: "/images/questions/werwas_300.jpg",
       },
       {
         value: 400,
         type: "image",
         question: "Wer oder was ist das?",
-        answer: "Platzhalter-Antwort (du passt später an)",
+        answer: "Kolosseum von Rom",
         imageUrl: "/images/questions/werwas_400.jpg",
       },
       {
         value: 500,
         type: "image",
         question: "Wer oder was ist das?",
-        answer: "Platzhalter-Antwort (du passt später an)",
+        answer: "Elon Musk",
         imageUrl: "/images/questions/werwas_500.jpg",
       },
     ],
   },
-
   {
     name: "Schätzfragen",
     questions: [
@@ -283,39 +281,36 @@ const categoriesRound1 = [
         value: 100,
         type: "estimate",
         timeLimit: 30,
-        question: "Wie viele Einwohner hat Basel-Stadt ungefähr?",
-        answer: "170'000",
+        question: "Wie viele Länder gibt es auf der Welt? (UN-Mitglieder)",
+        answer: "193",
       },
       {
         value: 200,
         type: "estimate",
         timeLimit: 30,
-        question: "Wie viele Streams hat Jyn Tora insgesamt schon ungefähr?",
-        answer: "24'000",
+        question: "Wie hoch ist der Eiffelturm in Metern?",
+        answer: "330",
       },
       {
         value: 300,
         type: "estimate",
         timeLimit: 30,
-        question:
-          "Wie viele km sind es ungefähr von Basel nach Tokio (Luftlinie)?",
-        answer: "9'500",
+        question: "In welchem Jahr wurde das iPhone zum ersten Mal verkauft?",
+        answer: "2007",
       },
       {
         value: 400,
         type: "estimate",
         timeLimit: 30,
-        question:
-          "Wie viele Minuten Musik veröffentlicht Jyn Tora auf der EP 'Echo' ungefähr insgesamt?",
-        answer: "1'256",
+        question: "Wie viele Knochen hat ein erwachsener Mensch?",
+        answer: "206",
       },
       {
         value: 500,
         type: "estimate",
         timeLimit: 45,
-        question:
-          "Wie viele Tage waren es ungefähr zwischen deinem ersten Release und heute?",
-        answer: "651",
+        question: "Wie viele Kilometer ist der Mond von der Erde entfernt? (Durchschnitt in Tausend)",
+        answer: "384000",
       },
     ],
   },
@@ -324,130 +319,132 @@ const categoriesRound1 = [
 // Runde 2
 const categoriesRound2 = [
   {
-    name: "Echo (EP)",
+    name: "Musik",
     questions: [
       {
         value: 100,
-        question: "Wie heißt die EP von Jyn Tora x AlKo 04?",
-        answer: "Echo",
+        question: "Aus welchem Land kommen die Beatles?",
+        answer: "England / Grossbritannien",
       },
       {
         value: 200,
-        question: "Nenne einen Release von Jyn Tora x AlKo 04 (Song).",
-        answer: "z.B. Abriss, Schatten, Sternenmeer, Sehnsucht",
+        question: "Wie heisst der 'King of Pop'?",
+        answer: "Michael Jackson",
       },
       {
         value: 300,
-        question:
-          "Wie heißt der Sommersong, der mit der ganzen EP kommen soll?",
-        answer: "Ole Ole",
+        question: "Welche Sängerin ist bekannt für 'Bad Guy' und 'Lovely'?",
+        answer: "Billie Eilish",
       },
       {
         value: 400,
-        question: "Welche zwei Artists stehen bei der EP im Fokus?",
-        answer: "Jyn Tora x AlKo 04",
-      },
-      {
-        value: 500,
-        question:
-          "Was soll das EP-Logo/Symbol wie bei 'Palmen aus Plastik' machen?",
-        answer:
-          "Sich visuell durchziehen (ein wiedererkennbares Symbol über alle Assets)",
-      },
-    ],
-  },
-  {
-    name: "RAF-Vibe",
-    questions: [
-      {
-        value: 100,
-        question: "Wie soll der Mix-Vibe werden (kurz): eher…?",
-        answer:
-          "Breit & warm (RAF-Camora-Feeling), aber eigener Jyn-Tora-Touch",
-      },
-      {
-        value: 200,
-        question: "Was ist wichtiger: 1:1 kopieren oder eigener Touch?",
-        answer: "Eigener Touch behalten – nur Richtung/Ästhetik anlehnen",
-      },
-      {
-        value: 300,
-        question:
-          "Welche Vocal-Elemente geben schnell 'RAF'-Energie (2 Dinge)?",
-        answer: "Harmonien + Adlibs (plus breite Doubles/Stacks)",
-      },
-      {
-        value: 400,
-        question: "Welches Snippet-Feeling wird als Referenz genannt?",
-        answer: "RAF/Bonez Vibes (PaP/Anthrazit-Style Snippets)",
-      },
-      {
-        value: 500,
-        question:
-          "Was ist beim Gesamt-Sound besonders wichtig neben dem Main-Vocal?",
-        answer: "Harmonien/Chöre & Adlibs müssen sitzen und 'leben'",
-      },
-    ],
-  },
-  {
-    name: "Japan Trip",
-    questions: [
-      {
-        value: 100,
-        question: "In welcher Stadt startet eure Japan-Reise?",
-        answer: "Tokio",
-      },
-      {
-        value: 200,
-        question: "Nenne 2 Orte, die fix im Plan sind.",
-        answer: "z.B. Tokio, Hakone, Fuji-Gebiet, Kyoto, Osaka",
-      },
-      {
-        value: 300,
-        question: "Wie viele Leute seid ihr insgesamt?",
+        question: "Wie viele Saiten hat eine normale Gitarre?",
         answer: "6",
       },
       {
-        value: 400,
-        question: "Welche große Veranstaltung soll Teil des Trips sein?",
-        answer: "World Expo 2025",
-      },
-      {
         value: 500,
-        question: "Wie lange dauert die Reise ungefähr?",
-        answer: "Ca. zwei Wochen",
+        question: "Welcher Rapper hat das Album 'Ye' veröffentlicht?",
+        answer: "Kanye West",
       },
     ],
   },
   {
-    name: "Baman Records",
+    name: "Wissenschaft",
     questions: [
       {
         value: 100,
-        question: "Wie heißt das Label-Konzept von Jyn Tora?",
-        answer: "Baman Records",
+        question: "Welcher Planet ist der Sonne am nächsten?",
+        answer: "Merkur",
       },
       {
         value: 200,
-        question: "Welches Tier soll beim Baman-Logo zentral sein?",
-        answer: "Basilisk",
+        question: "Was ist H2O?",
+        answer: "Wasser",
       },
       {
         value: 300,
-        question: "Wofür soll die Website u.a. sein?",
-        answer: "Artists präsentieren, Auftrittsdaten, Brand/Profil",
+        question: "Wie viele Planeten hat unser Sonnensystem?",
+        answer: "8",
       },
       {
         value: 400,
-        question:
-          "Welche Plattform nutzt du zum Hochladen/Verteilen deiner Musik?",
-        answer: "DistroKid",
+        question: "Wer hat die Relativitätstheorie entwickelt?",
+        answer: "Albert Einstein",
       },
       {
         value: 500,
-        question:
-          "Welche 3 Kanäle sind für Promo/Presence wichtig (Beispiele)?",
-        answer: "Spotify, Instagram, TikTok (auch YouTube möglich)",
+        question: "Was ist das häufigste Element im Universum?",
+        answer: "Wasserstoff",
+      },
+    ],
+  },
+  {
+    name: "Essen & Trinken",
+    questions: [
+      {
+        value: 100,
+        question: "Aus welchem Land kommt die Pizza ursprünglich?",
+        answer: "Italien",
+      },
+      {
+        value: 200,
+        question: "Welche Frucht ist auf dem Malibu-Flaschenlogo?",
+        answer: "Kokosnuss",
+      },
+      {
+        value: 300,
+        question: "Was ist die Hauptzutat von Guacamole?",
+        answer: "Avocado",
+      },
+      {
+        value: 400,
+        question: "Aus welchem Land kommt Sushi?",
+        answer: "Japan",
+      },
+      {
+        value: 500,
+        question: "Wie heisst der französische Begriff für 'guten Appetit'?",
+        answer: "Bon appétit",
+      },
+    ],
+  },
+  {
+    name: "Wer oder Was 2",
+    questions: [
+      {
+        value: 100,
+        type: "image",
+        question: "Wer oder was ist das?",
+        answer: "Spongebob Schwammkopf",
+        imageUrl: "/images/questions/werwas2_100.jpg",
+      },
+      {
+        value: 200,
+        type: "image",
+        question: "Wer oder was ist das?",
+        answer: "Freiheitsstatue",
+        imageUrl: "/images/questions/werwas2_200.jpg",
+      },
+      {
+        value: 300,
+        type: "image",
+        question: "Wer oder was ist das?",
+        answer: "Rhianna",
+        imageUrl: "/images/questions/werwas2_300.jpg",
+      },
+      {
+        value: 400,
+        type: "image",
+        question: "Wer oder was ist das?",
+        answer: "Mark Zuckerberg",
+        imageUrl: "/images/questions/werwas2_400.jpg",
+      },
+      {
+        value: 500,
+        type: "image",
+        question: "Wer oder was ist das?",
+        answer: "Machu Picchu",
+        imageUrl: "/images/questions/werwas2_500.jpg",
       },
     ],
   },
@@ -457,40 +454,37 @@ const categoriesRound2 = [
       {
         value: 100,
         type: "estimate",
-        timeLimit: 25,
-        question:
-          "Wie viele Sekunden hat ein TikTok-Video, das oft am besten performt (Grob)?",
-        answer: "15",
+        timeLimit: 30,
+        question: "Wie viele Zähne hat ein erwachsener Mensch normalerweise?",
+        answer: "32",
       },
       {
         value: 200,
         type: "estimate",
         timeLimit: 30,
-        question: "Wie viele Kategorien hat euer Jeopardy-Board pro Runde?",
-        answer: "5",
+        question: "In welchem Jahr ist die Titanic gesunken?",
+        answer: "1912",
       },
       {
         value: 300,
         type: "estimate",
-        timeLimit: 35,
-        question:
-          "Wie viele Felder hat ein Board insgesamt (Kategorien x Fragen)?",
-        answer: "25",
+        timeLimit: 30,
+        question: "Wie viele Minuten hat ein Tag?",
+        answer: "1440",
       },
       {
         value: 400,
         type: "estimate",
         timeLimit: 40,
-        question:
-          "Wie viele Punkte sind es in Runde 2, wenn ein Feld in Runde 1 500 hatte?",
-        answer: "1'000",
+        question: "Wie viele Instagram-Follower hat Cristiano Ronaldo ungefähr? (in Millionen)",
+        answer: "620",
       },
       {
         value: 500,
         type: "estimate",
         timeLimit: 45,
-        question: "Wie viele Sekunden dauert eure Transition ungefähr (Grob)?",
-        answer: "0.26",
+        question: "Wie alt wurde Queen Elizabeth II? (in Jahren)",
+        answer: "96",
       },
     ],
   },
@@ -596,8 +590,8 @@ function startEstimateBoardTimer(seconds) {
 // ===============================
 function extractCorrectFromAnswer(answerText) {
   if (!answerText) return null;
-  const nums = [...answerText.matchAll(/\d[\d'’.,]*/g)].map((m) =>
-    Number(m[0].replace(/['’.,]/g, "")),
+  const nums = [...answerText.matchAll(/\d[\d''.,]*/g)].map((m) =>
+    Number(m[0].replace(/[''.,]/g, "")),
   );
   if (nums.length === 0) return null;
   if (nums.length === 1) return nums[0];
