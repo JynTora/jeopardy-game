@@ -71,7 +71,7 @@ html, body {
   width: auto;
   animation: floatLogo 2.4s ease-in-out infinite;
   filter: drop-shadow(0 0 18px rgba(129, 140, 248, 0.55));
-  margin-bottom: -20px;
+  margin-bottom: 20px;
 }
 
 @keyframes floatLogo {
@@ -236,7 +236,7 @@ html, body {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 10px;
-  margin-top: 10px;
+  margin-top: 40px;
 }
 
 .board-column {
