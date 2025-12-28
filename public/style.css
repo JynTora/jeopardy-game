@@ -2966,4 +2966,236 @@ body.is-buzz-locked #qMedia {
   }
 }
 
+/* ===========================
+   SCHÄTZFRAGEN - LAYOUT FIX
+   =========================== */
+
+/* Schätzfrage Buttons - Zentriert und symmetrisch */
+.question-actions {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+/* Wenn nur 2 Buttons (Schätzfrage ohne Buzz) */
+.question-actions #showAnswerBtn,
+.question-actions #closeQuestionBtn {
+  min-width: 220px;
+  height: 46px;
+}
+
+/* Schätzantworten Panel - Komplett neu gestylt */
+#estimateRevealContainer {
+  width: 100%;
+  margin-top: 18px;
+  display: flex;
+  justify-content: center;
+}
+
+.estimate-reveal {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 18px 22px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.estimate-reveal-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #e5e7eb;
+  text-align: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Reveal Button im Titel - Zentriert */
+#btnRevealNextEstimate {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  color: #020617;
+  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.45);
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+  width: 100%;
+  max-width: 280px;
+}
+
+#btnRevealNextEstimate:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(34, 197, 94, 0.65);
+}
+
+#btnRevealNextEstimate:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+  background: linear-gradient(90deg, #64748b, #475569);
+}
+
+/* Antworten Liste */
+.estimate-reveal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+.estimate-reveal-item {
+  font-size: 1rem;
+  color: #e5e7eb;
+  padding: 10px 14px;
+  background: rgba(30, 41, 59, 0.7);
+  border-radius: 10px;
+  border-left: 3px solid transparent;
+  opacity: 0;
+  transform: translateX(-10px);
+  transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.estimate-reveal-item.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Gewinner Highlight */
+.estimate-reveal-item.estimate-winner-row {
+  background: rgba(34, 197, 94, 0.2);
+  border-left-color: #22c55e;
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
+}
+
+/* Untere Button-Reihe */
+.estimate-reveal-buttons-row {
+  margin-top: 8px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(148, 163, 184, 0.3);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.estimate-reveal-button {
+  padding: 12px 16px;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  text-align: center;
+  transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.estimate-reveal-button.secondary {
+  background: linear-gradient(90deg, #64748b, #475569);
+  color: #e5e7eb;
+  box-shadow: 0 6px 18px rgba(100, 116, 139, 0.35);
+}
+
+.estimate-reveal-button.secondary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(100, 116, 139, 0.5);
+}
+
+.estimate-reveal-button.primary {
+  background: linear-gradient(90deg, #22c55e, #16a34a);
+  color: #020617;
+  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.45);
+}
+
+.estimate-reveal-button.primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(34, 197, 94, 0.6);
+}
+
+.estimate-reveal-button:disabled {
+  cursor: default;
+  opacity: 0.5;
+  transform: none;
+}
+
+/* ===========================
+   SCHÄTZFRAGE CARD - NEUES LAYOUT
+   =========================== */
+
+/* Wenn Schätzfrage offen: Spezielle Struktur */
+.question-card:has(#estimateRevealContainer:not(.hidden)) .question-actions {
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Antwort anzeigen Button bei Schätzfragen - Links vom Panel */
+.question-card:has(#estimateRevealContainer:not(.hidden)) #showAnswerBtn {
+  position: relative;
+  order: -1;
+}
+
+/* Frage schliessen immer unten zentriert */
+#closeQuestionBtn {
+  width: 100%;
+  max-width: 280px;
+}
+
+/* ===========================
+   SCHÄTZFRAGE - KOMPLETT LAYOUT
+   =========================== */
+
+/* Container für Antwort + Reveal Panel nebeneinander */
+.estimate-layout {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+}
+
+/* Antwort Text bei Schätzfragen */
+.question-card .answer-text {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #a5b4fc;
+}
+
+/* Wenn Reveal Container sichtbar - besseres Layout */
+#estimateRevealContainer:not(.hidden) {
+  margin-top: 10px;
+}
+
+#estimateRevealContainer:not(.hidden) ~ .question-actions {
+  margin-top: 14px;
+}
+
+/* Verstecke Richtig/Falsch bei Schätzfragen komplett */
+#estimateRevealContainer:not(.hidden) ~ .question-actions #correctBtn,
+#estimateRevealContainer:not(.hidden) ~ .question-actions #wrongBtn {
+  display: none !important;
+}
+
 
