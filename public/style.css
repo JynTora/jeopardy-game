@@ -2412,4 +2412,537 @@ body.is-buzz-locked #qMedia {
   pointer-events: none;
 }
 
+/* ===========================
+   LEBENDIGE ANIMATIONEN & EFFEKTE
+   =========================== */
+
+/* ===== Board Cells - Pulsierender Glow ===== */
+.board-cell {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
+  border: 2px solid transparent;
+}
+
+/* Schimmernder Effekt der durchläuft */
+.board-cell::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.08) 50%,
+    transparent 60%
+  );
+  transform: rotate(45deg) translateX(-100%);
+  animation: cellShimmer 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes cellShimmer {
+  0% {
+    transform: rotate(45deg) translateX(-100%);
+  }
+  50%, 100% {
+    transform: rotate(45deg) translateX(100%);
+  }
+}
+
+/* Verschiedene Delays für jede Zelle */
+.board-cell:nth-child(1)::before { animation-delay: 0s; }
+.board-cell:nth-child(2)::before { animation-delay: 0.3s; }
+.board-cell:nth-child(3)::before { animation-delay: 0.6s; }
+.board-cell:nth-child(4)::before { animation-delay: 0.9s; }
+.board-cell:nth-child(5)::before { animation-delay: 1.2s; }
+
+/* Hover: Roter Glow + Rand-Animation */
+.board-cell:hover:not(:disabled) {
+  transform: translateY(-4px) scale(1.03);
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  border-color: rgba(248, 113, 113, 0.9);
+  box-shadow:
+    0 0 25px rgba(239, 68, 68, 0.7),
+    0 0 50px rgba(239, 68, 68, 0.4),
+    0 15px 35px rgba(0, 0, 0, 0.8);
+  animation: cellPulseHover 0.8s ease-in-out infinite;
+}
+
+@keyframes cellPulseHover {
+  0%, 100% {
+    box-shadow:
+      0 0 25px rgba(239, 68, 68, 0.7),
+      0 0 50px rgba(239, 68, 68, 0.4),
+      0 15px 35px rgba(0, 0, 0, 0.8);
+  }
+  50% {
+    box-shadow:
+      0 0 35px rgba(239, 68, 68, 0.9),
+      0 0 70px rgba(239, 68, 68, 0.5),
+      0 18px 40px rgba(0, 0, 0, 0.9);
+  }
+}
+
+/* ===== Kategorie-Header - Subtiler Glow-Puls ===== */
+.board-category {
+  position: relative;
+  animation: categoryGlow 3s ease-in-out infinite;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+@keyframes categoryGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 22px rgba(79, 70, 229, 0.6),
+      0 10px 24px rgba(15, 23, 42, 0.95);
+  }
+  50% {
+    box-shadow:
+      0 0 35px rgba(99, 102, 241, 0.85),
+      0 0 60px rgba(79, 70, 229, 0.4),
+      0 12px 28px rgba(15, 23, 42, 0.95);
+  }
+}
+
+.board-category:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 0 40px rgba(99, 102, 241, 1),
+    0 0 80px rgba(79, 70, 229, 0.5),
+    0 14px 30px rgba(15, 23, 42, 0.95);
+}
+
+/* ===== Question Card - Animierter Rand ===== */
+.question-card {
+  position: relative;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Animierter Gradient-Rand */
+.question-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 22px;
+  background: linear-gradient(
+    90deg,
+    #3b82f6,
+    #8b5cf6,
+    #ec4899,
+    #f97316,
+    #3b82f6
+  );
+  background-size: 300% 100%;
+  animation: borderGradient 4s linear infinite;
+  z-index: -1;
+  opacity: 0.7;
+}
+
+@keyframes borderGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 300% 50%;
+  }
+}
+
+/* Innerer Hintergrund über dem Gradient */
+.question-card::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: 18px;
+  background: radial-gradient(circle at top, #020617, #020617 40%, #000 100%);
+  z-index: -1;
+}
+
+/* ===== Buzzer Button - Heartbeat Animation ===== */
+.board-buzz-btn {
+  animation: buzzerHeartbeat 2s ease-in-out infinite;
+}
+
+@keyframes buzzerHeartbeat {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 26px rgba(34, 197, 94, 0.95),
+      0 12px 26px rgba(0, 0, 0, 0.75);
+  }
+  15% {
+    transform: scale(1.08);
+    box-shadow:
+      0 0 40px rgba(34, 197, 94, 1),
+      0 14px 30px rgba(0, 0, 0, 0.85);
+  }
+  30% {
+    transform: scale(1);
+    box-shadow:
+      0 0 26px rgba(34, 197, 94, 0.95),
+      0 12px 26px rgba(0, 0, 0, 0.75);
+  }
+  45% {
+    transform: scale(1.05);
+    box-shadow:
+      0 0 35px rgba(34, 197, 94, 1),
+      0 13px 28px rgba(0, 0, 0, 0.8);
+  }
+}
+
+/* ===== Player Buzzer - Intensiverer Puls ===== */
+.player-buzzer:not(:disabled) {
+  animation: playerBuzzerPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes playerBuzzerPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow:
+      0 0 40px rgba(248, 113, 113, 0.9),
+      0 24px 40px rgba(0, 0, 0, 0.9);
+  }
+  25% {
+    transform: scale(1.04);
+    box-shadow:
+      0 0 55px rgba(248, 113, 113, 1),
+      0 0 100px rgba(239, 68, 68, 0.4),
+      0 28px 45px rgba(0, 0, 0, 0.95);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow:
+      0 0 70px rgba(248, 113, 113, 1),
+      0 0 120px rgba(239, 68, 68, 0.5),
+      0 32px 50px rgba(0, 0, 0, 1);
+  }
+  75% {
+    transform: scale(1.04);
+    box-shadow:
+      0 0 55px rgba(248, 113, 113, 1),
+      0 0 100px rgba(239, 68, 68, 0.4),
+      0 28px 45px rgba(0, 0, 0, 0.95);
+  }
+}
+
+/* ===== Spieler-Pills - Floating Animation ===== */
+.player-pill {
+  animation: pillFloat 3s ease-in-out infinite;
+}
+
+.player-pill:nth-child(odd) {
+  animation-delay: 0s;
+}
+
+.player-pill:nth-child(even) {
+  animation-delay: 1.5s;
+}
+
+@keyframes pillFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* Aktiver Spieler - Stärkerer Glow */
+.player-pill-active {
+  animation: activePillGlow 1s ease-in-out infinite;
+}
+
+@keyframes activePillGlow {
+  0%, 100% {
+    box-shadow: 0 0 26px rgba(34, 197, 94, 0.9);
+  }
+  50% {
+    box-shadow:
+      0 0 40px rgba(34, 197, 94, 1),
+      0 0 80px rgba(34, 197, 94, 0.5);
+  }
+}
+
+/* ===== Turn Indicator - Attention Animation ===== */
+.turn-indicator {
+  animation: turnPulse 2s ease-in-out infinite;
+}
+
+@keyframes turnPulse {
+  0%, 100% {
+    box-shadow: 0 0 22px rgba(234, 88, 12, 0.9);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow:
+      0 0 35px rgba(234, 88, 12, 1),
+      0 0 60px rgba(234, 88, 12, 0.4);
+    transform: scale(1.03);
+  }
+}
+
+/* ===== Logo - Verstärkter Float + Glow ===== */
+.jt-logo {
+  animation: logoFloat 2.5s ease-in-out infinite;
+}
+
+@keyframes logoFloat {
+  0%, 100% {
+    transform: translateY(0);
+    filter: drop-shadow(0 0 18px rgba(129, 140, 248, 0.55));
+  }
+  50% {
+    transform: translateY(-8px);
+    filter: drop-shadow(0 0 30px rgba(129, 140, 248, 0.85))
+           drop-shadow(0 0 60px rgba(99, 102, 241, 0.4));
+  }
+}
+
+/* ===== Buttons - Glow on Hover ===== */
+.btn, .jt-modal-btn, .round-switch-btn, .estimate-send-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s ease;
+}
+
+.btn::before, .jt-modal-btn::before, .round-switch-btn::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.2) 0%,
+    transparent 60%
+  );
+  transform: scale(0);
+  transition: transform 0.4s ease;
+  pointer-events: none;
+}
+
+.btn:hover::before, .jt-modal-btn:hover::before, .round-switch-btn:hover::before {
+  transform: scale(1);
+}
+
+/* ===== Points Animation - Bounce In ===== */
+.question-points .points-inner.pop-in {
+  animation: pointsBounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes pointsBounce {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  80% {
+    transform: scale(0.95);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ===== Answer Text - Fade In Animation ===== */
+.answer-text:not(.hidden) {
+  animation: answerReveal 0.4s ease-out;
+}
+
+@keyframes answerReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 0.9;
+    transform: translateY(0);
+  }
+}
+
+/* ===== Question Overlay - Backdrop Animation ===== */
+.question-overlay {
+  animation: overlayFadeIn 0.3s ease-out;
+}
+
+@keyframes overlayFadeIn {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(12px);
+  }
+}
+
+/* ===== Fullscreen Button - Subtle Pulse ===== */
+.fullscreen-btn {
+  animation: fullscreenPulse 3s ease-in-out infinite;
+}
+
+@keyframes fullscreenPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 22px rgba(99, 102, 241, 0.85),
+      0 12px 26px rgba(0, 0, 0, 0.85);
+  }
+  50% {
+    box-shadow:
+      0 0 35px rgba(129, 140, 248, 1),
+      0 0 60px rgba(99, 102, 241, 0.4),
+      0 14px 30px rgba(0, 0, 0, 0.9);
+  }
+}
+
+/* ===== Image Question - Hover Zoom ===== */
+.q-image {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.q-image:hover {
+  transform: scale(1.02);
+  box-shadow:
+    0 0 30px rgba(59, 130, 246, 0.5),
+    0 25px 55px rgba(0, 0, 0, 0.7);
+}
+
+/* ===== Estimate Timer - Urgent Animation ===== */
+.estimate-board-timer.is-danger {
+  animation: timerUrgent 0.4s ease-in-out infinite;
+}
+
+@keyframes timerUrgent {
+  0%, 100% {
+    transform: scale(1);
+    color: #ef4444;
+  }
+  50% {
+    transform: scale(1.12);
+    color: #fca5a5;
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+  }
+}
+
+/* ===== Game Tiles (Index Page) - Hover Effects ===== */
+.game-tile:not(.disabled) {
+  position: relative;
+  overflow: hidden;
+}
+
+.game-tile:not(.disabled)::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 20px;
+  background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899, #3b82f6);
+  background-size: 200% 100%;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+  animation: tileGradient 3s linear infinite;
+}
+
+@keyframes tileGradient {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+.game-tile:not(.disabled):hover::before {
+  opacity: 1;
+}
+
+.game-tile:not(.disabled):hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow:
+    0 0 40px rgba(59, 130, 246, 1),
+    0 25px 50px rgba(0, 0, 0, 1);
+}
+
+/* ===== Particles Background Effect ===== */
+.jt-page::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.05) 0%, transparent 50%);
+  animation: bgParticles 10s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes bgParticles {
+  0% {
+    background-position: 0% 0%, 100% 100%, 50% 50%;
+    opacity: 0.6;
+  }
+  100% {
+    background-position: 100% 100%, 0% 0%, 50% 50%;
+    opacity: 1;
+  }
+}
+
+/* ===== Podium Slots - Celebration Animation ===== */
+.podium-slot.first {
+  animation: podiumFirst 1.5s ease-in-out infinite;
+}
+
+@keyframes podiumFirst {
+  0%, 100% {
+    transform: scale(1.08);
+    box-shadow: 0 0 40px rgba(250, 204, 21, 0.85);
+  }
+  50% {
+    transform: scale(1.12);
+    box-shadow:
+      0 0 60px rgba(250, 204, 21, 1),
+      0 0 100px rgba(250, 204, 21, 0.5);
+  }
+}
+
+.podium-slot.second {
+  animation: podiumSecond 2s ease-in-out infinite;
+}
+
+@keyframes podiumSecond {
+  0%, 100% {
+    box-shadow: 0 0 26px rgba(203, 213, 225, 0.7);
+  }
+  50% {
+    box-shadow:
+      0 0 40px rgba(203, 213, 225, 1),
+      0 0 70px rgba(203, 213, 225, 0.4);
+  }
+}
+
+.podium-slot.third {
+  animation: podiumThird 2.5s ease-in-out infinite;
+}
+
+@keyframes podiumThird {
+  0%, 100% {
+    box-shadow: 0 0 26px rgba(251, 146, 60, 0.75);
+  }
+  50% {
+    box-shadow:
+      0 0 40px rgba(251, 146, 60, 1),
+      0 0 70px rgba(251, 146, 60, 0.4);
+  }
+}
+
 
