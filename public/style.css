@@ -2562,3 +2562,83 @@ body.is-buzz-locked #qMedia {
     0 0 40px rgba(59, 130, 246, 1),
     0 25px 50px rgba(0, 0, 0, 1);
 }
+
+/* ===========================
+   BUTTON LAYOUT FIX - PERFEKT ZENTRIERT
+   =========================== */
+
+/* Normale Fragen: 3 Buttons oben, 1 unten zentriert */
+.question-actions {
+  margin-top: 18px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Alle Action Buttons gleiche Breite für perfekte Ausrichtung */
+#showAnswerBtn,
+#correctBtn,
+#wrongBtn {
+  min-width: 200px;
+}
+
+/* Frage schliessen: Eigene Zeile, zentriert */
+#closeQuestionBtn {
+  flex-basis: 100%;
+  max-width: 250px;
+  margin: 0 auto;
+}
+
+/* ===========================
+   SCHÄTZFRAGEN - ANTWORT ANZEIGEN NACH UNTEN
+   =========================== */
+
+/* Schätzfragen Panel: Antwort anzeigen verstecken in normaler Position */
+.question-card:has(#estimateRevealContainer:not(.hidden)) #showAnswerBtn {
+  order: 10;
+  flex-basis: calc(50% - 6px);
+  max-width: 250px;
+}
+
+/* Bei Schätzfragen: Frage schliessen neben Antwort anzeigen */
+.question-card:has(#estimateRevealContainer:not(.hidden)) #closeQuestionBtn {
+  flex-basis: calc(50% - 6px);
+  max-width: 250px;
+  margin: 0;
+}
+
+/* Container für die unteren Buttons bei Schätzfragen */
+.question-card:has(#estimateRevealContainer:not(.hidden)) .question-actions {
+  flex-wrap: wrap;
+}
+
+/* Verstecke Richtig/Falsch bei Schätzfragen */
+.question-card:has(#estimateRevealContainer:not(.hidden)) #correctBtn,
+.question-card:has(#estimateRevealContainer:not(.hidden)) #wrongBtn {
+  display: none !important;
+}
+```
+
+---
+
+## Das Ergebnis:
+
+**Normale Fragen:**
+```
+[ANTWORT ANZEIGEN] [RICHTIG] [FALSCH]
+            [FRAGE SCHLIESSEN]
+```
+*(Alle 3 oben gleich breit, Frage schliessen perfekt zentriert darunter)*
+
+**Schätzfragen:**
+```
+        ┌─────────────────────────┐
+        │   SCHÄTZANTWORTEN       │
+        │   [NÄCHSTE ANZEIGEN]    │
+        │   Person 1: 6798        │
+        │   ─────────────────     │
+        │   [NÄCHSTEN] [PUNKTE]   │
+        └─────────────────────────┘
+  [ANTWORT ANZEIGEN]  [FRAGE SCHLIESSEN]
