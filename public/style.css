@@ -476,9 +476,23 @@ html, body {
   margin-top: 18px;
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 12px;
   justify-content: center;
-  /* wichtig: alles mittig */
+  align-items: center;
+}
+
+/* Erste Reihe: Antwort + Richtig + Falsch */
+/* Zweite Reihe: Frage schliessen (zentriert) */
+.question-actions {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 12px;
+  justify-content: center;
+  justify-items: center;
+}
+
+#closeQuestionBtn {
+  grid-column: 1 / -1;  /* Nimmt ganze Breite, zentriert sich */
 }
 
 .btn {
