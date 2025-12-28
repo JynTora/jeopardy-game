@@ -999,6 +999,36 @@ function onCellClick(e) {
   }
 
   if (questionTextEl) questionTextEl.textContent = data.question || "";
+// Setze Klasse für Schätzfragen (CSS Fallback)
+   if (questionCardEl) {
+     if (data.type === "estimate") {
+       questionCardEl.classList.add("is-estimate-question");
+     } else {
+       questionCardEl.classList.remove("is-estimate-question");
+     }
+   }
+```
+4. Commit
+
+---
+
+## Das Ergebnis:
+
+**Normale Fragen:**
+```
+[ANTWORT ANZEIGEN]  [RICHTIG]  [FALSCH]
+           [FRAGE SCHLIESSEN]
+```
+
+**Schätzfragen (beim Öffnen mit Timer):**
+```
+      ┌─────────────────────────┐
+      │   SCHÄTZANTWORTEN       │
+      │   [NÄCHSTE ANZEIGEN]    │
+      │   ...Antworten...       │
+      │   [NÄCHSTEN] [PUNKTE]   │
+      └─────────────────────────┘
+[ANTWORT ANZEIGEN]  [FRAGE SCHLIESSEN]
   if (answerTextEl) answerTextEl.textContent = data.answer || "";
 
   // ✅ Bild rendern (falls Bildfrage) + Buzz-Blur zurücksetzen
