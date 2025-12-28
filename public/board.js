@@ -1447,6 +1447,8 @@ document.addEventListener("keydown", (e) => {
 if (questionCardEl) {
   questionCardEl.addEventListener("click", (e) => {
     if (e.target.closest("button")) return;
+    if (e.target.closest(".q-media")) return;  // Klick auf Bild ignorieren
+    if (e.target.closest("#qImage")) return;   // Klick auf Bild ignorieren
     if (!answerTextEl || !answerTextEl.classList.contains("hidden")) return;
     if (showAnswerBtn && !showAnswerBtn.disabled) showAnswerBtn.click();
   });
