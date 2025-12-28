@@ -69,31 +69,15 @@ html, body {
 .jt-logo {
   height: 220px;
   width: auto;
-  animation: floatLogo 2.4s ease-in-out infinite;
   filter: drop-shadow(0 0 18px rgba(129, 140, 248, 0.55));
-  margin-top: -50px;     /* Logo nach oben */
+  margin-top: -50px;
   margin-bottom: 20px;
-}
-
-@keyframes floatLogo {
-  0% {
-    transform: translateY(0);
-  }
-
-  50% {
-    transform: translateY(-6px);
-  }
-
-  100% {
-    transform: translateY(0);
-  }
 }
 
 .jt-main {
   flex: 1;
   position: relative;
   z-index: 5;
-  /* liegt über dem Ambient-Background */
 }
 
 
@@ -183,10 +167,7 @@ html, body {
 .board-buzz-btn {
   position: fixed;
   left: 32px;
-
-  /* HIER die Höhe steuern – kleinerer Wert = weiter nach unten */
   top: 25px;
-
   z-index: 999;
   width: 78px;
   height: 78px;
@@ -249,40 +230,31 @@ html, body {
 .board-category {
   width: 100%;
   height: 67px;
-  /* gleiche Höhe wie board-cell */
-
   display: flex;
-  /* flex für perfekte Zentrierung */
   justify-content: center;
-  /* horizontal */
   align-items: center;
-  /* vertikal */
-
   margin: 0 auto;
   padding: 0;
-  /* wichtig, sonst sitzt der Text zu hoch */
-
   border-radius: 14px;
   font-weight: 800;
   font-size: 1rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #e5e7eb;
-
   background: linear-gradient(135deg, #4338ca, #6366f1);
-
   box-shadow:
     0 0 22px rgba(79, 70, 229, 0.8),
     0 10px 24px rgba(15, 23, 42, 0.95);
-
   text-shadow: 0 0 14px rgba(129, 140, 248, 0.95);
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 
 .board-cell {
   background: linear-gradient(135deg, #2563eb, #1d4ed8);
   border-radius: 12px;
-  border: none;
+  border: 2px solid transparent;
   box-shadow: 0 6px 18px rgba(15, 23, 42, 0.9);
   padding: 0 16px;
   height: 80px;
@@ -293,17 +265,23 @@ html, body {
   font-weight: 700;
   font-size: 1rem;
   color: #e5e7eb;
+  position: relative;
+  overflow: hidden;
   transition:
-    transform 0.08s ease,
-    box-shadow 0.1s ease,
-    background 0.14s ease,
-    opacity 0.15s ease;
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .board-cell:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.85);
-  background: linear-gradient(135deg, #ea580c, #c2410c);
+  transform: translateY(-4px) scale(1.03);
+  background: linear-gradient(135deg, #ef4444, #b91c1c);
+  border-color: rgba(248, 113, 113, 0.9);
+  box-shadow:
+    0 0 25px rgba(239, 68, 68, 0.7),
+    0 0 50px rgba(239, 68, 68, 0.4),
+    0 15px 35px rgba(0, 0, 0, 0.8);
 }
 
 .board-cell:active:not(:disabled) {
@@ -342,6 +320,18 @@ html, body {
   background: radial-gradient(circle at top, rgba(15, 23, 42, 0.9), #020617);
   backdrop-filter: blur(12px);
   z-index: 40;
+  animation: overlayFadeIn 0.3s ease-out;
+}
+
+@keyframes overlayFadeIn {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(12px);
+  }
 }
 
 .question-card {
@@ -350,10 +340,50 @@ html, body {
   padding: 28px 32px 26px;
   background: radial-gradient(circle at top, #020617, #020617 40%, #000 100%);
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.55);
+  border: 2px solid transparent;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  position: relative;
+  background-clip: padding-box;
+}
+
+/* Animierter Gradient-Rand für Question Card */
+.question-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 22px;
+  background: linear-gradient(
+    90deg,
+    #3b82f6,
+    #8b5cf6,
+    #ec4899,
+    #f97316,
+    #3b82f6
+  );
+  background-size: 300% 100%;
+  animation: borderGradient 4s linear infinite;
+  z-index: -1;
+  opacity: 0.7;
+}
+
+@keyframes borderGradient {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 300% 50%;
+  }
+}
+
+.question-card::after {
+  content: "";
+  position: absolute;
+  inset: 2px;
+  border-radius: 18px;
+  background: radial-gradient(circle at top, #020617, #020617 40%, #000 100%);
+  z-index: -1;
 }
 
 .question-points {
@@ -365,39 +395,37 @@ html, body {
   color: #fb923c;
   text-shadow: 0 0 16px rgba(248, 153, 64, 0.9);
   margin-bottom: 6px;
-}
-
-/* Punkte-Animation beim Öffnen */
-.question-points {
   position: relative;
-  /* optional, falls du später Effekte willst */
   transform-origin: center;
 }
 
-/* Wird per JS kurz hinzugefügt */
-.question-points.pop-in {
-  animation: pointsPop 220ms ease-out;
+.question-points .points-inner {
+  display: inline-block;
   transform-origin: center;
+  will-change: transform, opacity;
 }
 
-@keyframes pointsPop {
+.question-points .points-inner.pop-in {
+  animation: pointsBounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes pointsBounce {
   0% {
-    transform: scale(0.92);
-    opacity: 0.6;
+    transform: scale(0.5);
+    opacity: 0;
   }
-
   60% {
-    transform: scale(1.06);
+    transform: scale(1.15);
     opacity: 1;
   }
-
+  80% {
+    transform: scale(0.95);
+  }
   100% {
     transform: scale(1);
     opacity: 1;
   }
 }
-
-
 
 /* Schätzfrage: Punkte + Timer in einer Zeile */
 .question-toprow {
@@ -405,12 +433,10 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  /* Timer bleibt rechts */
   gap: 14px;
 }
 
-
-.question-points {
+.question-toprow .question-points {
   position: absolute;
   left: 50%;
   transform: translateX(-50%);
@@ -425,10 +451,49 @@ html, body {
   border: 1px solid rgba(148, 163, 184, 0.55);
   color: #bfdbfe;
   font-weight: 800;
+  font-size: 1.2rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   box-shadow: 0 0 18px rgba(59, 130, 246, 0.35);
   white-space: nowrap;
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+.estimate-board-timer.is-warning {
+  color: #f97316;
+  animation: timer-pulse 0.9s infinite;
+}
+
+.estimate-board-timer.is-danger {
+  color: #ef4444;
+  animation: timerUrgent 0.4s ease-in-out infinite;
+}
+
+@keyframes timer-pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0.85;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes timerUrgent {
+  0%, 100% {
+    transform: scale(1);
+    color: #ef4444;
+  }
+  50% {
+    transform: scale(1.12);
+    color: #fca5a5;
+    text-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
+  }
 }
 
 
@@ -451,6 +516,21 @@ html, body {
   color: #a5b4fc;
 }
 
+.answer-text:not(.hidden) {
+  animation: answerReveal 0.4s ease-out;
+}
+
+@keyframes answerReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 0.9;
+    transform: translateY(0);
+  }
+}
+
 .buzz-info {
   margin-top: 18px;
   align-self: center;
@@ -471,7 +551,10 @@ html, body {
   transform: translateY(-1px);
 }
 
-/* Buttons-Leiste im Overlay */
+/* ===========================
+   Buttons-Leiste im Overlay - FIXED
+   =========================== */
+
 .question-actions {
   margin-top: 18px;
   display: flex;
@@ -481,20 +564,7 @@ html, body {
   align-items: center;
 }
 
-/* Erste Reihe: Antwort + Richtig + Falsch */
-/* Zweite Reihe: Frage schliessen (zentriert) */
-.question-actions {
-  display: grid;
-  grid-template-columns: repeat(3, auto);
-  gap: 12px;
-  justify-content: center;
-  justify-items: center;
-}
-
-#closeQuestionBtn {
-  grid-column: 1 / -1;  /* Nimmt ganze Breite, zentriert sich */
-}
-
+/* Standard Button Styles */
 .btn {
   border-radius: 999px;
   border: none;
@@ -550,16 +620,14 @@ html, body {
 }
 
 /* Spezieller Look für showAnswer / closeQuestion */
-
 #showAnswerBtn,
 #closeQuestionBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 44px;
-  min-width: 160px;
-  padding: 0 22px;
-  margin: 0 auto;
+  height: 46px;
+  min-width: 200px;
+  padding: 0 24px;
   border-radius: 999px;
   border: 1px solid rgba(148, 163, 184, 0.7);
   background: #020617;
@@ -585,7 +653,7 @@ html, body {
   box-shadow:
     0 12px 30px rgba(15, 23, 42, 1),
     0 0 18px rgba(59, 130, 246, 0.7);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
 }
 
 #closeQuestionBtn {
@@ -607,6 +675,44 @@ html, body {
   box-shadow:
     0 4px 14px rgba(15, 23, 42, 0.7),
     0 0 10px rgba(15, 23, 42, 0.7);
+}
+
+/* Richtig/Falsch Buttons */
+#correctBtn,
+#wrongBtn {
+  min-width: 180px;
+  height: 46px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+}
+
+#correctBtn {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #022c22;
+  box-shadow: 0 8px 22px rgba(34, 197, 94, 0.5);
+}
+
+#correctBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(34, 197, 94, 0.7);
+}
+
+#wrongBtn {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #fee2e2;
+  box-shadow: 0 8px 22px rgba(239, 68, 68, 0.5);
+}
+
+#wrongBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(239, 68, 68, 0.7);
 }
 
 /* ===========================
@@ -652,6 +758,24 @@ html, body {
     color 0.15s ease,
     transform 0.1s ease,
     opacity 0.15s ease;
+  animation: pillFloat 3s ease-in-out infinite;
+}
+
+.player-pill:nth-child(odd) {
+  animation-delay: 0s;
+}
+
+.player-pill:nth-child(even) {
+  animation-delay: 1.5s;
+}
+
+@keyframes pillFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
 }
 
 .player-status-dot {
@@ -671,6 +795,18 @@ html, body {
   font-weight: 700;
   box-shadow: 0 0 26px rgba(34, 197, 94, 0.9);
   transform: translateY(-1px);
+  animation: activePillGlow 1s ease-in-out infinite;
+}
+
+@keyframes activePillGlow {
+  0%, 100% {
+    box-shadow: 0 0 26px rgba(34, 197, 94, 0.9);
+  }
+  50% {
+    box-shadow:
+      0 0 40px rgba(34, 197, 94, 1),
+      0 0 80px rgba(34, 197, 94, 0.5);
+  }
 }
 
 .player-pill-locked {
@@ -702,7 +838,6 @@ html, body {
     0 6px 16px rgba(15, 23, 42, 0.9);
 }
 
-/* Backlight-Layer sitzt garantiert hinter dem Text */
 .player-pill-turn-preview::before,
 .player-pill-turn-active::before {
   content: "";
@@ -905,30 +1040,37 @@ html, body {
     opacity 0.15s ease;
 }
 
-.player-buzzer-pulse {
-  animation: playerBuzzPulse 1.4s infinite ease-in-out;
+.player-buzzer:not(:disabled) {
+  animation: playerBuzzerPulse 1.8s ease-in-out infinite;
 }
 
-@keyframes playerBuzzPulse {
-  0% {
+@keyframes playerBuzzerPulse {
+  0%, 100% {
     transform: scale(1);
     box-shadow:
       0 0 40px rgba(248, 113, 113, 0.9),
       0 24px 40px rgba(0, 0, 0, 0.9);
   }
-
+  25% {
+    transform: scale(1.04);
+    box-shadow:
+      0 0 55px rgba(248, 113, 113, 1),
+      0 0 100px rgba(239, 68, 68, 0.4),
+      0 28px 45px rgba(0, 0, 0, 0.95);
+  }
   50% {
-    transform: scale(1.07);
+    transform: scale(1.08);
     box-shadow:
-      0 0 64px rgba(248, 113, 113, 1),
-      0 30px 52px rgba(0, 0, 0, 1);
+      0 0 70px rgba(248, 113, 113, 1),
+      0 0 120px rgba(239, 68, 68, 0.5),
+      0 32px 50px rgba(0, 0, 0, 1);
   }
-
-  100% {
-    transform: scale(1);
+  75% {
+    transform: scale(1.04);
     box-shadow:
-      0 0 40px rgba(248, 113, 113, 0.9),
-      0 24px 40px rgba(0, 0, 0, 0.9);
+      0 0 55px rgba(248, 113, 113, 1),
+      0 0 100px rgba(239, 68, 68, 0.4),
+      0 28px 45px rgba(0, 0, 0, 0.95);
   }
 }
 
@@ -955,6 +1097,7 @@ html, body {
     0 12px 24px rgba(0, 0, 0, 0.9);
   color: #9ca3af;
   text-shadow: none;
+  animation: none;
 }
 
 .player-buzzer-hint {
@@ -1054,6 +1197,7 @@ html, body {
     border-color 0.15s ease,
     box-shadow 0.15s ease,
     background 0.15s ease;
+  -moz-appearance: textfield;
 }
 
 .estimate-input::placeholder {
@@ -1066,20 +1210,11 @@ html, body {
   background: rgba(15, 23, 42, 0.99);
 }
 
-/* Number-Spinner im Schätzfeld ausblenden */
-
-/* Chrome / Edge / Safari */
 .estimate-input::-webkit-inner-spin-button,
 .estimate-input::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
-
-/* Firefox */
-.estimate-input {
-  -moz-appearance: textfield;
-}
-
 
 .estimate-send-btn {
   margin-top: 12px;
@@ -1117,6 +1252,38 @@ html, body {
   font-size: 0.9rem;
   text-align: center;
   color: #e5e7eb;
+}
+
+/* ===========================
+   Player Timer – Warning/Danger
+   =========================== */
+
+.estimate-timer.is-warning,
+.jt-guess-timer.is-warning {
+  color: #f97316;
+  animation: timer-pulse 0.9s infinite;
+}
+
+.estimate-timer.is-danger,
+.jt-guess-timer.is-danger {
+  color: #ef4444;
+  animation: timer-pulse 0.55s infinite;
+}
+
+#estimateTimer {
+  font-weight: 800;
+  font-size: 1.1rem;
+  transition: color 0.25s ease, transform 0.25s ease;
+}
+
+#estimateTimer.is-warning {
+  color: #f97316;
+  animation: timer-pulse 0.9s infinite;
+}
+
+#estimateTimer.is-danger {
+  color: #ef4444;
+  animation: timer-pulse 0.55s infinite;
 }
 
 /* ===========================
@@ -1190,7 +1357,6 @@ html, body {
     padding: 6px 14px;
   }
 
-  /* Turn-Indikator Blink-Animation beim Spielerwechsel */
   .turn-indicator-flash {
     animation: turnFlash 0.7s ease-out;
   }
@@ -1247,6 +1413,21 @@ html, body {
   font-size: 1.3rem;
   font-weight: 700;
   transition: transform 0.12s ease, box-shadow 0.12s ease;
+  animation: fullscreenPulse 3s ease-in-out infinite;
+}
+
+@keyframes fullscreenPulse {
+  0%, 100% {
+    box-shadow:
+      0 0 22px rgba(99, 102, 241, 0.85),
+      0 12px 26px rgba(0, 0, 0, 0.85);
+  }
+  50% {
+    box-shadow:
+      0 0 35px rgba(129, 140, 248, 1),
+      0 0 60px rgba(99, 102, 241, 0.4),
+      0 14px 30px rgba(0, 0, 0, 0.9);
+  }
 }
 
 .fullscreen-btn:hover {
@@ -1385,141 +1566,150 @@ html, body {
 }
 
 /* ===========================
-   Schätzfragen – Reveal-Liste
+   Schätzfragen – Reveal-Liste (FIXED)
    =========================== */
 
-/* Container des Panels im Board-Overlay */
 #estimateRevealContainer {
   width: 100%;
-  margin-top: 18px;
+  margin-top: 16px;
   display: flex;
   justify-content: center;
 }
 
-/* Panel selbst – Variante B: mittig & ca. 560px breit */
 .estimate-reveal {
-  width: min(560px, 100%);
+  width: 100%;
+  max-width: 500px;
   margin: 0 auto;
-  padding: 1rem 1.25rem 0.9rem;
-  border-radius: 0.9rem;
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(148, 163, 184, 0.35);
+  padding: 20px 24px;
+  border-radius: 16px;
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
   display: flex;
   flex-direction: column;
-  gap: 0.6rem;
+  gap: 16px;
 }
 
 .estimate-reveal-title {
-  font-size: 0.95rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #e5e7eb;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  text-align: center;
+  margin: 0;
 }
 
-/* kleiner Pill-Button zum Antworten-Revealen – rechts oben im Panel */
 #btnRevealNextEstimate {
-  padding: 0.32rem 0.9rem;
+  padding: 10px 20px;
   border-radius: 999px;
   border: none;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.09em;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
   background: linear-gradient(90deg, #22c55e, #16a34a);
   color: #020617;
   box-shadow: 0 6px 18px rgba(34, 197, 94, 0.45);
-  transition:
-    transform 0.08s ease,
-    box-shadow 0.12s ease,
-    opacity 0.15s ease;
+  transition: transform 0.1s ease, box-shadow 0.15s ease;
+  width: 100%;
 }
 
 #btnRevealNextEstimate:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(34, 197, 94, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(34, 197, 94, 0.65);
 }
 
 #btnRevealNextEstimate:disabled {
   opacity: 0.6;
   cursor: default;
   transform: none;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.8);
+  background: linear-gradient(90deg, #64748b, #475569);
 }
 
-/* Liste der Antworten */
 .estimate-reveal-list {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
-  max-height: 180px;
+  gap: 8px;
+  max-height: 200px;
   overflow-y: auto;
-  margin-top: 0.25rem;
+  padding: 4px 0;
 }
 
 .estimate-reveal-item {
-  font-size: 0.95rem;
-  color: #cbd5f5;
+  font-size: 1rem;
+  color: #e5e7eb;
+  padding: 12px 16px;
+  background: rgba(30, 41, 59, 0.7);
+  border-radius: 10px;
+  border-left: 3px solid transparent;
   opacity: 0;
-  transform: translateY(4px);
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transform: translateX(-10px);
+  transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease, border-color 0.2s ease;
 }
 
 .estimate-reveal-item.visible {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateX(0);
 }
 
-/* Gewinner-Hervorhebung */
 .estimate-reveal-item.estimate-winner-row {
-  background: rgba(34, 197, 94, 0.12);
-  border-left: 3px solid #22c55e;
-  padding-left: 0.55rem;
+  background: rgba(34, 197, 94, 0.2);
+  border-left-color: #22c55e;
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
 }
 
-/* Untere Button-Reihe – zwei Buttons symmetrisch nebeneinander */
 .estimate-reveal-buttons-row {
-  margin-top: 0.6rem;
-  padding-top: 0.6rem;
-  border-top: 1px solid rgba(148, 163, 184, 0.35);
-  display: flex;
-  gap: 0.6rem;
-  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(148, 163, 184, 0.3);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 .estimate-reveal-button {
-  flex: 1;
-  padding: 0.5rem 0.75rem;
+  padding: 12px 16px;
   border-radius: 999px;
   border: none;
-  font-size: 0.9rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
   text-align: center;
+  transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
 .estimate-reveal-button.secondary {
   background: linear-gradient(90deg, #64748b, #475569);
   color: #e5e7eb;
+  box-shadow: 0 6px 18px rgba(100, 116, 139, 0.35);
+}
+
+.estimate-reveal-button.secondary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(100, 116, 139, 0.5);
 }
 
 .estimate-reveal-button.primary {
   background: linear-gradient(90deg, #22c55e, #16a34a);
   color: #020617;
+  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.45);
+}
+
+.estimate-reveal-button.primary:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(34, 197, 94, 0.6);
 }
 
 .estimate-reveal-button:disabled {
   cursor: default;
-  opacity: 0.6;
+  opacity: 0.5;
+  transform: none;
 }
 
-/* „Richtige Lösung“-Eingabefeld im Panel ausblenden (wir lesen aus Answer) */
 .estimate-reveal-label,
 .estimate-reveal-input {
   display: none !important;
@@ -1537,7 +1727,6 @@ html, body {
   pointer-events: none;
 }
 
-/* Kleine, schnelle Orbs */
 .ambient-orb {
   position: absolute;
   width: 52px;
@@ -1554,7 +1743,6 @@ html, body {
     ambientBlink 10s ease-in-out infinite;
 }
 
-/* Kleine, eckige Panels */
 .ambient-rect {
   position: absolute;
   width: 90px;
@@ -1571,205 +1759,72 @@ html, body {
     ambientBlink 12s ease-in-out infinite;
 }
 
-/* Position / individuelle Geschwindigkeiten */
+.orb-1 { top: 12%; left: 8%; animation-duration: 12s, 9s; }
+.orb-2 { top: 68%; left: 10%; animation-duration: 15s, 11s; animation-delay: -2s, -1s; }
+.orb-3 { top: 22%; right: 8%; animation-duration: 11s, 8s; animation-delay: -4s, -3s; }
+.orb-4 { top: 74%; right: 18%; animation-duration: 16s, 12s; animation-delay: -6s, -4s; }
+.orb-5 { top: 40%; left: 36%; animation-duration: 14s, 10s; animation-delay: -8s, -5s; }
+.orb-6 { top: 16%; left: 60%; animation-duration: 13s, 9s; animation-delay: -10s, -6s; }
 
-.orb-1 {
-  top: 12%;
-  left: 8%;
-  animation-duration: 12s, 9s;
-}
+.rect-1 { top: 18%; left: 18%; animation-duration: 17s, 12s; }
+.rect-2 { top: 57%; left: 55%; animation-duration: 18s, 13s; animation-delay: -3s, -2s; }
+.rect-3 { top: 34%; right: 15%; animation-duration: 16s, 11s; animation-delay: -6s, -4s; }
+.rect-4 { top: 71%; left: 42%; animation-duration: 19s, 14s; animation-delay: -9s, -6s; }
 
-.orb-2 {
-  top: 68%;
-  left: 10%;
-  animation-duration: 15s, 11s;
-  animation-delay: -2s, -1s;
-}
-
-.orb-3 {
-  top: 22%;
-  right: 8%;
-  animation-duration: 11s, 8s;
-  animation-delay: -4s, -3s;
-}
-
-.orb-4 {
-  top: 74%;
-  right: 18%;
-  animation-duration: 16s, 12s;
-  animation-delay: -6s, -4s;
-}
-
-.orb-5 {
-  top: 40%;
-  left: 36%;
-  animation-duration: 14s, 10s;
-  animation-delay: -8s, -5s;
-}
-
-.orb-6 {
-  top: 16%;
-  left: 60%;
-  animation-duration: 13s, 9s;
-  animation-delay: -10s, -6s;
-}
-
-/* Rechtecke */
-.rect-1 {
-  top: 18%;
-  left: 18%;
-  animation-duration: 17s, 12s;
-}
-
-.rect-2 {
-  top: 57%;
-  left: 55%;
-  animation-duration: 18s, 13s;
-  animation-delay: -3s, -2s;
-}
-
-.rect-3 {
-  top: 34%;
-  right: 15%;
-  animation-duration: 16s, 11s;
-  animation-delay: -6s, -4s;
-}
-
-.rect-4 {
-  top: 71%;
-  left: 42%;
-  animation-duration: 19s, 14s;
-  animation-delay: -9s, -6s;
-}
-
-/* schnellere, kleinere Bewegungen */
 @keyframes ambientDrift {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-
-  20% {
-    transform: translate3d(20px, -30px, 0) scale(1.06);
-  }
-
-  40% {
-    transform: translate3d(40px, -8px, 0) scale(0.96);
-  }
-
-  60% {
-    transform: translate3d(18px, 22px, 0) scale(1.07);
-  }
-
-  80% {
-    transform: translate3d(-24px, 6px, 0) scale(1.0);
-  }
-
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  20% { transform: translate3d(20px, -30px, 0) scale(1.06); }
+  40% { transform: translate3d(40px, -8px, 0) scale(0.96); }
+  60% { transform: translate3d(18px, 22px, 0) scale(1.07); }
+  80% { transform: translate3d(-24px, 6px, 0) scale(1.0); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
 }
 
 @keyframes ambientDriftRect {
-  0% {
-    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
-  }
-
-  25% {
-    transform: translate3d(32px, -26px, 0) scale(1.02) rotate(3deg);
-  }
-
-  50% {
-    transform: translate3d(10px, 20px, 0) scale(1.04) rotate(-2deg);
-  }
-
-  75% {
-    transform: translate3d(-28px, 4px, 0) scale(0.98) rotate(-4deg);
-  }
-
-  100% {
-    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
-  }
+  0% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
+  25% { transform: translate3d(32px, -26px, 0) scale(1.02) rotate(3deg); }
+  50% { transform: translate3d(10px, 20px, 0) scale(1.04) rotate(-2deg); }
+  75% { transform: translate3d(-28px, 4px, 0) scale(0.98) rotate(-4deg); }
+  100% { transform: translate3d(0, 0, 0) scale(1) rotate(0deg); }
 }
 
-/* kürzere Blink-Zyklen → öfter sichtbar, aber nur kurz */
 @keyframes ambientBlink {
-  0% {
-    opacity: 0;
-  }
-
-  20% {
-    opacity: 0;
-  }
-
-  30% {
-    opacity: 0.4;
-  }
-
-  45% {
-    opacity: 0.18;
-  }
-
-  55% {
-    opacity: 0.35;
-  }
-
-  70% {
-    opacity: 0.08;
-  }
-
-  100% {
-    opacity: 0;
-  }
+  0% { opacity: 0; }
+  20% { opacity: 0; }
+  30% { opacity: 0.4; }
+  45% { opacity: 0.18; }
+  55% { opacity: 0.35; }
+  70% { opacity: 0.08; }
+  100% { opacity: 0; }
 }
 
 /* ===========================
-   Page-Transitions (Baman Games, Host/Player, Board)
+   Page-Transitions
    =========================== */
 
-/* Wenn die Seite geladen wird – smoother Fade/Slide-In */
 body.page-enter .jt-page {
   animation: pageFadeSlideIn 0.38s ease-out;
 }
 
 @keyframes pageFadeSlideIn {
-  0% {
-    opacity: 0;
-    transform: translateY(18px) scale(0.98);
-  }
-
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  0% { opacity: 0; transform: translateY(18px) scale(0.98); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Wenn die Seite verlassen wird – smoother Fade/Slide-Out */
 body.page-leave .jt-page {
   animation: pageFadeSlideOut 0.26s ease-in forwards;
 }
 
 @keyframes pageFadeSlideOut {
-  0% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-
-  100% {
-    opacity: 0;
-    transform: translateY(-12px) scale(0.98);
-  }
+  0% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-12px) scale(0.98); }
 }
-
-/* ===========================
-   Page Transitions (global)
-   =========================== */
 
 :root {
   --page-enter-ms: 320ms;
   --page-exit-ms: 260ms;
 }
 
-/* Overlay, das kurz beim Wechsel drüber liegt */
 .page-transition-overlay {
   position: fixed;
   inset: 0;
@@ -1787,7 +1842,6 @@ body.page-leave .jt-page {
   transform: translateY(0);
 }
 
-/* Reinslide/Fade beim Laden der neuen Seite */
 .page-enter {
   opacity: 0;
   transform: translateY(10px);
@@ -1803,7 +1857,6 @@ body.page-leave .jt-page {
    Game UX – Fokus-Lenkung (Board)
    =========================== */
 
-/* Wenn Overlay offen ist: Board + Ambient leicht abdunkeln */
 .jt-page.is-overlay-open .board-grid {
   filter: brightness(0.78) saturate(0.9);
   transform: scale(0.995);
@@ -1816,7 +1869,6 @@ body.page-leave .jt-page {
   transition: opacity 0.18s ease, filter 0.18s ease;
 }
 
-/* Spielerleiste bekommt minimal mehr Fokus, wenn Overlay offen ist */
 .jt-page.is-overlay-open .players-bar {
   border-color: rgba(250, 204, 21, 0.35);
   box-shadow:
@@ -1825,7 +1877,6 @@ body.page-leave .jt-page {
   transition: box-shadow 0.18s ease, border-color 0.18s ease;
 }
 
-/* Wenn die Antwort eingeblendet ist: Frage leicht kleiner, Antwort „dominanter“ */
 .jt-page.is-answer-visible #questionText {
   opacity: 0.85;
   transform: translateY(-2px) scale(0.98);
@@ -1838,128 +1889,12 @@ body.page-leave .jt-page {
   transition: transform 0.16s ease, opacity 0.16s ease;
 }
 
-/* Optional: der Frage-Card selbst etwas „Fokus“ geben */
 .jt-page.is-overlay-open .question-card {
   box-shadow: 0 34px 90px rgba(0, 0, 0, 0.92);
 }
 
-/* =========================
-   Estimate Timer – Warning
-   ========================= */
-
-.estimate-board-timer {
-  font-weight: 800;
-  font-size: 1.2rem;
-  transition: color 0.25s ease, transform 0.25s ease;
-}
-
-/* Letzte 5 Sekunden */
-.estimate-board-timer.is-warning {
-  color: #f97316;
-  /* orange */
-  animation: timer-pulse 0.9s infinite;
-}
-
-/* Letzte 3 Sekunden */
-.estimate-board-timer.is-danger {
-  color: #ef4444;
-  /* rot */
-  animation: timer-pulse 0.55s infinite;
-}
-
-@keyframes timer-pulse {
-  0% {
-    transform: scale(1);
-    opacity: 1;
-  }
-
-  50% {
-    transform: scale(1.08);
-    opacity: 0.85;
-  }
-
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* =========================
-   Player Timer – Warning/Danger
-   ========================= */
-
-.estimate-timer.is-warning,
-.jt-guess-timer.is-warning {
-  color: #f97316;
-  /* orange */
-  animation: timer-pulse 0.9s infinite;
-}
-
-.estimate-timer.is-danger,
-.jt-guess-timer.is-danger {
-  color: #ef4444;
-  /* rot */
-  animation: timer-pulse 0.55s infinite;
-}
-
-/* =========================
-   Estimate Timer – PLAYER
-   ========================= */
-
-/* Basis */
-#estimateTimer {
-  font-weight: 800;
-  font-size: 1.1rem;
-  transition: color 0.25s ease, transform 0.25s ease;
-}
-
-/* Letzte 5 Sekunden – ORANGE + Puls */
-#estimateTimer.is-warning {
-  color: #f97316;
-  animation: timer-pulse 0.9s infinite;
-}
-
-/* Letzte 3 Sekunden – ROT + stärkeres Pulsieren */
-#estimateTimer.is-danger {
-  color: #ef4444;
-  animation: timer-pulse 0.55s infinite;
-}
-
-/* =========================
-   Points Pop Animation (Overlay)
-   ========================= */
-
-/* Der innere Span wird animiert, nicht das Punkte-Container-Div */
-.question-points .points-inner {
-  display: inline-block;
-  transform-origin: center;
-  will-change: transform, opacity;
-}
-
-/* Wenn JS die Klasse "pop-in" setzt, läuft die Animation */
-.question-points .points-inner.pop-in {
-  animation: pointsPopIn 240ms ease-out;
-}
-
-@keyframes pointsPopIn {
-  0% {
-    transform: scale(0.92);
-    opacity: 0.25;
-  }
-
-  60% {
-    transform: scale(1.06);
-    opacity: 1;
-  }
-
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
 /* ===========================
-   Host Passwort Modal (custom)
+   Host Passwort Modal
    =========================== */
 
 .jt-modal.hidden {
@@ -1991,15 +1926,8 @@ body.page-leave .jt-page {
 }
 
 @keyframes jtModalIn {
-  0% {
-    transform: translateY(14px) scale(0.985);
-    opacity: 0;
-  }
-
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
+  0% { transform: translateY(14px) scale(0.985); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .jt-modal-title {
@@ -2067,7 +1995,7 @@ body.page-leave .jt-page {
 }
 
 /* ===========================
-   Round Switch Overlay (Board 1 -> Board 2)
+   Round Switch Overlay
    =========================== */
 
 .round-switch-overlay.hidden {
@@ -2107,15 +2035,8 @@ body.page-leave .jt-page {
 }
 
 @keyframes roundSwitchPop {
-  0% {
-    transform: translateY(16px) scale(0.985);
-    opacity: 0;
-  }
-
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
+  0% { transform: translateY(16px) scale(0.985); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .round-switch-title {
@@ -2196,10 +2117,9 @@ body.page-leave .jt-page {
   background: radial-gradient(circle at top, #020617, #000);
   border: 1px solid rgba(148, 163, 184, 0.55);
   box-shadow: 0 40px 120px rgba(0, 0, 0, 0.95);
-
   display: flex;
   flex-direction: column;
-  align-items: center; /* ✅ sorgt dafür, dass Kinder mittig ausgerichtet sind */
+  align-items: center;
 }
 
 .final-title {
@@ -2210,7 +2130,6 @@ body.page-leave .jt-page {
   margin-bottom: 26px;
 }
 
-/* Podium Layout */
 .podium {
   display: flex;
   align-items: flex-end;
@@ -2228,14 +2147,8 @@ body.page-leave .jt-page {
 }
 
 @keyframes podiumPop {
-  0% {
-    transform: translateY(20px) scale(0.95);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
+  0% { transform: translateY(20px) scale(0.95); opacity: 0; }
+  100% { transform: translateY(0) scale(1); opacity: 1; }
 }
 
 .podium-rank {
@@ -2253,27 +2166,43 @@ body.page-leave .jt-page {
   opacity: 0.85;
 }
 
-/* Farben */
 .podium-slot.first {
   background: linear-gradient(135deg, #facc15, #eab308);
   color: #422006;
   box-shadow: 0 0 40px rgba(250, 204, 21, 0.85);
   transform: scale(1.08);
+  animation: podiumFirst 1.5s ease-in-out infinite;
+}
+
+@keyframes podiumFirst {
+  0%, 100% { transform: scale(1.08); box-shadow: 0 0 40px rgba(250, 204, 21, 0.85); }
+  50% { transform: scale(1.12); box-shadow: 0 0 60px rgba(250, 204, 21, 1), 0 0 100px rgba(250, 204, 21, 0.5); }
 }
 
 .podium-slot.second {
   background: linear-gradient(135deg, #cbd5e1, #94a3b8);
   color: #020617;
   box-shadow: 0 0 26px rgba(203, 213, 225, 0.7);
+  animation: podiumSecond 2s ease-in-out infinite;
+}
+
+@keyframes podiumSecond {
+  0%, 100% { box-shadow: 0 0 26px rgba(203, 213, 225, 0.7); }
+  50% { box-shadow: 0 0 40px rgba(203, 213, 225, 1), 0 0 70px rgba(203, 213, 225, 0.4); }
 }
 
 .podium-slot.third {
   background: linear-gradient(135deg, #fb923c, #c2410c);
   color: #431407;
   box-shadow: 0 0 26px rgba(251, 146, 60, 0.75);
+  animation: podiumThird 2.5s ease-in-out infinite;
 }
 
-/* Finale: Layout für nur 2 Spieler */
+@keyframes podiumThird {
+  0%, 100% { box-shadow: 0 0 26px rgba(251, 146, 60, 0.75); }
+  50% { box-shadow: 0 0 40px rgba(251, 146, 60, 1), 0 0 70px rgba(251, 146, 60, 0.4); }
+}
+
 .podium.podium-two {
   gap: 28px;
 }
@@ -2286,28 +2215,23 @@ body.page-leave .jt-page {
   transform: translateY(10px);
 }
 
-/* ✅ Zurück-zum-Menü Button (unten mittig) */
 .final-menu-btn {
   margin-top: 22px;
   width: min(560px, 92vw);
   height: 52px;
-
   display: block;
   border: none;
   border-radius: 999px;
-
   font-size: 0.95rem;
   font-weight: 900;
   letter-spacing: 0.10em;
   text-transform: uppercase;
   cursor: pointer;
-
   color: #eef2ff;
   background: linear-gradient(90deg, #4f46e5, #3b82f6);
   box-shadow:
     0 12px 30px rgba(59, 130, 246, 0.35),
     0 18px 34px rgba(15, 23, 42, 0.75);
-
   transition: transform 120ms ease, box-shadow 160ms ease, filter 160ms ease;
 }
 
@@ -2325,6 +2249,7 @@ body.page-leave .jt-page {
     0 10px 26px rgba(59, 130, 246, 0.35),
     0 14px 28px rgba(15, 23, 42, 0.8);
 }
+
 /* ===========================
    COMING SOON – SHAKE FEEDBACK
    =========================== */
@@ -2341,6 +2266,7 @@ body.page-leave .jt-page {
 .game-tile.shake {
   animation: tileShake 360ms ease;
 }
+
 /* ===========================
    Bildfragen (Wer/Was) + Blur + Lightbox
    =========================== */
@@ -2366,6 +2292,14 @@ body.page-leave .jt-page {
   user-select: none;
   display: block;
   margin: 0 auto;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.q-image:hover {
+  transform: scale(1.02);
+  box-shadow:
+    0 0 30px rgba(59, 130, 246, 0.5),
+    0 25px 55px rgba(0, 0, 0, 0.7);
 }
 
 .q-hint {
@@ -2374,13 +2308,11 @@ body.page-leave .jt-page {
   text-align: center;
 }
 
-/* ✅ Blur-State (wenn jemand gebuzzert hat) */
 .jt-page.is-buzz-locked .q-image {
   filter: blur(14px) brightness(0.85);
   transform: scale(1.01);
 }
 
-/* ✅ Lightbox */
 .lightbox {
   position: fixed;
   inset: 0;
@@ -2414,9 +2346,6 @@ body.page-leave .jt-page {
   line-height: 1;
   cursor: pointer;
 }
-/* ===========================
-   BUZZ-LOCK (Bild blur wenn jemand buzzert)
-   =========================== */
 
 body.is-buzz-locked #qImage {
   filter: blur(18px) !important;
@@ -2428,28 +2357,15 @@ body.is-buzz-locked #qMedia .q-hint {
   transition: opacity 160ms ease;
 }
 
-/* Optional: Klick/Zoom deaktivieren während gelockt */
 body.is-buzz-locked #qMedia {
   pointer-events: none;
 }
 
 /* ===========================
-   LEBENDIGE ANIMATIONEN & EFFEKTE
+   LEBENDIGE ANIMATIONEN
    =========================== */
 
-/* ===== Board Cells - Pulsierender Glow ===== */
-.board-cell {
-  position: relative;
-  overflow: hidden;
-  transition:
-    transform 0.15s ease,
-    box-shadow 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
-  border: 2px solid transparent;
-}
-
-/* Schimmernder Effekt der durchläuft */
+/* Board Cells - Schimmernder Effekt */
 .board-cell::before {
   content: "";
   position: absolute;
@@ -2469,30 +2385,18 @@ body.is-buzz-locked #qMedia {
 }
 
 @keyframes cellShimmer {
-  0% {
-    transform: rotate(45deg) translateX(-100%);
-  }
-  50%, 100% {
-    transform: rotate(45deg) translateX(100%);
-  }
+  0% { transform: rotate(45deg) translateX(-100%); }
+  50%, 100% { transform: rotate(45deg) translateX(100%); }
 }
 
-/* Verschiedene Delays für jede Zelle */
 .board-cell:nth-child(1)::before { animation-delay: 0s; }
 .board-cell:nth-child(2)::before { animation-delay: 0.3s; }
 .board-cell:nth-child(3)::before { animation-delay: 0.6s; }
 .board-cell:nth-child(4)::before { animation-delay: 0.9s; }
 .board-cell:nth-child(5)::before { animation-delay: 1.2s; }
 
-/* Hover: Roter Glow + Rand-Animation */
+/* Hover Animation für Cells */
 .board-cell:hover:not(:disabled) {
-  transform: translateY(-4px) scale(1.03);
-  background: linear-gradient(135deg, #ef4444, #b91c1c);
-  border-color: rgba(248, 113, 113, 0.9);
-  box-shadow:
-    0 0 25px rgba(239, 68, 68, 0.7),
-    0 0 50px rgba(239, 68, 68, 0.4),
-    0 15px 35px rgba(0, 0, 0, 0.8);
   animation: cellPulseHover 0.8s ease-in-out infinite;
 }
 
@@ -2511,11 +2415,9 @@ body.is-buzz-locked #qMedia {
   }
 }
 
-/* ===== Kategorie-Header - Subtiler Glow-Puls ===== */
+/* Kategorie Glow */
 .board-category {
-  position: relative;
   animation: categoryGlow 3s ease-in-out infinite;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 @keyframes categoryGlow {
@@ -2540,54 +2442,7 @@ body.is-buzz-locked #qMedia {
     0 14px 30px rgba(15, 23, 42, 0.95);
 }
 
-/* ===== Question Card - Animierter Rand ===== */
-.question-card {
-  position: relative;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
-}
-
-/* Animierter Gradient-Rand */
-.question-card::before {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border-radius: 22px;
-  background: linear-gradient(
-    90deg,
-    #3b82f6,
-    #8b5cf6,
-    #ec4899,
-    #f97316,
-    #3b82f6
-  );
-  background-size: 300% 100%;
-  animation: borderGradient 4s linear infinite;
-  z-index: -1;
-  opacity: 0.7;
-}
-
-@keyframes borderGradient {
-  0% {
-    background-position: 0% 50%;
-  }
-  100% {
-    background-position: 300% 50%;
-  }
-}
-
-/* Innerer Hintergrund über dem Gradient */
-.question-card::after {
-  content: "";
-  position: absolute;
-  inset: 2px;
-  border-radius: 18px;
-  background: radial-gradient(circle at top, #020617, #020617 40%, #000 100%);
-  z-index: -1;
-}
-
-/* ===== Buzzer Button - Heartbeat Animation ===== */
+/* Buzzer Button Heartbeat */
 .board-buzz-btn {
   animation: buzzerHeartbeat 2s ease-in-out infinite;
 }
@@ -2619,80 +2474,7 @@ body.is-buzz-locked #qMedia {
   }
 }
 
-/* ===== Player Buzzer - Intensiverer Puls ===== */
-.player-buzzer:not(:disabled) {
-  animation: playerBuzzerPulse 1.8s ease-in-out infinite;
-}
-
-@keyframes playerBuzzerPulse {
-  0%, 100% {
-    transform: scale(1);
-    box-shadow:
-      0 0 40px rgba(248, 113, 113, 0.9),
-      0 24px 40px rgba(0, 0, 0, 0.9);
-  }
-  25% {
-    transform: scale(1.04);
-    box-shadow:
-      0 0 55px rgba(248, 113, 113, 1),
-      0 0 100px rgba(239, 68, 68, 0.4),
-      0 28px 45px rgba(0, 0, 0, 0.95);
-  }
-  50% {
-    transform: scale(1.08);
-    box-shadow:
-      0 0 70px rgba(248, 113, 113, 1),
-      0 0 120px rgba(239, 68, 68, 0.5),
-      0 32px 50px rgba(0, 0, 0, 1);
-  }
-  75% {
-    transform: scale(1.04);
-    box-shadow:
-      0 0 55px rgba(248, 113, 113, 1),
-      0 0 100px rgba(239, 68, 68, 0.4),
-      0 28px 45px rgba(0, 0, 0, 0.95);
-  }
-}
-
-/* ===== Spieler-Pills - Floating Animation ===== */
-.player-pill {
-  animation: pillFloat 3s ease-in-out infinite;
-}
-
-.player-pill:nth-child(odd) {
-  animation-delay: 0s;
-}
-
-.player-pill:nth-child(even) {
-  animation-delay: 1.5s;
-}
-
-@keyframes pillFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-3px);
-  }
-}
-
-/* Aktiver Spieler - Stärkerer Glow */
-.player-pill-active {
-  animation: activePillGlow 1s ease-in-out infinite;
-}
-
-@keyframes activePillGlow {
-  0%, 100% {
-    box-shadow: 0 0 26px rgba(34, 197, 94, 0.9);
-  }
-  50% {
-    box-shadow:
-      0 0 40px rgba(34, 197, 94, 1),
-      0 0 80px rgba(34, 197, 94, 0.5);
-  }
-}
-
-/* ===== Turn Indicator - Attention Animation ===== */
+/* Turn Indicator Pulse */
 .turn-indicator {
   animation: turnPulse 2s ease-in-out infinite;
 }
@@ -2710,7 +2492,7 @@ body.is-buzz-locked #qMedia {
   }
 }
 
-/* ===== Logo - Verstärkter Float + Glow ===== */
+/* Logo Float */
 .jt-logo {
   animation: logoFloat 2.5s ease-in-out infinite;
 }
@@ -2727,138 +2509,26 @@ body.is-buzz-locked #qMedia {
   }
 }
 
-/* ===== Buttons - Glow on Hover ===== */
-.btn, .jt-modal-btn, .round-switch-btn, .estimate-send-btn {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-
-.btn::before, .jt-modal-btn::before, .round-switch-btn::before {
+/* Background Particles */
+.jt-page::before {
   content: "";
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.2) 0%,
-    transparent 60%
-  );
-  transform: scale(0);
-  transition: transform 0.4s ease;
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.05) 0%, transparent 50%);
+  animation: bgParticles 10s ease-in-out infinite alternate;
   pointer-events: none;
+  z-index: 0;
 }
 
-.btn:hover::before, .jt-modal-btn:hover::before, .round-switch-btn:hover::before {
-  transform: scale(1);
+@keyframes bgParticles {
+  0% { background-position: 0% 0%, 100% 100%, 50% 50%; opacity: 0.6; }
+  100% { background-position: 100% 100%, 0% 0%, 50% 50%; opacity: 1; }
 }
 
-/* ===== Points Animation - Bounce In ===== */
-.question-points .points-inner.pop-in {
-  animation: pointsBounce 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-}
-
-@keyframes pointsBounce {
-  0% {
-    transform: scale(0.5);
-    opacity: 0;
-  }
-  60% {
-    transform: scale(1.15);
-    opacity: 1;
-  }
-  80% {
-    transform: scale(0.95);
-  }
-  100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-}
-
-/* ===== Answer Text - Fade In Animation ===== */
-.answer-text:not(.hidden) {
-  animation: answerReveal 0.4s ease-out;
-}
-
-@keyframes answerReveal {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  100% {
-    opacity: 0.9;
-    transform: translateY(0);
-  }
-}
-
-/* ===== Question Overlay - Backdrop Animation ===== */
-.question-overlay {
-  animation: overlayFadeIn 0.3s ease-out;
-}
-
-@keyframes overlayFadeIn {
-  0% {
-    opacity: 0;
-    backdrop-filter: blur(0px);
-  }
-  100% {
-    opacity: 1;
-    backdrop-filter: blur(12px);
-  }
-}
-
-/* ===== Fullscreen Button - Subtle Pulse ===== */
-.fullscreen-btn {
-  animation: fullscreenPulse 3s ease-in-out infinite;
-}
-
-@keyframes fullscreenPulse {
-  0%, 100% {
-    box-shadow:
-      0 0 22px rgba(99, 102, 241, 0.85),
-      0 12px 26px rgba(0, 0, 0, 0.85);
-  }
-  50% {
-    box-shadow:
-      0 0 35px rgba(129, 140, 248, 1),
-      0 0 60px rgba(99, 102, 241, 0.4),
-      0 14px 30px rgba(0, 0, 0, 0.9);
-  }
-}
-
-/* ===== Image Question - Hover Zoom ===== */
-.q-image {
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-
-.q-image:hover {
-  transform: scale(1.02);
-  box-shadow:
-    0 0 30px rgba(59, 130, 246, 0.5),
-    0 25px 55px rgba(0, 0, 0, 0.7);
-}
-
-/* ===== Estimate Timer - Urgent Animation ===== */
-.estimate-board-timer.is-danger {
-  animation: timerUrgent 0.4s ease-in-out infinite;
-}
-
-@keyframes timerUrgent {
-  0%, 100% {
-    transform: scale(1);
-    color: #ef4444;
-  }
-  50% {
-    transform: scale(1.12);
-    color: #fca5a5;
-    text-shadow: 0 0 20px rgba(239, 68, 68, 0.8);
-  }
-}
-
-/* ===== Game Tiles (Index Page) - Hover Effects ===== */
+/* Game Tiles Hover */
 .game-tile:not(.disabled) {
   position: relative;
   overflow: hidden;
@@ -2892,310 +2562,3 @@ body.is-buzz-locked #qMedia {
     0 0 40px rgba(59, 130, 246, 1),
     0 25px 50px rgba(0, 0, 0, 1);
 }
-
-/* ===== Particles Background Effect ===== */
-.jt-page::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  background-image:
-    radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
-    radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.05) 0%, transparent 50%);
-  animation: bgParticles 10s ease-in-out infinite alternate;
-  pointer-events: none;
-  z-index: 0;
-}
-
-@keyframes bgParticles {
-  0% {
-    background-position: 0% 0%, 100% 100%, 50% 50%;
-    opacity: 0.6;
-  }
-  100% {
-    background-position: 100% 100%, 0% 0%, 50% 50%;
-    opacity: 1;
-  }
-}
-
-/* ===== Podium Slots - Celebration Animation ===== */
-.podium-slot.first {
-  animation: podiumFirst 1.5s ease-in-out infinite;
-}
-
-@keyframes podiumFirst {
-  0%, 100% {
-    transform: scale(1.08);
-    box-shadow: 0 0 40px rgba(250, 204, 21, 0.85);
-  }
-  50% {
-    transform: scale(1.12);
-    box-shadow:
-      0 0 60px rgba(250, 204, 21, 1),
-      0 0 100px rgba(250, 204, 21, 0.5);
-  }
-}
-
-.podium-slot.second {
-  animation: podiumSecond 2s ease-in-out infinite;
-}
-
-@keyframes podiumSecond {
-  0%, 100% {
-    box-shadow: 0 0 26px rgba(203, 213, 225, 0.7);
-  }
-  50% {
-    box-shadow:
-      0 0 40px rgba(203, 213, 225, 1),
-      0 0 70px rgba(203, 213, 225, 0.4);
-  }
-}
-
-.podium-slot.third {
-  animation: podiumThird 2.5s ease-in-out infinite;
-}
-
-@keyframes podiumThird {
-  0%, 100% {
-    box-shadow: 0 0 26px rgba(251, 146, 60, 0.75);
-  }
-  50% {
-    box-shadow:
-      0 0 40px rgba(251, 146, 60, 1),
-      0 0 70px rgba(251, 146, 60, 0.4);
-  }
-}
-
-/* ===========================
-   SCHÄTZFRAGEN - LAYOUT FIX
-   =========================== */
-
-/* Schätzfrage Buttons - Zentriert und symmetrisch */
-.question-actions {
-  margin-top: 18px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
-
-/* Wenn nur 2 Buttons (Schätzfrage ohne Buzz) */
-.question-actions #showAnswerBtn,
-.question-actions #closeQuestionBtn {
-  min-width: 220px;
-  height: 46px;
-}
-
-/* Schätzantworten Panel - Komplett neu gestylt */
-#estimateRevealContainer {
-  width: 100%;
-  margin-top: 18px;
-  display: flex;
-  justify-content: center;
-}
-
-.estimate-reveal {
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 18px 22px;
-  border-radius: 16px;
-  background: rgba(15, 23, 42, 0.95);
-  border: 1px solid rgba(148, 163, 184, 0.4);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5);
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.estimate-reveal-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: #e5e7eb;
-  text-align: center;
-  padding-bottom: 10px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-}
-
-/* Reveal Button im Titel - Zentriert */
-#btnRevealNextEstimate {
-  padding: 8px 18px;
-  border-radius: 999px;
-  border: none;
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  background: linear-gradient(90deg, #22c55e, #16a34a);
-  color: #020617;
-  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.45);
-  transition: transform 0.1s ease, box-shadow 0.15s ease;
-  width: 100%;
-  max-width: 280px;
-}
-
-#btnRevealNextEstimate:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 28px rgba(34, 197, 94, 0.65);
-}
-
-#btnRevealNextEstimate:disabled {
-  opacity: 0.6;
-  cursor: default;
-  transform: none;
-  background: linear-gradient(90deg, #64748b, #475569);
-}
-
-/* Antworten Liste */
-.estimate-reveal-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 200px;
-  overflow-y: auto;
-  padding: 8px 0;
-}
-
-.estimate-reveal-item {
-  font-size: 1rem;
-  color: #e5e7eb;
-  padding: 10px 14px;
-  background: rgba(30, 41, 59, 0.7);
-  border-radius: 10px;
-  border-left: 3px solid transparent;
-  opacity: 0;
-  transform: translateX(-10px);
-  transition: opacity 0.25s ease, transform 0.25s ease, background 0.2s ease, border-color 0.2s ease;
-}
-
-.estimate-reveal-item.visible {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-/* Gewinner Highlight */
-.estimate-reveal-item.estimate-winner-row {
-  background: rgba(34, 197, 94, 0.2);
-  border-left-color: #22c55e;
-  box-shadow: 0 0 15px rgba(34, 197, 94, 0.3);
-}
-
-/* Untere Button-Reihe */
-.estimate-reveal-buttons-row {
-  margin-top: 8px;
-  padding-top: 14px;
-  border-top: 1px solid rgba(148, 163, 184, 0.3);
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-
-.estimate-reveal-button {
-  padding: 12px 16px;
-  border-radius: 999px;
-  border: none;
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  cursor: pointer;
-  text-align: center;
-  transition: transform 0.1s ease, box-shadow 0.15s ease, opacity 0.15s ease;
-}
-
-.estimate-reveal-button.secondary {
-  background: linear-gradient(90deg, #64748b, #475569);
-  color: #e5e7eb;
-  box-shadow: 0 6px 18px rgba(100, 116, 139, 0.35);
-}
-
-.estimate-reveal-button.secondary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(100, 116, 139, 0.5);
-}
-
-.estimate-reveal-button.primary {
-  background: linear-gradient(90deg, #22c55e, #16a34a);
-  color: #020617;
-  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.45);
-}
-
-.estimate-reveal-button.primary:hover:not(:disabled) {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(34, 197, 94, 0.6);
-}
-
-.estimate-reveal-button:disabled {
-  cursor: default;
-  opacity: 0.5;
-  transform: none;
-}
-
-/* ===========================
-   SCHÄTZFRAGE CARD - NEUES LAYOUT
-   =========================== */
-
-/* Wenn Schätzfrage offen: Spezielle Struktur */
-.question-card:has(#estimateRevealContainer:not(.hidden)) .question-actions {
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-/* Antwort anzeigen Button bei Schätzfragen - Links vom Panel */
-.question-card:has(#estimateRevealContainer:not(.hidden)) #showAnswerBtn {
-  position: relative;
-  order: -1;
-}
-
-/* Frage schliessen immer unten zentriert */
-#closeQuestionBtn {
-  width: 100%;
-  max-width: 280px;
-}
-
-/* ===========================
-   SCHÄTZFRAGE - KOMPLETT LAYOUT
-   =========================== */
-
-/* Container für Antwort + Reveal Panel nebeneinander */
-.estimate-layout {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  width: 100%;
-}
-
-/* Antwort Text bei Schätzfragen */
-.question-card .answer-text {
-  text-align: center;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: #a5b4fc;
-}
-
-/* Wenn Reveal Container sichtbar - besseres Layout */
-#estimateRevealContainer:not(.hidden) {
-  margin-top: 10px;
-}
-
-#estimateRevealContainer:not(.hidden) ~ .question-actions {
-  margin-top: 14px;
-}
-
-/* Verstecke Richtig/Falsch bei Schätzfragen komplett */
-#estimateRevealContainer:not(.hidden) ~ .question-actions #correctBtn,
-#estimateRevealContainer:not(.hidden) ~ .question-actions #wrongBtn {
-  display: none !important;
-}
-
-
