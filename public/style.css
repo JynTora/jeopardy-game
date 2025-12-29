@@ -2627,3 +2627,24 @@ body.is-buzz-locked #qMedia {
       0 0 40px rgba(59, 130, 246, 0.2);
   }
 }
+/* FORCE BUTTON LAYOUT - Ganz am Ende einfügen */
+.question-actions {
+  display: grid !important;
+  grid-template-columns: repeat(3, auto) !important;
+  grid-template-rows: auto auto !important;
+  gap: 10px !important;
+  justify-content: center !important;
+  justify-items: center !important;
+}
+
+#showAnswerBtn { grid-column: 1; grid-row: 1; }
+#correctBtn { grid-column: 2; grid-row: 1; }
+#wrongBtn { grid-column: 3; grid-row: 1; }
+
+#closeQuestionBtn {
+  grid-column: 1 / -1 !important;
+  grid-row: 2 !important;
+  justify-self: center !important;
+  width: 160px !important;
+  margin: 0 !important;
+}
