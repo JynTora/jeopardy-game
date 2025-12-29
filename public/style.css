@@ -2677,3 +2677,13 @@ body.is-buzz-locked #qMedia {
   margin-top: auto !important;
   padding-top: 16px !important;
 }
+/* FRAGE WIRKLICH ZENTRIEREN - FINAL */
+.question-card {
+  min-height: 380px !important;
+  padding-top: 50px !important;
+  padding-bottom: 28px !important;
+}
+
+.question-actions {
+  margin-top: 40px !important;
+}
