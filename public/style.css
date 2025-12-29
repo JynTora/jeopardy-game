@@ -2911,3 +2911,371 @@ body.is-buzz-locked #qMedia {
 .question-card.is-estimate-question #wrongBtn {
   display: none !important;
 }
+/* ===========================
+   QUESTION CARD - KLEINERE BUTTONS + ANIMATIONEN
+   
+   Füge diesen Code am ENDE deiner style.css ein.
+   =========================== */
+
+/* ===========================
+   NORMALE FRAGEN - Kleinere, dezentere Buttons
+   =========================== */
+
+/* Basis-Buttons kleiner machen */
+.question-actions {
+  margin-top: 14px !important;
+  gap: 10px !important;
+}
+
+/* ANTWORT Button - klein und dezent */
+#showAnswerBtn {
+  min-width: 100px !important;
+  height: 36px !important;
+  padding: 0 16px !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(148, 163, 184, 0.5) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+#showAnswerBtn:hover {
+  background: rgba(30, 41, 59, 0.95) !important;
+  border-color: rgba(148, 163, 184, 0.8) !important;
+  box-shadow: 0 6px 18px rgba(59, 130, 246, 0.3) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* RICHTIG Button - klein */
+#correctBtn {
+  min-width: 90px !important;
+  height: 36px !important;
+  padding: 0 14px !important;
+  font-size: 0.75rem !important;
+  background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35) !important;
+}
+
+#correctBtn:hover {
+  box-shadow: 0 6px 18px rgba(34, 197, 94, 0.5) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* FALSCH Button - klein */
+#wrongBtn {
+  min-width: 90px !important;
+  height: 36px !important;
+  padding: 0 14px !important;
+  font-size: 0.75rem !important;
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35) !important;
+}
+
+#wrongBtn:hover {
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.5) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* FRAGE SCHLIESSEN - klein und dezent */
+#closeQuestionBtn {
+  min-width: 130px !important;
+  max-width: 160px !important;
+  height: 36px !important;
+  padding: 0 16px !important;
+  font-size: 0.75rem !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.04em !important;
+  background: rgba(15, 23, 42, 0.8) !important;
+  border: 1px solid rgba(248, 113, 113, 0.4) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+#closeQuestionBtn:hover {
+  background: rgba(127, 29, 29, 0.6) !important;
+  border-color: rgba(248, 113, 113, 0.7) !important;
+  box-shadow: 0 6px 18px rgba(239, 68, 68, 0.4) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* ===========================
+   SCHÄTZFRAGEN - Buttons bleiben größer
+   =========================== */
+
+.question-card.is-estimate-question #showAnswerBtn {
+  min-width: 160px !important;
+  height: 42px !important;
+  font-size: 0.8rem !important;
+}
+
+.question-card.is-estimate-question #closeQuestionBtn {
+  min-width: 160px !important;
+  max-width: none !important;
+  height: 42px !important;
+  font-size: 0.8rem !important;
+}
+
+/* ===========================
+   QUESTION CARD - PROFESSIONELLE ANIMATIONEN
+   =========================== */
+
+/* Animierter Gradient-Rand - sanfter und eleganter */
+.question-card::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: -2px !important;
+  border-radius: 22px !important;
+  background: linear-gradient(
+    90deg,
+    rgba(59, 130, 246, 0.6),
+    rgba(139, 92, 246, 0.6),
+    rgba(236, 72, 153, 0.5),
+    rgba(249, 115, 22, 0.5),
+    rgba(59, 130, 246, 0.6)
+  ) !important;
+  background-size: 400% 100% !important;
+  animation: cardBorderFlow 8s linear infinite !important;
+  z-index: -1 !important;
+  opacity: 0.8 !important;
+  filter: blur(1px) !important;
+}
+
+@keyframes cardBorderFlow {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 400% 50%; }
+}
+
+/* Subtiler Glow-Pulse auf der Karte */
+.question-card {
+  animation: cardGlowPulse 4s ease-in-out infinite !important;
+}
+
+@keyframes cardGlowPulse {
+  0%, 100% {
+    box-shadow: 
+      0 30px 80px rgba(0, 0, 0, 0.9),
+      0 0 40px rgba(59, 130, 246, 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 35px 90px rgba(0, 0, 0, 0.95),
+      0 0 60px rgba(139, 92, 246, 0.15),
+      0 0 100px rgba(59, 130, 246, 0.08);
+  }
+}
+
+/* Punkte-Anzeige - subtiles Glühen */
+.question-points {
+  animation: pointsGlow 3s ease-in-out infinite !important;
+}
+
+@keyframes pointsGlow {
+  0%, 100% {
+    text-shadow: 0 0 16px rgba(248, 153, 64, 0.9);
+    transform: scale(1);
+  }
+  50% {
+    text-shadow: 
+      0 0 20px rgba(248, 153, 64, 1),
+      0 0 40px rgba(248, 153, 64, 0.5);
+    transform: scale(1.02);
+  }
+}
+
+/* Frage-Text - sanftes Einblenden beim Öffnen */
+.question-text {
+  animation: questionFadeIn 0.5s ease-out !important;
+}
+
+@keyframes questionFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Schimmernder Effekt über der Karte */
+.question-card::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -100% !important;
+  width: 50% !important;
+  height: 100% !important;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.03),
+    transparent
+  ) !important;
+  animation: cardShimmer 6s ease-in-out infinite !important;
+  z-index: 1 !important;
+  pointer-events: none !important;
+  border-radius: 20px !important;
+}
+
+@keyframes cardShimmer {
+  0% { left: -100%; }
+  50%, 100% { left: 150%; }
+}
+
+/* Floating Particles im Hintergrund der Karte */
+.question-overlay::before {
+  content: "" !important;
+  position: absolute !important;
+  inset: 0 !important;
+  background-image: 
+    radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.05) 0%, transparent 40%) !important;
+  animation: overlayParticles 15s ease-in-out infinite alternate !important;
+  pointer-events: none !important;
+  z-index: 0 !important;
+}
+
+@keyframes overlayParticles {
+  0% {
+    background-position: 0% 0%, 100% 100%, 50% 50%;
+    opacity: 0.5;
+  }
+  50% {
+    background-position: 50% 30%, 50% 70%, 30% 60%;
+    opacity: 0.8;
+  }
+  100% {
+    background-position: 100% 100%, 0% 0%, 70% 40%;
+    opacity: 0.6;
+  }
+}
+
+/* Buttons - subtile Hover-Animation */
+.question-actions button {
+  transition: all 0.2s ease !important;
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+.question-actions button::before {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: -100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.1),
+    transparent
+  ) !important;
+  transition: left 0.4s ease !important;
+}
+
+.question-actions button:hover::before {
+  left: 100% !important;
+}
+
+/* Antwort-Text - elegantes Reveal */
+.answer-text:not(.hidden) {
+  animation: answerRevealPro 0.6s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes answerRevealPro {
+  0% {
+    opacity: 0;
+    transform: translateY(15px) scale(0.98);
+    filter: blur(4px);
+  }
+  100% {
+    opacity: 0.9;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+/* Buzz-Info - pulsierende Animation wenn aktiv */
+.buzz-info:not(.hidden) {
+  animation: buzzInfoPulse 1.5s ease-in-out infinite !important;
+}
+
+@keyframes buzzInfoPulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(248, 153, 64, 0.4);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow: 0 0 20px 5px rgba(248, 153, 64, 0.2);
+    transform: scale(1.02);
+  }
+}
+
+/* Bild bei Bildfragen - sanftes Schweben */
+.q-image {
+  animation: imageFloat 4s ease-in-out infinite !important;
+}
+
+@keyframes imageFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.55);
+  }
+  50% {
+    transform: translateY(-5px) scale(1.01);
+    box-shadow: 
+      0 25px 55px rgba(0, 0, 0, 0.6),
+      0 0 30px rgba(59, 130, 246, 0.15);
+  }
+}
+
+/* Timer bei Schätzfragen - subtiles Pulsieren */
+.estimate-board-timer:not(.hidden) {
+  animation: timerPulse 2s ease-in-out infinite !important;
+}
+
+@keyframes timerPulse {
+  0%, 100% {
+    box-shadow: 0 0 18px rgba(59, 130, 246, 0.35);
+  }
+  50% {
+    box-shadow: 
+      0 0 25px rgba(59, 130, 246, 0.5),
+      0 0 40px rgba(59, 130, 246, 0.2);
+  }
+}
+
+/* Karten-Öffnung - professionelles Einblenden */
+.question-overlay {
+  animation: overlayOpen 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes overlayOpen {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(12px);
+  }
+}
+
+.question-card {
+  animation: 
+    cardGlowPulse 4s ease-in-out infinite,
+    cardOpen 0.5s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+@keyframes cardOpen {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
