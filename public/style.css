@@ -2863,50 +2863,51 @@ body.is-buzz-locked #qMedia {
   margin: 0;
 }
 /* ===========================
-   SCHÄTZFRAGEN LAYOUT - FINALER FIX
+   SCHÄTZFRAGEN - CSS GRID FIX
    
-   Füge diesen Code ganz am ENDE deiner style.css ein.
-   Er überschreibt alle vorherigen Regeln.
+   LÖSCHE alle vorherigen "SCHÄTZFRAGEN" fixes am Ende deiner style.css
+   und füge NUR diesen Code ein.
    =========================== */
 
-/* Schätzfragen: Panel oben, beide Buttons unten nebeneinander */
+/* Schätzfragen: Grid Layout statt Flexbox */
 .question-card.is-estimate-question .question-actions {
-  display: flex !important;
-  flex-wrap: wrap !important;
-  justify-content: center !important;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+  grid-template-rows: auto auto !important;
   gap: 12px !important;
+  justify-items: center !important;
 }
 
-/* Estimate Panel: Volle Breite, ganz oben */
+/* Estimate Panel: Volle Breite, erste Zeile */
 .question-card.is-estimate-question #estimateRevealContainer {
-  flex: 0 0 100% !important;
+  grid-column: 1 / -1 !important;
+  grid-row: 1 !important;
   width: 100% !important;
-  order: 1 !important;
-  margin-bottom: 12px !important;
-}
-
-/* ANTWORT Button: Links unten */
-.question-card.is-estimate-question #showAnswerBtn {
-  order: 10 !important;
-  flex: 0 0 auto !important;
-  min-width: 180px !important;
-  max-width: none !important;
-}
-
-/* FRAGE SCHLIESSEN: Rechts unten (neben ANTWORT) */
-.question-card.is-estimate-question #closeQuestionBtn {
-  order: 11 !important;
-  flex: 0 0 auto !important;
-  flex-basis: auto !important;
-  width: auto !important;
-  min-width: 180px !important;
-  max-width: none !important;
+  max-width: 100% !important;
   margin: 0 !important;
 }
 
-/* Richtig/Falsch bei Schätzfragen verstecken */
+/* ANTWORT Button: Links in zweiter Zeile */
+.question-card.is-estimate-question #showAnswerBtn {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  justify-self: end !important;
+  min-width: 180px !important;
+}
+
+/* FRAGE SCHLIESSEN: Rechts in zweiter Zeile */
+.question-card.is-estimate-question #closeQuestionBtn {
+  grid-column: 2 !important;
+  grid-row: 2 !important;
+  justify-self: start !important;
+  min-width: 180px !important;
+  margin: 0 !important;
+  flex-basis: auto !important;
+  width: auto !important;
+}
+
+/* Richtig/Falsch bei Schätzfragen komplett verstecken */
 .question-card.is-estimate-question #correctBtn,
 .question-card.is-estimate-question #wrongBtn {
   display: none !important;
 }
-
