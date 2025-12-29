@@ -2657,3 +2657,23 @@ body.is-buzz-locked #qMedia {
   line-height: 1.2 !important;
   padding: 6px 16px !important;
 }
+/* FRAGE ZENTRIEREN - Visueller Mittelpunkt */
+.question-card {
+  justify-content: center !important;
+  padding-top: 40px !important;
+  padding-bottom: 30px !important;
+}
+
+.question-points {
+  margin-bottom: 16px !important;
+}
+
+.question-text {
+  margin-bottom: 24px !important;
+  flex-grow: 0 !important;
+}
+
+.question-actions {
+  margin-top: auto !important;
+  padding-top: 16px !important;
+}
