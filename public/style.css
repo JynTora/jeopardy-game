@@ -2862,16 +2862,4 @@ body.is-buzz-locked #qMedia {
   min-width: 180px;
   margin: 0;
 }
-```
 
----
-
-## Das Ergebnis sollte so aussehen:
-```
-      ┌─────────────────────────┐
-      │   SCHÄTZANTWORTEN       │
-      │   [NÄCHSTE ANZEIGEN]    │
-      │   ...Antworten...       │
-      │   [NÄCHSTEN] [PUNKTE]   │
-      └─────────────────────────┘
-   [ANTWORT]    [FRAGE SCHLIESSEN]
