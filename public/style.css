@@ -2599,10 +2599,10 @@ body.is-buzz-locked #qMedia {
   flex: 0 0 auto;
 }
 
-/* Frage schliessen: Volle Breite der Zeile, zentriert */
+/* Frage schliessen: Eigene Zeile, zentriert */
 #closeQuestionBtn {
-  flex: 0 0 100%;
-  max-width: 220px;
+  flex-basis: 100%;
+  width: 220px;
   height: 44px;
   margin: 4px auto 0 auto;
 }
