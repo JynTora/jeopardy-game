@@ -2862,4 +2862,51 @@ body.is-buzz-locked #qMedia {
   min-width: 180px;
   margin: 0;
 }
+/* ===========================
+   SCHÄTZFRAGEN LAYOUT - FINALER FIX
+   
+   Füge diesen Code ganz am ENDE deiner style.css ein.
+   Er überschreibt alle vorherigen Regeln.
+   =========================== */
+
+/* Schätzfragen: Panel oben, beide Buttons unten nebeneinander */
+.question-card.is-estimate-question .question-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  justify-content: center !important;
+  gap: 12px !important;
+}
+
+/* Estimate Panel: Volle Breite, ganz oben */
+.question-card.is-estimate-question #estimateRevealContainer {
+  flex: 0 0 100% !important;
+  width: 100% !important;
+  order: 1 !important;
+  margin-bottom: 12px !important;
+}
+
+/* ANTWORT Button: Links unten */
+.question-card.is-estimate-question #showAnswerBtn {
+  order: 10 !important;
+  flex: 0 0 auto !important;
+  min-width: 180px !important;
+  max-width: none !important;
+}
+
+/* FRAGE SCHLIESSEN: Rechts unten (neben ANTWORT) */
+.question-card.is-estimate-question #closeQuestionBtn {
+  order: 11 !important;
+  flex: 0 0 auto !important;
+  flex-basis: auto !important;
+  width: auto !important;
+  min-width: 180px !important;
+  max-width: none !important;
+  margin: 0 !important;
+}
+
+/* Richtig/Falsch bei Schätzfragen verstecken */
+.question-card.is-estimate-question #correctBtn,
+.question-card.is-estimate-question #wrongBtn {
+  display: none !important;
+}
 
