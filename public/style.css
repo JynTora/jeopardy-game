@@ -2830,3 +2830,48 @@ body.is-buzz-locked #qMedia {
 .question-card.is-estimate-question #estimateRevealContainer {
   order: 5;
 }
+/* ===========================
+   SCHÄTZFRAGEN LAYOUT FIX
+   =========================== */
+
+/* Wenn Schätzfrage aktiv: Estimate Panel volle Breite */
+.question-card.is-estimate-question .question-actions {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* Estimate Container nimmt volle Breite */
+.question-card.is-estimate-question #estimateRevealContainer {
+  flex-basis: 100%;
+  order: 1;
+  margin-bottom: 16px;
+}
+
+/* ANTWORT Button bei Schätzfragen */
+.question-card.is-estimate-question #showAnswerBtn {
+  order: 10;
+  flex-basis: auto;
+  min-width: 180px;
+}
+
+/* FRAGE SCHLIESSEN bei Schätzfragen neben ANTWORT */
+.question-card.is-estimate-question #closeQuestionBtn {
+  order: 11;
+  flex-basis: auto;
+  width: auto;
+  min-width: 180px;
+  margin: 0;
+}
+```
+
+---
+
+## Das Ergebnis sollte so aussehen:
+```
+      ┌─────────────────────────┐
+      │   SCHÄTZANTWORTEN       │
+      │   [NÄCHSTE ANZEIGEN]    │
+      │   ...Antworten...       │
+      │   [NÄCHSTEN] [PUNKTE]   │
+      └─────────────────────────┘
+   [ANTWORT]    [FRAGE SCHLIESSEN]
