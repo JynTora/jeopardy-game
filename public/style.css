@@ -2687,3 +2687,14 @@ body.is-buzz-locked #qMedia {
 .question-actions {
   margin-top: 40px !important;
 }
+/* KATEGORIE TEXT ZENTRIEREN */
+.board-category {
+  text-align: center !important;
+  justify-content: center !important;
+  align-items: center !important;
+  padding: 8px 10px !important;
+  font-size: 0.85rem !important;
+  line-height: 1.3 !important;
+  height: auto !important;
+  min-height: 67px !important;
+}
