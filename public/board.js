@@ -4,11 +4,11 @@
 const socket = io();
 
 // ===============================
-// ROUND (KEINE Punkteverdopplung mehr)
+// ROUND / MULTIPLIER
 // ===============================
 const urlParams = new URLSearchParams(window.location.search);
 const ROUND = Math.max(1, Number(urlParams.get("round") || 1)); // 1 oder 2
-const MULT = 1; // Immer 1 - keine Verdopplung
+const MULT = ROUND >= 2 ? 2 : 1; // Runde 2 = doppelte Punkte
 
 // ===============================
 // DOM-Elemente
@@ -140,364 +140,362 @@ function flashScreen(type) {
 
 // ===============================
 // Kategorien & Fragen (Runde 1 / Runde 2)
-// Niveau: 5. Klasse / Mit Tamil Übersetzung
+// Für gebildete junge Erwachsene (~26 Jahre)
 // ===============================
 
-// Runde 1
+// Runde 1 (100-500 Punkte)
 const categoriesRound1 = [
   {
-    name: "Tiere / விலங்குகள்",
+    name: "Geographie",
     questions: [
       {
         value: 100,
-        question: "Welches Tier ist das schnellste Landtier der Welt? / உலகின் மிக வேகமான நிலவிலங்கு எது?",
-        answer: "Der Gepard / சிறுத்தை",
+        question: "Wie heisst die Hauptstadt von Kanada?",
+        answer: "Ottawa",
       },
       {
         value: 200,
-        question: "Welches Tier kann seinen Kopf fast komplett nach hinten drehen? / எந்த விலங்கால் தலையை கிட்டத்தட்ட முழுமையாக பின்னோக்கி திருப்ப முடியும்?",
-        answer: "Die Eule / ஆந்தை",
+        question: "Welches ist das kleinste Land der Welt?",
+        answer: "Vatikanstadt",
       },
       {
         value: 300,
-        question: "Welches Tier hat blaues Blut? / எந்த விலங்குக்கு நீல நிற இரத்தம் உள்ளது?",
-        answer: "Der Oktopus (Tintenfisch) / நீர்க்காகம் (ஆக்டோபஸ்)",
+        question: "In welchem Land befindet sich die Inka-Ruinenstadt Machu Picchu?",
+        answer: "Peru",
       },
       {
         value: 400,
-        question: "Welches Säugetier kann am längsten unter Wasser bleiben ohne zu atmen? / எந்த பாலூட்டி சுவாசிக்காமல் நீருக்கடியில் அதிக நேரம் இருக்க முடியும்?",
-        answer: "Der Pottwal (bis zu 90 Minuten) / திமிங்கலம் (90 நிமிடங்கள் வரை)",
+        question: "Welches Land hat die meisten Nachbarländer der Welt? (14 Stück)",
+        answer: "China (oder Russland)",
       },
       {
         value: 500,
-        question: "Welches Tier hat drei Herzen? / எந்த விலங்குக்கு மூன்று இதயங்கள் உள்ளன?",
-        answer: "Der Oktopus (Tintenfisch) / நீர்க்காகம் (ஆக்டோபஸ்)",
+        question: "Wie heisst die Meerenge zwischen Europa und Asien bei Istanbul?",
+        answer: "Bosporus",
       },
     ],
   },
   {
-    name: "Tamil Feste / தமிழ் திருவிழாக்கள்",
+    name: "Filme & Serien",
     questions: [
       {
         value: 100,
-        question: "Welches Fest feiern Tamilen im Januar mit süssem Reis? / தமிழர்கள் ஜனவரியில் இனிப்பு சாதத்துடன் எந்த பண்டிகையை கொண்டாடுகிறார்கள்?",
-        answer: "Pongal / பொங்கல்",
+        question: "Welcher Schauspieler spielt Jack Sparrow in 'Fluch der Karibik'?",
+        answer: "Johnny Depp",
       },
       {
         value: 200,
-        question: "Was kocht man traditionell an Pongal im Topf? / பொங்கலில் பாரம்பரியமாக பானையில் என்ன சமைக்கிறார்கள்?",
-        answer: "Süssen Milchreis / இனிப்பு பால் சாதம்",
+        question: "In welcher Netflix-Serie geht es um ein tödliches Kinderspiel aus Südkorea?",
+        answer: "Squid Game",
       },
       {
         value: 300,
-        question: "Welches Fest ist das tamilische Neujahr im April? / ஏப்ரலில் தமிழ் புத்தாண்டு எந்த பண்டிகை?",
-        answer: "Puthandu / புத்தாண்டு",
+        question: "Welcher Film gewann 2024 den Oscar für den besten Film?",
+        answer: "Oppenheimer",
       },
       {
         value: 400,
-        question: "An welchem Fest werden Kühe und Tiere geehrt? / எந்த பண்டிகையில் மாடுகளும் விலங்குகளும் மதிக்கப்படுகின்றன?",
-        answer: "Mattu Pongal / மாட்டு பொங்கல்",
+        question: "Wie heisst die fiktive Kontinente in 'Game of Thrones' wo die Handlung hauptsächlich spielt?",
+        answer: "Westeros",
       },
       {
         value: 500,
-        question: "Welches Lichterfest feiern viele Tamilen im Herbst? / இலையுதிர் காலத்தில் தமிழர்கள் கொண்டாடும் ஒளி திருவிழா எது?",
-        answer: "Deepavali / Diwali / தீபாவளி",
+        question: "Welcher Regisseur ist bekannt für die Filme 'Inception', 'Interstellar' und 'The Dark Knight'?",
+        answer: "Christopher Nolan",
       },
     ],
   },
   {
-    name: "Farben / வண்ணங்கள்",
+    name: "Musik",
     questions: [
       {
         value: 100,
-        question: "Welche drei Farben sind die Grundfarben beim Malen? / ஓவியத்தில் மூன்று அடிப்படை வண்ணங்கள் எவை?",
-        answer: "Rot, Blau, Gelb / சிவப்பு, நீலம், மஞ்சள்",
+        question: "Welche Sängerin ist bekannt für Hits wie 'Bad Guy' und 'Lovely'?",
+        answer: "Billie Eilish",
       },
       {
         value: 200,
-        question: "Welche Farbe entsteht wenn man Rot und Blau mischt? / சிவப்பும் நீலமும் கலந்தால் என்ன நிறம் வரும்?",
-        answer: "Violett / Lila / ஊதா",
+        question: "Welcher Rapper veröffentlichte das Album 'DAMN.' und gewann dafür einen Pulitzer-Preis?",
+        answer: "Kendrick Lamar",
       },
       {
         value: 300,
-        question: "Welche Farbe steht in der Ampel für 'Gehen'? / போக்குவரத்து விளக்கில் 'செல்' என்பதற்கு என்ன நிறம்?",
-        answer: "Grün / பச்சை",
+        question: "Aus welchem Land kommt die Band BTS?",
+        answer: "Südkorea",
       },
       {
         value: 400,
-        question: "Welche Farbe hat der Planet Mars und warum heisst er so? / செவ்வாய் கிரகத்தின் நிறம் என்ன, அது ஏன் அப்படி அழைக்கப்படுகிறது?",
-        answer: "Rot (der rote Planet) / சிவப்பு (சிவப்பு கிரகம்)",
+        question: "Welche Sängerin hat mit ihrer 'Eras Tour' 2023/2024 alle Konzertrekorde gebrochen?",
+        answer: "Taylor Swift",
       },
       {
         value: 500,
-        question: "Welche Farbe absorbiert am meisten Wärme von der Sonne? / சூரியனிடமிருந்து அதிக வெப்பத்தை உறிஞ்சும் நிறம் எது?",
-        answer: "Schwarz / கருப்பு",
+        question: "Unter welchem Künstlernamen ist Abel Tesfaye bekannt?",
+        answer: "The Weeknd",
       },
     ],
   },
   {
-    name: "Wer bin ich? / நான் யார்?",
+    name: "Wer ist das?",
     questions: [
-      // BILDVORSCHLÄGE für Runde 1:
-      // 100: Mickey Mouse
-      // 200: Rajinikanth (Tamil Superstar)
-      // 300: Cristiano Ronaldo (Fussballer)
-      // 400: Vijay (Tamil Actor)
-      // 500: Nayanthara (Tamil Actress)
+      // 100: Dwayne "The Rock" Johnson - sehr bekannt
+      // 200: Zendaya - Schauspielerin/Sängerin
+      // 300: Mark Zuckerberg - Tech
+      // 400: Greta Thunberg - Aktivistin
+      // 500: Satya Nadella - Microsoft CEO (schwerer)
       {
         value: 100,
         type: "image",
-        question: "Wer bin ich? / நான் யார்?",
-        answer: "Mickey Mouse / மிக்கி மவுஸ்",
+        question: "Wer ist diese Person?",
+        answer: "Dwayne 'The Rock' Johnson",
         imageUrl: "/images/questions/r1_wer_100.jpg",
       },
       {
         value: 200,
         type: "image",
-        question: "Wer bin ich? / நான் யார்?",
-        answer: "Rajinikanth (Thalaivar) / ரஜினிகாந்த் (தலைவர்)",
+        question: "Wer ist diese Person?",
+        answer: "Zendaya",
         imageUrl: "/images/questions/r1_wer_200.jpg",
       },
       {
         value: 300,
         type: "image",
-        question: "Wer bin ich? / நான் யார்?",
-        answer: "Cristiano Ronaldo / கிறிஸ்டியானோ ரொனால்டோ",
+        question: "Wer ist diese Person?",
+        answer: "Mark Zuckerberg",
         imageUrl: "/images/questions/r1_wer_300.jpg",
       },
       {
         value: 400,
         type: "image",
-        question: "Wer bin ich? / நான் யார்?",
-        answer: "Vijay (Thalapathy) / விஜய் (தளபதி)",
+        question: "Wer ist diese Person?",
+        answer: "Greta Thunberg",
         imageUrl: "/images/questions/r1_wer_400.jpg",
       },
       {
         value: 500,
         type: "image",
-        question: "Wer bin ich? / நான் யார்?",
-        answer: "Nayanthara / நயன்தாரா",
+        question: "Wer ist diese Person?",
+        answer: "Satya Nadella (Microsoft CEO)",
         imageUrl: "/images/questions/r1_wer_500.jpg",
       },
     ],
   },
   {
-    name: "Schätzfragen / மதிப்பீட்டு கேள்விகள்",
+    name: "Schätzfragen",
     questions: [
       {
         value: 100,
         type: "estimate",
         timeLimit: 30,
-        question: "Wie viele Knochen hat ein neugeborenes Baby ungefähr? / புதிதாகப் பிறந்த குழந்தைக்கு தோராயமாக எத்தனை எலும்புகள் உள்ளன?",
-        answer: "300",
+        question: "In welchem Jahr wurde Instagram gegründet?",
+        answer: "2010",
       },
       {
         value: 200,
         type: "estimate",
         timeLimit: 30,
-        question: "Wie viele Zähne hat ein erwachsener Mensch? / வயது வந்தவருக்கு எத்தனை பற்கள் உள்ளன?",
-        answer: "32",
+        question: "Wie viele Follower hat Cristiano Ronaldo auf Instagram ungefähr? (in Millionen)",
+        answer: "640",
       },
       {
         value: 300,
         type: "estimate",
         timeLimit: 30,
-        question: "Wie viele Länder gibt es in Europa ungefähr? / ஐரோப்பாவில் தோராயமாக எத்தனை நாடுகள் உள்ளன?",
-        answer: "44",
+        question: "Wie viel kostet eine Tesla Model 3 Basisversion ungefähr in CHF?",
+        answer: "40000",
       },
       {
         value: 400,
         type: "estimate",
-        timeLimit: 30,
-        question: "Wie hoch ist der Mount Everest in Metern? / எவரெஸ்ட் சிகரத்தின் உயரம் எத்தனை மீட்டர்?",
-        answer: "8849",
+        timeLimit: 35,
+        question: "Wie viele aktive Nutzer hat TikTok weltweit ungefähr? (in Milliarden)",
+        answer: "1.5",
       },
       {
         value: 500,
         type: "estimate",
-        timeLimit: 30,
-        question: "In welchem Jahr wurde die Schweiz gegründet? / சுவிட்சர்லாந்து எந்த ஆண்டு நிறுவப்பட்டது?",
-        answer: "1291",
+        timeLimit: 40,
+        question: "Wie viel war das Unternehmen Apple im Jahr 2024 ungefähr wert? (in Billionen USD)",
+        answer: "3",
       },
     ],
   },
 ];
 
-// Runde 2
+// Runde 2 (200-1000 Punkte, x2 Multiplikator)
 const categoriesRound2 = [
   {
-    name: "Essen / உணவு",
+    name: "Sport",
     questions: [
       {
         value: 100,
-        question: "Was isst man in Italien sehr gerne? (Teig mit Sauce) / இத்தாலியில் என்ன சாப்பிட விரும்புகிறார்கள்? (மாவு சாஸுடன்)",
-        answer: "Pizza oder Pasta/Spaghetti / பீட்சா அல்லது பாஸ்தா",
+        question: "Welches Land gewann die Fussball-WM 2022 in Katar?",
+        answer: "Argentinien",
       },
       {
         value: 200,
-        question: "Welches tamilische Fladenbrot isst man zum Frühstück mit Chutney? / சட்னியுடன் காலை உணவாக சாப்பிடும் தமிழ் தட்டை ரொட்டி எது?",
-        answer: "Dosai / Dosa / தோசை",
+        question: "Für welchen NBA-Club spielte LeBron James zuerst?",
+        answer: "Cleveland Cavaliers",
       },
       {
         value: 300,
-        question: "Woraus macht man Pommes Frites? / பிரெஞ்சு பிரைஸ் எதிலிருந்து செய்யப்படுகிறது?",
-        answer: "Kartoffeln / உருளைக்கிழங்கு",
+        question: "Welcher Tennisspieler hat die meisten Grand-Slam-Titel bei den Herren?",
+        answer: "Novak Djokovic (24)",
       },
       {
         value: 400,
-        question: "Wie heisst das tamilische Reisgericht mit Gemüse und Gewürzen? / காய்கறிகள் மற்றும் மசாலாப் பொருட்களுடன் தமிழ் அரிசி உணவின் பெயர் என்ன?",
-        answer: "Biryani / பிரியாணி",
+        question: "In welcher Stadt fanden die Olympischen Sommerspiele 2021 statt (verschoben von 2020)?",
+        answer: "Tokio",
       },
       {
         value: 500,
-        question: "Welches süsse tamilische Getränk trinkt man kalt mit Joghurt? / தயிருடன் குளிர்ச்சியாக குடிக்கும் இனிப்பு தமிழ் பானம் எது?",
-        answer: "Lassi / லஸ்ஸி",
+        question: "Welcher Formel-1-Fahrer gewann 2023 die Weltmeisterschaft?",
+        answer: "Max Verstappen",
       },
     ],
   },
   {
-    name: "Tamil Kultur / தமிழ் கலாச்சாரம்",
+    name: "Wissenschaft & Tech",
     questions: [
       {
         value: 100,
-        question: "In welchem Land sprechen die meisten Menschen Tamil? / எந்த நாட்டில் அதிகமான மக்கள் தமிழ் பேசுகிறார்கள்?",
-        answer: "Indien (Tamil Nadu) / இந்தியா (தமிழ்நாடு)",
+        question: "Wie heisst der Chatbot von OpenAI, der 2022 viral ging?",
+        answer: "ChatGPT",
       },
       {
         value: 200,
-        question: "Wie heisst der traditionelle Wickelrock für tamilische Frauen? / தமிழ் பெண்களுக்கான பாரம்பரிய சுற்று ஆடையின் பெயர் என்ன?",
-        answer: "Sari / புடவை",
+        question: "Welches Unternehmen hat SpaceX gegründet?",
+        answer: "Elon Musk",
       },
       {
         value: 300,
-        question: "Was malt man sich in Indien oft als Punkt auf die Stirn? / இந்தியாவில் நெற்றியில் புள்ளியாக என்ன வைக்கிறார்கள்?",
-        answer: "Bindi / Pottu / பொட்டு",
+        question: "Wofür steht die Abkürzung 'NFT'?",
+        answer: "Non-Fungible Token",
       },
       {
         value: 400,
-        question: "Wie nennt man die schönen Muster die man vor dem Haus mit Pulver malt? / வீட்டின் முன் பொடியால் வரையும் அழகான வடிவங்களின் பெயர் என்ன?",
-        answer: "Kolam / Rangoli / கோலம்",
+        question: "Wie heisst das Weltraumteleskop, das 2021 gestartet wurde und Nachfolger von Hubble ist?",
+        answer: "James Webb Space Telescope",
       },
       {
         value: 500,
-        question: "Wie begrüsst man sich respektvoll auf Tamil? / தமிழில் மரியாதையாக எப்படி வணக்கம் சொல்வது?",
-        answer: "Vanakkam / வணக்கம்",
+        question: "Welches Element wird in den meisten Lithium-Ionen-Akkus als Kathode verwendet?",
+        answer: "Kobalt (oder Lithium-Kobalt-Oxid)",
       },
     ],
   },
   {
-    name: "Natur / இயற்கை",
+    name: "Allgemeinwissen",
     questions: [
       {
         value: 100,
-        question: "Was scheint am Tag am Himmel und gibt uns Licht? / பகலில் வானத்தில் ஒளிரும் நமக்கு வெளிச்சம் தருவது என்ன?",
-        answer: "Die Sonne / சூரியன்",
+        question: "Wie viele Länder gehören zur Europäischen Union (Stand 2024)?",
+        answer: "27",
       },
       {
         value: 200,
-        question: "Was fällt vom Himmel wenn es regnet? / மழை பெய்யும்போது வானத்திலிருந்து என்ன விழுகிறது?",
-        answer: "Wasser / Regen / தண்ணீர் / மழை",
+        question: "In welcher Stadt befindet sich das Hauptquartier der Vereinten Nationen?",
+        answer: "New York",
       },
       {
         value: 300,
-        question: "Wie heisst der weisse kalte Stoff der im Winter fällt? / குளிர்காலத்தில் விழும் வெள்ளை குளிர்ந்த பொருளின் பெயர் என்ன?",
-        answer: "Schnee / பனி",
+        question: "Welche Währung wird in Japan verwendet?",
+        answer: "Yen",
       },
       {
         value: 400,
-        question: "Was hat viele bunte Farben am Himmel nach dem Regen? / மழைக்குப் பிறகு வானத்தில் பல வண்ணங்கள் கொண்டது என்ன?",
-        answer: "Der Regenbogen / வானவில்",
+        question: "Wie heisst das internationale Klimaschutzabkommen von 2015?",
+        answer: "Pariser Abkommen",
       },
       {
         value: 500,
-        question: "Wie heisst der grosse runde Ball am Nachthimmel? / இரவு வானத்தில் உள்ள பெரிய உருண்டை பந்தின் பெயர் என்ன?",
-        answer: "Der Mond / நிலவு",
+        question: "Welches Tier ist auf dem Logo der Automarke Porsche?",
+        answer: "Pferd (Stuttgarter Rössle)",
       },
     ],
   },
   {
-    name: "Wer oder Was? / யார் அல்லது என்ன?",
+    name: "Wer oder Was?",
     questions: [
-      // BILDVORSCHLÄGE für Runde 2:
-      // 100: Taj Mahal
-      // 200: A.R. Rahman (Tamil Komponist)
-      // 300: Sachin Tendulkar (Cricket-Legende)
-      // 400: M.S. Dhoni (Cricket Star)
-      // 500: Burj Khalifa (höchstes Gebäude)
+      // 200: Keanu Reeves - Schauspieler
+      // 400: Burj Khalifa - Gebäude
+      // 600: Emma Watson - Schauspielerin
+      // 800: Golden Gate Bridge - Sehenswürdigkeit
+      // 1000: Jensen Huang - Nvidia CEO (schwer)
       {
         value: 100,
         type: "image",
-        question: "Was ist das für ein Gebäude? / இது என்ன கட்டிடம்?",
-        answer: "Taj Mahal / தாஜ் மஹால்",
+        question: "Wer ist diese Person?",
+        answer: "Keanu Reeves",
         imageUrl: "/images/questions/r2_wer_100.jpg",
       },
       {
         value: 200,
         type: "image",
-        question: "Wer ist dieser berühmte Musikkomponist? / இந்த புகழ்பெற்ற இசையமைப்பாளர் யார்?",
-        answer: "A.R. Rahman / ஏ.ஆர். ரஹ்மான்",
+        question: "Was ist das für ein Gebäude?",
+        answer: "Burj Khalifa (Dubai)",
         imageUrl: "/images/questions/r2_wer_200.jpg",
       },
       {
         value: 300,
         type: "image",
-        question: "Wer ist dieser Fussballstar? / இந்த கால்பந்து நட்சத்திரம் யார்?",
-        answer: "Xherdan Shaqiri",
+        question: "Wer ist diese Person?",
+        answer: "Emma Watson",
         imageUrl: "/images/questions/r2_wer_300.jpg",
       },
       {
         value: 400,
         type: "image",
-        question: "Wer ist dieser berühmte Cricket-Spieler? / இந்த புகழ்பெற்ற கிரிக்கெட் வீரர் யார்?",
-        answer: "M.S. Dhoni / எம்.எஸ். தோனி",
+        question: "Was ist das für eine Brücke?",
+        answer: "Golden Gate Bridge (San Francisco)",
         imageUrl: "/images/questions/r2_wer_400.jpg",
       },
       {
         value: 500,
         type: "image",
-        question: "Was ist das für ein Gebäude? / இது என்ன கட்டிடம்?",
-        answer: "Burj Khalifa (Dubai) / புர்ஜ் கலீஃபா (துபாய்)",
+        question: "Wer ist diese Person?",
+        answer: "Jensen Huang (Nvidia CEO)",
         imageUrl: "/images/questions/r2_wer_500.jpg",
       },
     ],
   },
   {
-    name: "Schätzfragen / மதிப்பீட்டு கேள்விகள்",
+    name: "Schätzfragen",
     questions: [
       {
         value: 100,
         type: "estimate",
         timeLimit: 30,
-        question: "Wie viele Farben hat ein Regenbogen? / வானவில்லில் எத்தனை நிறங்கள் உள்ளன?",
-        answer: "7",
+        question: "In welchem Jahr wurde Spotify gegründet?",
+        answer: "2006",
       },
       {
         value: 200,
         type: "estimate",
         timeLimit: 30,
-        question: "Wie viele Sekunden hat eine Stunde? / ஒரு மணி நேரத்தில் எத்தனை வினாடிகள் உள்ளன?",
-        answer: "3600",
+        question: "Wie viele Stunden Videomaterial werden pro Minute auf YouTube hochgeladen?",
+        answer: "500",
       },
       {
         value: 300,
         type: "estimate",
-        timeLimit: 30,
-        question: "In welchem Jahr wurde das erste iPhone verkauft? / முதல் ஐபோன் எந்த ஆண்டு விற்பனை செய்யப்பட்டது?",
-        answer: "2007",
+        timeLimit: 35,
+        question: "Wie viel verdient der bestbezahlte Fussballspieler der Welt pro Jahr ungefähr? (in Millionen Euro)",
+        answer: "200",
       },
       {
         value: 400,
         type: "estimate",
-        timeLimit: 30,
-        question: "Wie viele Tasten hat ein normales Klavier? / ஒரு சாதாரண பியானோவில் எத்தனை விசைகள் உள்ளன?",
-        answer: "88",
+        timeLimit: 40,
+        question: "Wie viele iPhones hat Apple seit 2007 ungefähr verkauft? (in Milliarden)",
+        answer: "2.3",
       },
       {
         value: 500,
         type: "estimate",
-        timeLimit: 30,
-        question: "Wie viele Menschen leben ungefähr auf der Erde? (in Milliarden) / பூமியில் தோராயமாக எத்தனை மக்கள் வாழ்கிறார்கள்? (பில்லியன்களில்)",
-        answer: "8",
+        timeLimit: 45,
+        question: "Wie viel Prozent des weltweiten Internet-Traffics macht Netflix ungefähr aus?",
+        answer: "15",
       },
     ],
   },
@@ -1485,7 +1483,7 @@ joinRoomForBoard();
 buildBoard();
 renderPlayersBar();
 setTurnIndicator(
-  ROUND === 2 ? "Runde 2 – Warte auf Spieler..." : "Warte auf Spieler...",
+  ROUND === 2 ? "Runde 2 (x2) – Warte auf Spieler..." : "Warte auf Spieler...",
   false,
 );
 maybeShowRound2Button();
