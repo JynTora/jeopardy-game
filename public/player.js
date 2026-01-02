@@ -283,7 +283,7 @@ sendEstimateBtn.addEventListener("click", () => {
 
   let value = null;
   if (raw !== "") {
-    const normalized = raw.replace(/'/g, "");
+    const normalized = raw.replace(/'/g, "").replace(/,/g, ".");
     value = Number(normalized);
     if (!Number.isFinite(value)) {
       estimateStatusEl.textContent = "Bitte eine gültige Zahl eingeben.";
@@ -405,3 +405,9 @@ document.addEventListener("keydown", (e) => {
   if (room && roomCodeInput) roomCodeInput.value = room;
   if (name && playerNameInput) playerNameInput.value = name;
 })();
+
+// Input auf "text" mit decimal-Tastatur umstellen
+estimateInput.setAttribute("type", "text");
+estimateInput.setAttribute("inputmode", "decimal");
+estimateInput.setAttribute("pattern", "[0-9.,]*");
+estimateInput.setAttribute("placeholder", "z.B. 13,8 oder 1500");
