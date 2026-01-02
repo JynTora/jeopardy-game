@@ -756,9 +756,36 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  max-height: 200px;
+  max-height: 350px;  /* Erhöht für 5+ Spieler (war 200px) */
   overflow-y: auto;
-  padding: 4px 0;
+  padding: 4px 8px 4px 0;  /* Rechts Platz für Scrollbar */
+  scroll-behavior: smooth;
+}
+
+/* Scrollbar-Styling für die Antwortenliste */
+.estimate-reveal-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.estimate-reveal-list::-webkit-scrollbar-track {
+  background: rgba(30, 41, 59, 0.6);
+  border-radius: 5px;
+}
+
+.estimate-reveal-list::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #6366f1, #8b5cf6);
+  border-radius: 5px;
+  border: 2px solid rgba(30, 41, 59, 0.6);
+}
+
+.estimate-reveal-list::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #818cf8, #a78bfa);
+}
+
+/* Firefox Scrollbar */
+.estimate-reveal-list {
+  scrollbar-width: auto;
+  scrollbar-color: #6366f1 rgba(30, 41, 59, 0.6);
 }
 
 .estimate-reveal-item {
@@ -2627,28 +2654,45 @@ body.is-buzz-locked #qMedia {
       0 0 40px rgba(59, 130, 246, 0.2);
   }
 }
-/* FORCE BUTTON LAYOUT - Ganz am Ende einfügen */
+
+/* ===========================
+   BUTTON FIX - FORCE LAYOUT
+   Überschreibt alles mit !important
+   =========================== */
+
+/* Container: Flex mit Wrap */
 .question-actions {
-  display: grid !important;
-  grid-template-columns: repeat(3, auto) !important;
-  grid-template-rows: auto auto !important;
+  display: flex !important;
+  flex-wrap: wrap !important;
   gap: 10px !important;
   justify-content: center !important;
-  justify-items: center !important;
+  align-items: center !important;
+  width: 100% !important;
 }
 
-#showAnswerBtn { grid-column: 1; grid-row: 1; }
-#correctBtn { grid-column: 2; grid-row: 1; }
-#wrongBtn { grid-column: 3; grid-row: 1; }
+/* Die drei oberen Buttons: inline, nicht wachsen */
+#showAnswerBtn,
+#correctBtn,
+#wrongBtn {
+  flex: 0 0 auto !important;
+  order: 1 !important;
+}
 
+/* FRAGE SCHLIESSEN: Eigene Zeile erzwingen */
 #closeQuestionBtn {
-  grid-column: 1 / -1 !important;
-  grid-row: 2 !important;
-  justify-self: center !important;
-  width: 160px !important;
-  margin: 0 !important;
+  flex: 0 0 100% !important;
+  width: 140px !important;
+  max-width: 140px !important;
+  margin: 8px auto 0 auto !important;
+  order: 10 !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
 }
-/* FRAGE SCHLIESSEN - Text zentrieren */
+
+/* ===========================
+   FRAGE SCHLIESSEN - Text zentrieren
+   =========================== */
 #closeQuestionBtn {
   display: inline-flex !important;
   justify-content: center !important;
@@ -2656,45 +2700,4 @@ body.is-buzz-locked #qMedia {
   text-align: center !important;
   line-height: 1.2 !important;
   padding: 6px 16px !important;
-}
-/* FRAGE ZENTRIEREN - Visueller Mittelpunkt */
-.question-card {
-  justify-content: center !important;
-  padding-top: 40px !important;
-  padding-bottom: 30px !important;
-}
-
-.question-points {
-  margin-bottom: 16px !important;
-}
-
-.question-text {
-  margin-bottom: 24px !important;
-  flex-grow: 0 !important;
-}
-
-.question-actions {
-  margin-top: auto !important;
-  padding-top: 16px !important;
-}
-/* FRAGE WIRKLICH ZENTRIEREN - FINAL */
-.question-card {
-  min-height: 380px !important;
-  padding-top: 50px !important;
-  padding-bottom: 28px !important;
-}
-
-.question-actions {
-  margin-top: 40px !important;
-}
-/* KATEGORIE TEXT ZENTRIEREN */
-.board-category {
-  text-align: center !important;
-  justify-content: center !important;
-  align-items: center !important;
-  padding: 8px 10px !important;
-  font-size: 0.85rem !important;
-  line-height: 1.3 !important;
-  height: auto !important;
-  min-height: 67px !important;
 }
