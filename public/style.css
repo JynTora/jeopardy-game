@@ -2655,7 +2655,7 @@ body.is-buzz-locked #qMedia {
 
 /* ===========================
    BUTTON FIX - FORCE LAYOUT
-   Überschreibt alles mit !important
+   3 Buttons oben zentriert, FRAGE SCHLIESSEN unten zentriert
    =========================== */
 
 /* Container: Flex mit Wrap */
@@ -2668,7 +2668,7 @@ body.is-buzz-locked #qMedia {
   width: 100% !important;
 }
 
-/* Die drei oberen Buttons: inline, nicht wachsen */
+/* Die drei oberen Buttons: in einer Reihe, zentriert */
 #showAnswerBtn,
 #correctBtn,
 #wrongBtn {
@@ -2676,26 +2676,17 @@ body.is-buzz-locked #qMedia {
   order: 1 !important;
 }
 
-/* FRAGE SCHLIESSEN: Eigene Zeile erzwingen */
+/* FRAGE SCHLIESSEN: Eigene Zeile, zentriert */
 #closeQuestionBtn {
-  flex: 0 0 100% !important;
-  width: 140px !important;
-  max-width: 140px !important;
+  flex-basis: 100% !important;
+  width: auto !important;
+  max-width: none !important;
   margin: 8px auto 0 auto !important;
   order: 10 !important;
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-}
-
-/* ===========================
-   FRAGE SCHLIESSEN - Text zentrieren
-   =========================== */
-#closeQuestionBtn {
   display: inline-flex !important;
   justify-content: center !important;
   align-items: center !important;
   text-align: center !important;
   line-height: 1.2 !important;
-  padding: 6px 16px !important;
+  padding: 6px 20px !important;
 }
