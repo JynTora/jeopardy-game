@@ -2690,3 +2690,267 @@ body.is-buzz-locked #qMedia {
   line-height: 1.2 !important;
   padding: 6px 20px !important;
 }
+
+/* =============================================
+   SPECTATOR MODE - CSS ERGÄNZUNGEN
+   Füge diesen Code am Ende deiner style.css ein
+   ============================================= */
+
+/* ───────────────────────────────────────────────
+   SPECTATOR JOIN BAR (oben)
+   ─────────────────────────────────────────────── */
+.spectator-join-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 9000;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border-bottom: 2px solid rgba(45, 212, 191, 0.4);
+  padding: 16px 20px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.spectator-join-bar.hidden {
+  display: none;
+}
+
+.spectator-join-inner {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.spectator-join-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #2dd4bf;
+  margin-bottom: 12px;
+  letter-spacing: 0.03em;
+}
+
+.spectator-join-form {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+}
+
+.spectator-input {
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(15, 23, 42, 0.8);
+  color: #f1f5f9;
+  font-size: 0.95rem;
+  min-width: 120px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.spectator-input:focus {
+  outline: none;
+  border-color: #2dd4bf;
+  box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.2);
+}
+
+.spectator-input::placeholder {
+  color: #64748b;
+}
+
+.spectator-join-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: linear-gradient(135deg, #0d9488, #14b8a6);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.spectator-join-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(20, 184, 166, 0.4);
+}
+
+.spectator-join-btn:active {
+  transform: scale(0.98);
+}
+
+.spectator-join-status {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  min-height: 1.2em;
+}
+
+/* ───────────────────────────────────────────────
+   SPECTATOR BUZZER (unten rechts)
+   ─────────────────────────────────────────────── */
+.spectator-buzzer-wrap {
+  position: fixed;
+  bottom: 100px;
+  right: 24px;
+  z-index: 8000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.spectator-buzzer-wrap.hidden {
+  display: none;
+}
+
+.spectator-buzz-btn {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 4px solid #f97316;
+  background: radial-gradient(circle at 30% 30%, #fb923c, #ea580c);
+  color: #fff;
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  box-shadow: 
+    0 6px 20px rgba(249, 115, 22, 0.5),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.1s, box-shadow 0.1s, filter 0.1s;
+}
+
+.spectator-buzz-btn:not(:disabled):hover {
+  transform: scale(1.05);
+  box-shadow: 
+    0 8px 30px rgba(249, 115, 22, 0.6),
+    inset 0 -4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.spectator-buzz-btn:not(:disabled):active,
+.spectator-buzz-btn.spectator-buzz-pulse {
+  transform: scale(0.95);
+  box-shadow: 
+    0 2px 10px rgba(249, 115, 22, 0.4),
+    inset 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.spectator-buzz-btn:disabled {
+  background: radial-gradient(circle at 30% 30%, #64748b, #475569);
+  border-color: #475569;
+  cursor: not-allowed;
+  filter: grayscale(0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.spectator-buzz-status {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  text-align: center;
+  background: rgba(15, 23, 42, 0.9);
+  padding: 6px 12px;
+  border-radius: 6px;
+  max-width: 140px;
+}
+
+/* ───────────────────────────────────────────────
+   SPECTATOR BOARD (read-only cells)
+   ─────────────────────────────────────────────── */
+.spectator-board .board-cell,
+.spectator-cell {
+  cursor: default !important;
+  pointer-events: none;
+}
+
+.spectator-board .board-cell:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.spectator-board .board-cell-active {
+  background: linear-gradient(135deg, #0d9488, #14b8a6) !important;
+  color: #fff !important;
+  animation: spectator-cell-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes spectator-cell-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(45, 212, 191, 0.5); }
+  50% { box-shadow: 0 0 20px 8px rgba(45, 212, 191, 0.3); }
+}
+
+/* ───────────────────────────────────────────────
+   SPECTATOR QUESTION CARD (read-only)
+   ─────────────────────────────────────────────── */
+.spectator-question-card {
+  /* Keine Buttons sichtbar für Spectator */
+}
+
+.spectator-question-card .question-btn-row {
+  display: none !important;
+}
+
+.spectator-question-card .estimate-reveal {
+  /* Reveal-Liste sichtbar, aber ohne Buttons */
+}
+
+.spectator-question-card .estimate-reveal button {
+  display: none !important;
+}
+
+/* ───────────────────────────────────────────────
+   SPECTATOR PAGE ADJUSTMENTS
+   ─────────────────────────────────────────────── */
+.spectator-page {
+  padding-top: 80px; /* Platz für Join-Bar */
+}
+
+.spectator-page .jt-header {
+  margin-top: 10px;
+}
+
+/* Wenn Join-Bar versteckt ist, normales Padding */
+.spectator-join-bar.hidden + .spectator-buzzer-wrap + .spectator-page,
+.spectator-join-bar.hidden ~ .spectator-page {
+  padding-top: 0;
+}
+
+/* ───────────────────────────────────────────────
+   RESPONSIVE ADJUSTMENTS
+   ─────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .spectator-join-form {
+    flex-direction: column;
+  }
+  
+  .spectator-input {
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  .spectator-join-btn {
+    width: 100%;
+    max-width: 280px;
+  }
+  
+  .spectator-buzzer-wrap {
+    bottom: 80px;
+    right: 16px;
+  }
+  
+  .spectator-buzz-btn {
+    width: 80px;
+    height: 80px;
+    font-size: 1.1rem;
+  }
+}
+
+/* ───────────────────────────────────────────────
+   JEOPARDY.HTML MODE SELECTION ENHANCEMENTS
+   ─────────────────────────────────────────────── */
+.mode-section.online .card-row a:hover {
+  border-color: rgba(45, 212, 191, 0.8);
+}
+
+.mode-section.local .card-row a:hover {
+  border-color: rgba(59, 130, 246, 0.8);
+}
