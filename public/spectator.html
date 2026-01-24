@@ -2,16 +2,18 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <title>Jeopardy – Online Modus</title>
+    <title>Jeopardy – Spectator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <link rel="manifest" href="/manifest.json">
     <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
     <link rel="stylesheet" href="style.css" />
+
     <script src="/socket.io/socket.io.js"></script>
     <script defer src="/spectator.js"></script>
   </head>
 
-  <body class="jt-body spectator-body">
+  <body class="jt-body">
     <!-- Screen-Flash für richtig/falsch -->
     <div id="screenFlash" class="screen-flash"></div>
 
@@ -20,10 +22,8 @@
          =========================== -->
     <div id="spectatorJoinOverlay" class="spectator-join-overlay">
       <div class="spectator-join-card">
-        <div class="spectator-join-icon">🌐</div>
-        <h2 class="spectator-join-title">Online Modus</h2>
-        <p class="spectator-join-desc">Tritt einem Spiel bei, um das Board zu sehen und mitzuspielen.</p>
-        
+        <div class="spectator-join-title">🌐 Online Modus</div>
+        <div class="spectator-join-subtitle">Tritt einem Spiel bei</div>
         <div class="spectator-join-form">
           <input
             id="spectatorRoomCode"
@@ -31,7 +31,6 @@
             type="text"
             placeholder="Raumcode (z.B. X59XC)"
             maxlength="10"
-            autocomplete="off"
           />
           <input
             id="spectatorName"
@@ -39,39 +38,36 @@
             type="text"
             placeholder="Dein Name"
             maxlength="20"
-            autocomplete="off"
           />
-          <button id="spectatorJoinBtn" class="spectator-join-btn">
-            🚀 Beitreten
-          </button>
+          <button id="spectatorJoinBtn" class="spectator-join-btn">Beitreten</button>
         </div>
         <div id="spectatorJoinStatus" class="spectator-join-status"></div>
       </div>
     </div>
 
     <!-- ===========================
-         BUZZER (unten rechts, nach Beitritt)
+         BUZZER INDICATOR (oben links, wie Host-Board)
          =========================== -->
-    <div id="spectatorBuzzerWrap" class="spectator-buzzer-wrap hidden">
-      <button id="spectatorBuzzBtn" class="spectator-buzz-btn" disabled>
-        <span class="buzz-text">BUZZ</span>
-        <span class="buzz-hint">oder SPACE drücken</span>
-      </button>
-      <div id="spectatorBuzzStatus" class="spectator-buzz-status">🦆 Buzzer gesperrt</div>
+    <div id="buzzerIndicator" class="buzzer-indicator buzzer-locked hidden">
+      <span id="buzzerText">BUZZER GESPERRT</span>
     </div>
 
     <!-- ===========================
          MAIN PAGE (Board)
          =========================== -->
-    <div id="spectatorPage" class="jt-page spectator-page hidden">
-      <!-- Logo oben -->
+    <div class="jt-page spectator-page hidden" id="spectatorMainPage">
+      <!-- Logo oben mittig -->
       <header class="jt-header">
-        <img src="/images/jt-logo.png" alt="Jyn Tora Jeopardy" class="jt-logo" />
+        <img
+          src="/images/jt-logo.png"
+          alt="Jyn Tora Jeopardy"
+          class="jt-logo"
+        />
       </header>
 
-      <!-- Turn-Bar oben rechts -->
+      <!-- Turn-Bar oben rechts (wie Host-Board) -->
       <div class="turn-bar">
-        <div id="turnIndicator" class="turn-indicator">Warte auf Host…</div>
+        <div id="turnIndicator" class="turn-indicator">Warte auf Spieler…</div>
       </div>
 
       <!-- Ambient Background -->
@@ -89,7 +85,7 @@
       </div>
 
       <main class="jt-main">
-        <!-- Board Grid (read-only) -->
+        <!-- Board Grid (read-only für Spectator) -->
         <div id="board" class="board-grid spectator-board"></div>
       </main>
 
@@ -98,7 +94,7 @@
     </div>
 
     <!-- ===========================
-         Fragen-Overlay (read-only)
+         Fragen-Overlay (read-only für Spectator)
          =========================== -->
     <div id="questionOverlay" class="question-overlay hidden">
       <div id="questionCard" class="question-card spectator-question-card">
@@ -106,7 +102,9 @@
           <div id="questionPoints" class="question-points">
             <span class="points-inner"></span>
           </div>
-          <div id="estimateBoardTimer" class="estimate-board-timer hidden">⏱ –</div>
+          <div id="estimateBoardTimer" class="estimate-board-timer hidden">
+            ⏱ –
+          </div>
         </div>
 
         <div id="questionText" class="question-text"></div>
@@ -119,7 +117,7 @@
 
         <div id="answerText" class="answer-text hidden"></div>
 
-        <!-- Schätzfragen Reveal -->
+        <!-- Schätzfragen Reveal (read-only) -->
         <div id="estimateRevealContainer" class="estimate-reveal hidden">
           <h3 class="estimate-reveal-title">Schätzantworten</h3>
           <div id="estimateRevealList" class="estimate-reveal-list"></div>
@@ -131,12 +129,12 @@
     </div>
 
     <!-- ===========================
-         Schätzfrage-Eingabe Modal
+         Schätzfrage-Eingabe Overlay (für Spectator)
          =========================== -->
     <div id="estimateModal" class="estimate-modal hidden">
       <div class="estimate-card">
         <div class="estimate-header">
-          <div class="estimate-label">📊 Schätzfrage</div>
+          <div class="estimate-label">Schätzfrage</div>
           <div class="estimate-timer">⏱ <span id="estimateTimer">–</span></div>
         </div>
         <div id="estimateQuestionText" class="estimate-question-text"></div>
@@ -149,7 +147,7 @@
           placeholder="Dein Tipp (z.B. 13,8)"
         />
         <button id="sendEstimateBtn" class="estimate-send-btn">
-          ✅ Antwort senden
+          Antwort senden
         </button>
         <div id="estimateStatus" class="estimate-status"></div>
       </div>
@@ -166,8 +164,10 @@
       function toggleFullscreen() {
         if (!document.fullscreenElement) {
           document.documentElement.requestFullscreen();
-        } else if (document.exitFullscreen) {
-          document.exitFullscreen();
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
         }
       }
     </script>
