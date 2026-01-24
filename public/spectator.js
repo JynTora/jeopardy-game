@@ -15,12 +15,11 @@ const joinBtn = document.getElementById("spectatorJoinBtn");
 const joinStatus = document.getElementById("spectatorJoinStatus");
 
 // Main Page
-const spectatorPage = document.getElementById("spectatorPage");
+const mainPage = document.getElementById("spectatorMainPage");
 
-// Buzzer UI
-const buzzerWrap = document.getElementById("spectatorBuzzerWrap");
-const buzzBtn = document.getElementById("spectatorBuzzBtn");
-const buzzStatus = document.getElementById("spectatorBuzzStatus");
+// Buzzer Indicator (oben links wie Host)
+const buzzerIndicator = document.getElementById("buzzerIndicator");
+const buzzerText = document.getElementById("buzzerText");
 
 // Board UI
 const boardEl = document.getElementById("board");
@@ -30,6 +29,7 @@ const turnIndicatorEl = document.getElementById("turnIndicator");
 // Question Overlay
 const overlayEl = document.getElementById("questionOverlay");
 const questionCardEl = document.getElementById("questionCard");
+const questionPointsEl = document.getElementById("questionPoints");
 const questionPointsInnerEl = document.querySelector("#questionPoints .points-inner");
 const questionTextEl = document.getElementById("questionText");
 const answerTextEl = document.getElementById("answerText");
@@ -43,7 +43,7 @@ const lightboxEl = document.getElementById("lightbox");
 const lightboxImgEl = document.getElementById("lightboxImg");
 const lightboxCloseEl = document.getElementById("lightboxClose");
 
-// Estimate Reveal
+// Estimate Reveal (read-only)
 const estimateRevealContainer = document.getElementById("estimateRevealContainer");
 const estimateRevealList = document.getElementById("estimateRevealList");
 
@@ -70,7 +70,7 @@ let estimateLocked = false;
 let estimateDeadline = null;
 let estimateTimerInterval = null;
 
-// Board State
+// Board State (vom Server synchronisiert)
 let latestPlayers = {};
 let activePlayerId = null;
 let activePlayerName = null;
@@ -82,13 +82,17 @@ let usedCells = new Set();
 // ===============================
 const sfxTick = new Audio("/sounds/tick.wav");
 sfxTick.volume = 0.25;
+
 const sfxBuzz = new Audio("/sounds/buzzer-button.wav");
 const sfxCorrect = new Audio("/sounds/correct-button.wav");
 const sfxWrong = new Audio("/sounds/wrong-button.wav");
 
 function safePlay(audio) {
   if (!audio) return;
-  try { audio.currentTime = 0; audio.play().catch(() => {}); } catch {}
+  try {
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  } catch {}
 }
 
 function playTick() { safePlay(sfxTick); }
@@ -97,16 +101,30 @@ function playCorrectSound() { safePlay(sfxCorrect); }
 function playWrongSound() { safePlay(sfxWrong); }
 
 // ===============================
-// Screen Flash
+// Screen Flash (FIXED - verschwindet nach Animation)
 // ===============================
 function flashScreen(type) {
   const flashEl = document.getElementById("screenFlash");
   if (!flashEl) return;
+
+  // Alle Klassen entfernen
   flashEl.classList.remove("screen-flash-green", "screen-flash-red", "screen-flash-active");
-  if (type === "correct") flashEl.classList.add("screen-flash-green");
-  if (type === "wrong") flashEl.classList.add("screen-flash-red");
-  requestAnimationFrame(() => flashEl.classList.add("screen-flash-active"));
-  setTimeout(() => flashEl.classList.remove("screen-flash-active"), 350);
+
+  // Kurz warten, dann neue Klasse setzen (für Animation Reset)
+  requestAnimationFrame(() => {
+    if (type === "correct") flashEl.classList.add("screen-flash-green");
+    if (type === "wrong") flashEl.classList.add("screen-flash-red");
+
+    // Animation starten
+    requestAnimationFrame(() => {
+      flashEl.classList.add("screen-flash-active");
+
+      // Nach Animation entfernen
+      setTimeout(() => {
+        flashEl.classList.remove("screen-flash-active", "screen-flash-green", "screen-flash-red");
+      }, 350);
+    });
+  });
 }
 
 // ===============================
@@ -124,11 +142,12 @@ function saveJoinToLocalStorage(roomCode, name) {
 
 function loadJoinFromLocalStorage() {
   try {
-    return {
-      room: (localStorage.getItem(LS_ROOM) || "").trim().toUpperCase(),
-      name: (localStorage.getItem(LS_NAME) || "").trim(),
-    };
-  } catch { return { room: "", name: "" }; }
+    const room = (localStorage.getItem(LS_ROOM) || "").trim().toUpperCase();
+    const name = (localStorage.getItem(LS_NAME) || "").trim();
+    return { room, name };
+  } catch {
+    return { room: "", name: "" };
+  }
 }
 
 // ===============================
@@ -141,30 +160,38 @@ function setJoinStatus(msg, isError = false) {
 }
 
 // ===============================
-// Buzzer UI
+// Buzzer Indicator UI (oben links wie Host)
 // ===============================
-function updateBuzzUI() {
+function updateBuzzerIndicator() {
+  if (!buzzerIndicator || !buzzerText) return;
+
   if (!joined) {
-    buzzBtn.disabled = true;
-    buzzStatus.textContent = "Bitte zuerst beitreten.";
+    buzzerIndicator.classList.add("hidden");
     return;
   }
+
+  buzzerIndicator.classList.remove("hidden");
+
   if (isLocked) {
-    buzzBtn.disabled = true;
-    buzzStatus.textContent = "❌ Du bist für diese Frage gesperrt";
+    buzzerIndicator.classList.add("buzzer-locked");
+    buzzerIndicator.classList.remove("buzzer-free");
+    buzzerText.textContent = "GESPERRT";
     return;
   }
+
   if (buzzingEnabled) {
-    buzzBtn.disabled = false;
-    buzzStatus.textContent = "🟢 Buzzer aktiv – drück BUZZ!";
+    buzzerIndicator.classList.remove("buzzer-locked");
+    buzzerIndicator.classList.add("buzzer-free");
+    buzzerText.textContent = "BUZZER FREI";
   } else {
-    buzzBtn.disabled = true;
-    buzzStatus.textContent = "🦆 Buzzer gesperrt";
+    buzzerIndicator.classList.add("buzzer-locked");
+    buzzerIndicator.classList.remove("buzzer-free");
+    buzzerText.textContent = "BUZZER GESPERRT";
   }
 }
 
 // ===============================
-// Kategorien (identisch zu board.js)
+// Kategorien (gleiche wie board.js)
 // ===============================
 const categoriesRound1 = [
   { name: "Geographie", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
@@ -182,8 +209,13 @@ const categoriesRound2 = [
   { name: "Schätzfragen", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
 ];
 
-function getCategories() { return currentRound >= 2 ? categoriesRound2 : categoriesRound1; }
-function getMultiplier() { return currentRound >= 2 ? 2 : 1; }
+function getCategories() {
+  return currentRound >= 2 ? categoriesRound2 : categoriesRound1;
+}
+
+function getMultiplier() {
+  return currentRound >= 2 ? 2 : 1;
+}
 
 // ===============================
 // Board bauen (read-only)
@@ -207,8 +239,10 @@ function buildBoard() {
     cat.questions.forEach((q, qIndex) => {
       const cell = document.createElement("div");
       cell.className = "board-cell spectator-cell";
+
       const displayValue = (Number(q.value) || 0) * mult;
       cell.textContent = displayValue;
+
       cell.dataset.categoryIndex = String(cIndex);
       cell.dataset.questionIndex = String(qIndex);
 
@@ -229,6 +263,7 @@ function buildBoard() {
 // ===============================
 function renderPlayersBar() {
   if (!playersBarEl) return;
+
   const entries = Object.entries(latestPlayers || {});
   playersBarEl.innerHTML = "";
 
@@ -260,7 +295,9 @@ function renderPlayersBar() {
     pill.appendChild(nameSpan);
     pill.appendChild(scoreSpan);
 
-    if (id === activePlayerId) pill.classList.add("player-pill-active");
+    if (id === activePlayerId) {
+      pill.classList.add("player-pill-active");
+    }
 
     playersBarEl.appendChild(pill);
   });
@@ -271,6 +308,7 @@ function renderPlayersBar() {
 // ===============================
 function updateBuzzInfo(isBuzzed) {
   if (!buzzInfoEl || !questionCardEl) return;
+
   if (isBuzzed && activePlayerName) {
     buzzInfoEl.textContent = `${activePlayerName} hat gebuzzert!`;
     buzzInfoEl.classList.remove("hidden");
@@ -328,14 +366,14 @@ function doJoin(roomCode, name, { silent = false } = {}) {
     return;
   }
 
-  // Als Spieler joinen
+  // Spectator joint als Player UND als Spectator
   socket.emit("player-join", { roomCode: rc, name: nm }, (res) => {
     if (!res || !res.success) {
       joined = false;
       currentRoomCode = null;
       currentName = null;
       isLocked = false;
-      updateBuzzUI();
+      updateBuzzerIndicator();
       if (!silent) setJoinStatus(res?.error || "Beitritt fehlgeschlagen.", true);
       return;
     }
@@ -346,15 +384,14 @@ function doJoin(roomCode, name, { silent = false } = {}) {
 
     saveJoinToLocalStorage(rc, nm);
 
-    // UI wechseln: Join Overlay weg, Board + Buzzer sichtbar
+    // Join Overlay ausblenden, Main Page einblenden
     if (joinOverlay) joinOverlay.classList.add("hidden");
-    if (spectatorPage) spectatorPage.classList.remove("hidden");
-    if (buzzerWrap) buzzerWrap.classList.remove("hidden");
+    if (mainPage) mainPage.classList.remove("hidden");
 
-    updateBuzzUI();
+    updateBuzzerIndicator();
     if (!silent) setJoinStatus("Erfolgreich beigetreten!");
 
-    // Als Spectator für Board-Updates registrieren
+    // Jetzt auch als Spectator registrieren für Board-Updates
     socket.emit("spectator-join-room", { roomCode: rc });
   });
 }
@@ -368,7 +405,7 @@ if (joinBtn) {
   });
 }
 
-// Enter-Taste
+// Enter-Taste in Inputs
 [roomCodeInput, nameInput].forEach((input) => {
   if (input) {
     input.addEventListener("keydown", (e) => {
@@ -378,30 +415,29 @@ if (joinBtn) {
 });
 
 // ===============================
-// Buzzer Logic
+// Buzzer Logic (Keyboard SPACE)
 // ===============================
-if (buzzBtn) {
-  buzzBtn.addEventListener("click", () => {
-    if (!joined || !currentRoomCode || !buzzingEnabled || isLocked) return;
-    socket.emit("player-buzz", { roomCode: currentRoomCode });
-    buzzingEnabled = false;
-    updateBuzzUI();
-  });
-}
-
-// Keyboard Buzzer (SPACE)
 document.addEventListener("keydown", (e) => {
   if (e.code !== "Space") return;
+
   const t = e.target;
   const isTyping = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
   if (isTyping) return;
-  if (!buzzBtn || buzzBtn.disabled) return;
 
-  buzzBtn.classList.add("spectator-buzz-pulse");
-  setTimeout(() => buzzBtn.classList.remove("spectator-buzz-pulse"), 180);
+  if (!joined || !currentRoomCode || !buzzingEnabled || isLocked) return;
 
   e.preventDefault();
-  buzzBtn.click();
+
+  // Visual feedback
+  if (buzzerIndicator) {
+    buzzerIndicator.classList.add("buzzer-pressed");
+    setTimeout(() => buzzerIndicator.classList.remove("buzzer-pressed"), 150);
+  }
+
+  socket.emit("player-buzz", { roomCode: currentRoomCode });
+
+  buzzingEnabled = false;
+  updateBuzzerIndicator();
 });
 
 // ===============================
@@ -414,15 +450,21 @@ function openEstimateModal(questionText, timeLimitSec) {
   estimateLocked = false;
 
   if (estimateQuestionTextEl) estimateQuestionTextEl.textContent = questionText || "";
-  if (estimateInput) { estimateInput.value = ""; estimateInput.disabled = false; }
+  if (estimateInput) {
+    estimateInput.value = "";
+    estimateInput.disabled = false;
+  }
   if (sendEstimateBtn) sendEstimateBtn.disabled = false;
   if (estimateStatusEl) estimateStatusEl.textContent = "";
 
+  const now = Date.now();
   const limit = typeof timeLimitSec === "number" && timeLimitSec > 0 ? timeLimitSec : 30;
-  estimateDeadline = Date.now() + limit * 1000;
+  estimateDeadline = now + limit * 1000;
+
   lastTickSecond = null;
 
   if (estimateTimerEl) estimateTimerEl.classList.remove("is-warning", "is-danger");
+
   updateEstimateTimer();
 
   if (estimateTimerInterval) clearInterval(estimateTimerInterval);
@@ -436,14 +478,17 @@ function openEstimateModal(questionText, timeLimitSec) {
 
 function closeEstimateModal() {
   estimateActive = false;
+
   if (estimateTimerInterval) clearInterval(estimateTimerInterval);
   estimateTimerInterval = null;
   estimateDeadline = null;
 
   if (estimateTimerEl) estimateTimerEl.classList.remove("is-warning", "is-danger");
+
   if (estimateModal && !estimateModal.classList.contains("hidden")) {
     estimateModal.classList.remove("estimate-slide-in");
     estimateModal.classList.add("estimate-slide-out");
+
     setTimeout(() => {
       estimateModal.classList.add("hidden");
       estimateModal.classList.remove("estimate-slide-out");
@@ -453,10 +498,12 @@ function closeEstimateModal() {
 
 function updateEstimateTimer() {
   if (!estimateDeadline || !estimateTimerEl) return;
+
   const diffMs = estimateDeadline - Date.now();
   const diffSec = Math.max(0, Math.ceil(diffMs / 1000));
 
   estimateTimerEl.classList.remove("is-warning", "is-danger");
+
   if (diffSec <= 5 && diffSec > 3) estimateTimerEl.classList.add("is-warning");
   if (diffSec <= 3 && diffSec > 0) estimateTimerEl.classList.add("is-danger");
 
@@ -471,6 +518,7 @@ function updateEstimateTimer() {
   }
 
   estimateTimerEl.textContent = "0s";
+
   if (estimateTimerInterval) clearInterval(estimateTimerInterval);
   estimateTimerInterval = null;
 
@@ -489,6 +537,7 @@ function updateEstimateTimer() {
 
 function sendEstimateToServer({ value, noAnswer }) {
   if (!joined || !currentRoomCode) return;
+
   socket.emit("estimate-answer", {
     roomCode: currentRoomCode,
     value,
@@ -499,6 +548,7 @@ function sendEstimateToServer({ value, noAnswer }) {
 if (sendEstimateBtn) {
   sendEstimateBtn.addEventListener("click", () => {
     if (!estimateActive || estimateLocked) return;
+
     const raw = (estimateInput.value || "").trim();
 
     let value = null;
@@ -535,17 +585,17 @@ if (estimateInput) {
 // ===============================
 socket.on("buzzing-status", ({ enabled }) => {
   buzzingEnabled = !!enabled;
-  updateBuzzUI();
+  updateBuzzerIndicator();
 });
 
 socket.on("you-are-locked", () => {
   isLocked = true;
-  updateBuzzUI();
+  updateBuzzerIndicator();
 });
 
 socket.on("round-reset", () => {
   isLocked = false;
-  updateBuzzUI();
+  updateBuzzerIndicator();
 });
 
 socket.on("players-updated", (serverPlayers) => {
@@ -556,25 +606,32 @@ socket.on("players-updated", (serverPlayers) => {
 socket.on("player-buzzed-first", (payload) => {
   const id = payload?.playerId || payload?.socketId;
   const name = payload?.name;
+
   if (!id) return;
 
   activePlayerId = id;
   activePlayerName = name || (latestPlayers?.[id]?.name ?? null);
+
   renderPlayersBar();
   playBuzzSound();
   updateBuzzInfo(true);
+
+  // Bild blur wenn jemand gebuzzert hat
   document.body.classList.add("is-buzz-locked");
 });
 
 // ===============================
-// Socket Events - Board Sync
+// Socket Events - Board Sync (vom Host)
 // ===============================
 socket.on("spectator-question-opened", (data) => {
-  const { categoryIndex, questionIndex, question, value, type, imageUrl } = data;
+  // Host hat eine Frage geöffnet
+  const { categoryIndex, questionIndex, question, value, type, imageUrl, timeLimit } = data;
 
   // Zelle markieren
   const cell = boardEl?.querySelector(`[data-category-index="${categoryIndex}"][data-question-index="${questionIndex}"]`);
-  if (cell) cell.classList.add("board-cell-active");
+  if (cell) {
+    cell.classList.add("board-cell-active");
+  }
 
   // Overlay öffnen
   if (questionPointsInnerEl) {
@@ -585,9 +642,12 @@ socket.on("spectator-question-opened", (data) => {
   }
 
   if (questionTextEl) questionTextEl.textContent = question || "";
-  if (answerTextEl) { answerTextEl.textContent = ""; answerTextEl.classList.add("hidden"); }
+  if (answerTextEl) {
+    answerTextEl.textContent = "";
+    answerTextEl.classList.add("hidden");
+  }
 
-  // Bild
+  // Bild anzeigen
   if (type === "image" && imageUrl && qImageEl && qMediaEl) {
     qImageEl.src = imageUrl;
     qMediaEl.classList.remove("hidden");
@@ -596,9 +656,13 @@ socket.on("spectator-question-opened", (data) => {
     if (qImageEl) qImageEl.src = "";
   }
 
-  // Estimate-Klasse
+  // Estimate-Klasse setzen
   if (questionCardEl) {
-    questionCardEl.classList.toggle("is-estimate-question", type === "estimate");
+    if (type === "estimate") {
+      questionCardEl.classList.add("is-estimate-question");
+    } else {
+      questionCardEl.classList.remove("is-estimate-question");
+    }
   }
 
   // Reset states
@@ -614,16 +678,21 @@ socket.on("spectator-question-opened", (data) => {
 });
 
 socket.on("spectator-answer-shown", (data) => {
+  // Host hat Antwort gezeigt
   const { answer } = data;
+
   if (answerTextEl) {
     answerTextEl.textContent = answer || "";
     answerTextEl.classList.remove("hidden");
   }
+
+  // Bild-Blur aufheben
   document.body.classList.remove("is-buzz-locked");
   closeLightbox();
 });
 
 socket.on("spectator-question-closed", (data) => {
+  // Host hat Frage geschlossen
   const { categoryIndex, questionIndex } = data;
 
   // Zelle als benutzt markieren
@@ -664,8 +733,9 @@ socket.on("spectator-round-changed", ({ round }) => {
   currentRound = round;
   usedCells.clear();
   buildBoard();
+
   if (turnIndicatorEl) {
-    turnIndicatorEl.textContent = round >= 2 ? "Runde 2 (x2)" : "Runde 1";
+    turnIndicatorEl.textContent = round >= 2 ? "Runde 2 (x2) – Warte auf Spieler…" : "Warte auf Spieler…";
   }
 });
 
@@ -694,8 +764,10 @@ socket.on("estimate-all-answered", () => {
   closeEstimateModal();
 });
 
+// Estimate Reveal (read-only für Spectator)
 socket.on("spectator-estimate-reveal", ({ answers }) => {
   if (!estimateRevealContainer || !estimateRevealList) return;
+
   estimateRevealList.innerHTML = "";
 
   if (answers && Array.isArray(answers)) {
@@ -709,7 +781,10 @@ socket.on("spectator-estimate-reveal", ({ answers }) => {
         row.textContent = `${ans.name}: ${ans.value}`;
       }
 
-      if (ans.isWinner) row.classList.add("estimate-winner-row");
+      if (ans.isWinner) {
+        row.classList.add("estimate-winner-row");
+      }
+
       estimateRevealList.appendChild(row);
     });
   }
@@ -725,31 +800,29 @@ socket.on("game-ended", () => {
   isLocked = false;
 
   if (joinOverlay) joinOverlay.classList.remove("hidden");
-  if (spectatorPage) spectatorPage.classList.add("hidden");
-  if (buzzerWrap) buzzerWrap.classList.add("hidden");
+  if (mainPage) mainPage.classList.add("hidden");
 
-  buzzBtn.disabled = true;
+  updateBuzzerIndicator();
   setJoinStatus("Spiel beendet. Du kannst einem neuen Raum beitreten.");
-  buzzStatus.textContent = "🦆 Buzzer gesperrt";
   closeEstimateModal();
+
   if (overlayEl) overlayEl.classList.add("hidden");
 });
 
 socket.on("disconnect", () => {
   buzzingEnabled = false;
-  buzzBtn.disabled = true;
-  buzzStatus.textContent = "⚠️ Verbindung getrennt...";
+  updateBuzzerIndicator();
   closeEstimateModal();
 });
 
 // Reconnect
 socket.on("connect", () => {
   const { room, name } = loadJoinFromLocalStorage();
+
   if (roomCodeInput && room) roomCodeInput.value = room;
   if (nameInput && name) nameInput.value = name;
 
-  // Auto-rejoin wenn wir schon mal verbunden waren
-  if (room && name && joined) {
+  if (room && name) {
     doJoin(room, name, { silent: true });
   }
 });
@@ -765,7 +838,9 @@ socket.on("connect", () => {
   buildBoard();
   renderPlayersBar();
 
-  if (turnIndicatorEl) turnIndicatorEl.textContent = "Warte auf Host…";
+  if (turnIndicatorEl) {
+    turnIndicatorEl.textContent = "Warte auf Spieler…";
+  }
 
   // Decimal Input Setup
   if (estimateInput) {
