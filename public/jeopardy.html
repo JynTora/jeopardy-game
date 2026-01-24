@@ -2,25 +2,16 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <title>JEOPARDY</title>
+    <title>JEOPARDY – Spielmodus</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-
     <link rel="manifest" href="/manifest.json">
-<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
-    <!-- Dein globales CSS -->
+    <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
     <link rel="stylesheet" href="/style.css" />
-
     <style>
-      /* Kleines Basis-Layout, kannst du später anpassen oder löschen */
       body {
         margin: 0;
         min-height: 100vh;
-        font-family:
-          system-ui,
-          -apple-system,
-          BlinkMacSystemFont,
-          "Segoe UI",
-          sans-serif;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -28,86 +19,165 @@
         color: #f9fafb;
       }
 
-      .lobby {
-        background: rgba(15, 23, 42, 0.9);
-        border-radius: 24px;
-        padding: 32px 40px;
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
-        max-width: 480px;
-        width: 90%;
+      .mode-select {
+        background: rgba(15, 23, 42, 0.95);
+        border-radius: 28px;
+        padding: 36px 44px;
+        box-shadow: 0 28px 70px rgba(0, 0, 0, 0.7), 0 0 40px rgba(59, 130, 246, 0.15);
+        max-width: 580px;
+        width: 92%;
         text-align: center;
+        border: 1px solid rgba(148, 163, 184, 0.3);
       }
 
-      .lobby h1 {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
+      .mode-select h1 {
+        font-size: 2.4rem;
+        margin: 0 0 8px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        text-shadow: 0 0 30px rgba(248, 250, 252, 0.5);
       }
 
-      .lobby p {
-        margin: 0 0 1.5rem;
-        opacity: 0.8;
+      .mode-select .subtitle {
+        margin: 0 0 28px;
+        font-size: 1rem;
+        color: #9ca3af;
       }
 
-      .card-row {
+      .mode-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .mode-card {
         display: flex;
         flex-direction: column;
+        align-items: center;
+        justify-content: center;
         gap: 12px;
+        padding: 28px 20px;
+        border-radius: 20px;
+        text-decoration: none;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
       }
 
-      .card-row a {
-        display: block;
-        padding: 14px 18px;
+      .mode-card:hover { transform: translateY(-4px); }
+
+      .mode-card.local {
+        background: linear-gradient(135deg, #22c55e, #15803d);
+        box-shadow: 0 0 30px rgba(34, 197, 94, 0.5), 0 16px 40px rgba(0, 0, 0, 0.5);
+      }
+      .mode-card.local:hover {
+        box-shadow: 0 0 45px rgba(34, 197, 94, 0.7), 0 20px 50px rgba(0, 0, 0, 0.6);
+        border-color: rgba(134, 239, 172, 0.5);
+      }
+
+      .mode-card.online {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        box-shadow: 0 0 30px rgba(59, 130, 246, 0.5), 0 16px 40px rgba(0, 0, 0, 0.5);
+      }
+      .mode-card.online:hover {
+        box-shadow: 0 0 45px rgba(59, 130, 246, 0.7), 0 20px 50px rgba(0, 0, 0, 0.6);
+        border-color: rgba(147, 197, 253, 0.5);
+      }
+
+      .mode-icon { font-size: 2.8rem; }
+      .mode-title {
+        font-size: 1.3rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #f9fafb;
+      }
+      .mode-desc {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.4;
+      }
+
+      .mode-footer {
+        margin-top: 8px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(148, 163, 184, 0.2);
+      }
+      .mode-footer p {
+        margin: 0 0 12px;
+        font-size: 0.9rem;
+        color: #9ca3af;
+      }
+
+      .host-link {
+        display: inline-block;
+        padding: 10px 24px;
         border-radius: 999px;
         text-decoration: none;
-        font-weight: 600;
-        letter-spacing: 0.03em;
-        border: 1px solid rgba(148, 163, 184, 0.6);
-        background: radial-gradient(circle at top left, #1d4ed8, #0f172a);
-        color: #f9fafb;
-        transition:
-          transform 0.12s ease,
-          box-shadow 0.12s ease,
-          background 0.12s ease;
+        font-weight: 700;
+        font-size: 0.85rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border: 1px solid rgba(251, 146, 60, 0.7);
+        background: rgba(251, 146, 60, 0.15);
+        color: #fed7aa;
+        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
       }
-
-      .card-row a:hover {
+      .host-link:hover {
+        background: rgba(251, 146, 60, 0.25);
+        box-shadow: 0 0 20px rgba(251, 146, 60, 0.4);
         transform: translateY(-1px);
-        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.7);
-        background: radial-gradient(circle at top left, #2563eb, #020617);
       }
 
-      .muted {
-        margin-top: 1rem;
-        font-size: 0.8rem;
-        opacity: 0.6;
+      @media (max-width: 520px) {
+        .mode-grid { grid-template-columns: 1fr; }
+        .mode-select { padding: 28px 24px; }
+        .mode-select h1 { font-size: 1.8rem; }
       }
     </style>
   </head>
   <body>
-    <main class="lobby">
-      <h1>JEOPARDY</h1>
-      <p>Wähle, ob du der Host bist oder als Spieler beitrittst.</p>
+    <main class="mode-select">
+      <h1>🎯 JEOPARDY</h1>
+      <p class="subtitle">Wie möchtest du spielen?</p>
 
-      <div class="card-row">
-        <a href="/host.html" data-transition-link
-          >🎛️ Neues Spiel als Host starten</a
-        >
-        <a href="/player.html" data-transition-link>🎮 Als Spieler beitreten</a>
+      <div class="mode-grid">
+        <a href="/player.html" class="mode-card local" data-transition-link>
+          <span class="mode-icon">🏠</span>
+          <span class="mode-title">Lokal</span>
+          <span class="mode-desc">
+            Alle im selben Raum.<br>
+            Host zeigt Board auf TV,<br>
+            Spieler buzzern am Handy.
+          </span>
+        </a>
+
+        <a href="/spectator.html" class="mode-card online" data-transition-link>
+          <span class="mode-icon">🌐</span>
+          <span class="mode-title">Online</span>
+          <span class="mode-desc">
+            Perfekt für Discord!<br>
+            Jeder sieht das Board auf<br>
+            seinem eigenen Bildschirm.
+          </span>
+        </a>
       </div>
 
-      <p class="muted">
-        Host erstellt einen Raumcode, Spieler treten mit dem Code bei.
-      </p>
+      <div class="mode-footer">
+        <p>Bist du der Spielleiter?</p>
+        <a href="/host.html" class="host-link" data-transition-link>
+          🎛️ Host-Panel öffnen
+        </a>
+      </div>
     </main>
 
     <script>
       function toggleFullscreen() {
         if (!document.fullscreenElement) {
           document.documentElement.requestFullscreen();
-        } else {
-          if (document.exitFullscreen) {
-            document.exitFullscreen();
-          }
+        } else if (document.exitFullscreen) {
+          document.exitFullscreen();
         }
       }
     </script>
