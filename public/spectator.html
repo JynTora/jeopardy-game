@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Jeopardy – Online Modus</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="manifest" href="/manifest.json">
+    <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
+    <link rel="stylesheet" href="style.css" />
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="/spectator.js"></script>
+  </head>
+
+  <body class="jt-body spectator-body">
+    <!-- Screen-Flash für richtig/falsch -->
+    <div id="screenFlash" class="screen-flash"></div>
+
+    <!-- ===========================
+         JOIN OVERLAY (vor dem Beitreten)
+         =========================== -->
+    <div id="spectatorJoinOverlay" class="spectator-join-overlay">
+      <div class="spectator-join-card">
+        <div class="spectator-join-icon">🌐</div>
+        <h2 class="spectator-join-title">Online Modus</h2>
+        <p class="spectator-join-desc">Tritt einem Spiel bei, um das Board zu sehen und mitzuspielen.</p>
+        
+        <div class="spectator-join-form">
+          <input
+            id="spectatorRoomCode"
+            class="spectator-input"
+            type="text"
+            placeholder="Raumcode (z.B. X59XC)"
+            maxlength="10"
+            autocomplete="off"
+          />
+          <input
+            id="spectatorName"
+            class="spectator-input"
+            type="text"
+            placeholder="Dein Name"
+            maxlength="20"
+            autocomplete="off"
+          />
+          <button id="spectatorJoinBtn" class="spectator-join-btn">
+            🚀 Beitreten
+          </button>
+        </div>
+        <div id="spectatorJoinStatus" class="spectator-join-status"></div>
+      </div>
+    </div>
+
+    <!-- ===========================
+         BUZZER (unten rechts, nach Beitritt)
+         =========================== -->
+    <div id="spectatorBuzzerWrap" class="spectator-buzzer-wrap hidden">
+      <button id="spectatorBuzzBtn" class="spectator-buzz-btn" disabled>
+        <span class="buzz-text">BUZZ</span>
+        <span class="buzz-hint">oder SPACE drücken</span>
+      </button>
+      <div id="spectatorBuzzStatus" class="spectator-buzz-status">🦆 Buzzer gesperrt</div>
+    </div>
+
+    <!-- ===========================
+         MAIN PAGE (Board)
+         =========================== -->
+    <div id="spectatorPage" class="jt-page spectator-page hidden">
+      <!-- Logo oben -->
+      <header class="jt-header">
+        <img src="/images/jt-logo.png" alt="Jyn Tora Jeopardy" class="jt-logo" />
+      </header>
+
+      <!-- Turn-Bar oben rechts -->
+      <div class="turn-bar">
+        <div id="turnIndicator" class="turn-indicator">Warte auf Host…</div>
+      </div>
+
+      <!-- Ambient Background -->
+      <div class="board-ambient-layer">
+        <span class="ambient-orb orb-1"></span>
+        <span class="ambient-orb orb-2"></span>
+        <span class="ambient-orb orb-3"></span>
+        <span class="ambient-orb orb-4"></span>
+        <span class="ambient-orb orb-5"></span>
+        <span class="ambient-orb orb-6"></span>
+        <span class="ambient-rect rect-1"></span>
+        <span class="ambient-rect rect-2"></span>
+        <span class="ambient-rect rect-3"></span>
+        <span class="ambient-rect rect-4"></span>
+      </div>
+
+      <main class="jt-main">
+        <!-- Board Grid (read-only) -->
+        <div id="board" class="board-grid spectator-board"></div>
+      </main>
+
+      <!-- Spieler-Leiste unten -->
+      <div id="players-bar" class="players-bar"></div>
+    </div>
+
+    <!-- ===========================
+         Fragen-Overlay (read-only)
+         =========================== -->
+    <div id="questionOverlay" class="question-overlay hidden">
+      <div id="questionCard" class="question-card spectator-question-card">
+        <div class="question-toprow">
+          <div id="questionPoints" class="question-points">
+            <span class="points-inner"></span>
+          </div>
+          <div id="estimateBoardTimer" class="estimate-board-timer hidden">⏱ –</div>
+        </div>
+
+        <div id="questionText" class="question-text"></div>
+
+        <!-- Bildfrage -->
+        <div id="qMedia" class="q-media hidden">
+          <img id="qImage" class="q-image" alt="" />
+          <div class="q-hint">Klicken zum Vergrößern</div>
+        </div>
+
+        <div id="answerText" class="answer-text hidden"></div>
+
+        <!-- Schätzfragen Reveal -->
+        <div id="estimateRevealContainer" class="estimate-reveal hidden">
+          <h3 class="estimate-reveal-title">Schätzantworten</h3>
+          <div id="estimateRevealList" class="estimate-reveal-list"></div>
+        </div>
+
+        <!-- Gebuzzerter Spieler -->
+        <div id="buzzInfo" class="buzz-info hidden"></div>
+      </div>
+    </div>
+
+    <!-- ===========================
+         Schätzfrage-Eingabe Modal
+         =========================== -->
+    <div id="estimateModal" class="estimate-modal hidden">
+      <div class="estimate-card">
+        <div class="estimate-header">
+          <div class="estimate-label">📊 Schätzfrage</div>
+          <div class="estimate-timer">⏱ <span id="estimateTimer">–</span></div>
+        </div>
+        <div id="estimateQuestionText" class="estimate-question-text"></div>
+        <input
+          id="estimateInput"
+          class="estimate-input"
+          type="text"
+          inputmode="decimal"
+          pattern="[0-9.,]*"
+          placeholder="Dein Tipp (z.B. 13,8)"
+        />
+        <button id="sendEstimateBtn" class="estimate-send-btn">
+          ✅ Antwort senden
+        </button>
+        <div id="estimateStatus" class="estimate-status"></div>
+      </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox hidden">
+      <button id="lightboxClose" class="lightbox-close" aria-label="Close">×</button>
+      <img id="lightboxImg" class="lightbox-img" alt="" />
+    </div>
+
+    <!-- Fullscreen Button -->
+    <script>
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    </script>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+    <script src="/transition.js"></script>
+  </body>
+</html>
