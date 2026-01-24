@@ -1,4 +1,6 @@
 // server/index.js
+// Jeopardy Server - MIT SPECTATOR/ONLINE-MODUS SUPPORT
+
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
@@ -27,29 +29,28 @@ function createRoomCode() {
 }
 
 function normRoomCode(roomCode) {
-  return String(roomCode || "")
-    .trim()
-    .toUpperCase();
+  return String(roomCode || "").trim().toUpperCase();
 }
 
-// Stabiler Player-Key aus Name
 function playerKeyFromName(name) {
-  return String(name || "")
-    .trim()
-    .toLowerCase();
+  return String(name || "").trim().toLowerCase();
 }
 
-// Players an alle im Raum senden (inkl. connected)
 function emitPlayers(roomCode) {
   const game = games[roomCode];
   if (!game) return;
   io.to(roomCode).emit("players-updated", game.players);
 }
 
-// Helper: immer sicherstellen, dass lockedPlayers existiert
 function ensureLockedPlayers(game) {
   if (!game.lockedPlayers || !(game.lockedPlayers instanceof Set)) {
     game.lockedPlayers = new Set();
+  }
+}
+
+function ensureSpectators(game) {
+  if (!game.spectators || !(game.spectators instanceof Set)) {
+    game.spectators = new Set();
   }
 }
 
@@ -68,27 +69,19 @@ io.on("connection", (socket) => {
 
     games[roomCode] = {
       hostId: socket.id,
-
-      // playerId -> { name, score, connected, socketId }
       players: {},
-
-      // socket.id -> playerId (für Disconnect/Buzz/Estimate)
       socketToPlayerId: {},
-
       buzzingEnabled: false,
-
-      // speichert playerId (nicht socketId)
       firstBuzzId: null,
-
-      // ✅ Server-seitige Locks pro Frage
       lockedPlayers: new Set(),
-
+      spectators: new Set(),
       estimateRound: null,
+      currentRound: 1,
+      currentQuestion: null, // Für Late-Joiner
     };
 
     socket.join(roomCode);
     console.log("Game erstellt:", roomCode);
-
     callback?.({ success: true, roomCode });
   });
 
@@ -99,36 +92,26 @@ io.on("connection", (socket) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
 
-    if (!game)
-      return callback?.({ success: false, error: "Room nicht gefunden" });
+    if (!game) return callback?.({ success: false, error: "Room nicht gefunden" });
 
     ensureLockedPlayers(game);
+    ensureSpectators(game);
 
     const cleanName = String(name || "").trim();
-    if (!cleanName)
-      return callback?.({
-        success: false,
-        error: "Bitte einen Namen eingeben",
-      });
+    if (!cleanName) return callback?.({ success: false, error: "Bitte einen Namen eingeben" });
 
     const playerId = playerKeyFromName(cleanName);
 
-    // Reconnect: wenn Player schon existiert -> Score behalten
+    // Reconnect: Score behalten
     if (game.players[playerId]) {
       const prevSocketId = game.players[playerId].socketId;
-
-      // alte socket map entfernen (falls vorhanden)
       if (prevSocketId && game.socketToPlayerId[prevSocketId] === playerId) {
         delete game.socketToPlayerId[prevSocketId];
       }
-
       game.players[playerId].connected = true;
       game.players[playerId].socketId = socket.id;
-
-      // Name aktualisieren (Groß-/Kleinschreibung)
       game.players[playerId].name = cleanName;
     } else {
-      // neu
       game.players[playerId] = {
         name: cleanName,
         score: 0,
@@ -137,7 +120,6 @@ io.on("connection", (socket) => {
       };
     }
 
-    // mapping + socket.data setzen (WICHTIG für disconnect)
     game.socketToPlayerId[socket.id] = playerId;
     socket.data.roomCode = rc;
     socket.data.playerId = playerId;
@@ -145,16 +127,42 @@ io.on("connection", (socket) => {
     socket.join(rc);
     emitPlayers(rc);
 
-    // ✅ Wenn Player gerade gelockt ist (Frage läuft), sofort an Client melden
     if (game.lockedPlayers.has(playerId)) {
       socket.emit("you-are-locked");
     }
 
     callback?.({ success: true, playerId });
+    console.log(`Player "${cleanName}" ist Room ${rc} beigetreten (playerId=${playerId})`);
+  });
 
-    console.log(
-      `Player "${cleanName}" ist Room ${rc} beigetreten (playerId=${playerId})`,
-    );
+  // --------------------------------
+  // Spectator joint Raum (für Board-Sync)
+  // --------------------------------
+  socket.on("spectator-join-room", ({ roomCode }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) {
+      console.log("Spectator wollte unbekannten Raum joinen:", rc);
+      return;
+    }
+
+    ensureSpectators(game);
+    game.spectators.add(socket.id);
+    socket.data.isSpectator = true;
+
+    socket.join(rc);
+    console.log("Spectator verbunden mit Raum:", rc);
+
+    // Aktuelle Runde senden
+    socket.emit("spectator-round-changed", { round: game.currentRound || 1 });
+
+    // Falls gerade eine Frage offen ist, an Late-Joiner senden
+    if (game.currentQuestion) {
+      socket.emit("spectator-question-opened", game.currentQuestion);
+    }
+
+    socket.emit("players-updated", game.players);
+    socket.emit("buzzing-status", { enabled: game.buzzingEnabled });
   });
 
   // --------------------------------
@@ -169,12 +177,115 @@ io.on("connection", (socket) => {
     }
 
     ensureLockedPlayers(game);
+    ensureSpectators(game);
 
     socket.join(rc);
+    socket.data.roomCode = rc;
+    socket.data.isBoard = true;
     console.log("Board verbunden mit Raum:", rc);
 
     socket.emit("players-updated", game.players);
     socket.emit("buzzing-status", { enabled: game.buzzingEnabled });
+  });
+
+  // --------------------------------
+  // Board öffnet Frage -> an Spectators senden
+  // --------------------------------
+  socket.on("board-question-opened", ({ roomCode, categoryIndex, questionIndex, question, answer, value, type, imageUrl, timeLimit }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    game.currentQuestion = {
+      categoryIndex,
+      questionIndex,
+      question,
+      value,
+      type,
+      imageUrl,
+      timeLimit,
+    };
+
+    io.to(rc).emit("spectator-question-opened", game.currentQuestion);
+  });
+
+  // --------------------------------
+  // Board zeigt Antwort
+  // --------------------------------
+  socket.on("board-answer-shown", ({ roomCode, answer }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    io.to(rc).emit("spectator-answer-shown", { answer });
+  });
+
+  // --------------------------------
+  // Board schliesst Frage
+  // --------------------------------
+  socket.on("board-question-closed", ({ roomCode, categoryIndex, questionIndex }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    game.currentQuestion = null;
+    io.to(rc).emit("spectator-question-closed", { categoryIndex, questionIndex });
+  });
+
+  // --------------------------------
+  // Board: Richtig
+  // --------------------------------
+  socket.on("board-correct", ({ roomCode }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    io.to(rc).emit("spectator-correct");
+  });
+
+  // --------------------------------
+  // Board: Falsch
+  // --------------------------------
+  socket.on("board-wrong", ({ roomCode }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    io.to(rc).emit("spectator-wrong");
+  });
+
+  // --------------------------------
+  // Runde wechseln
+  // --------------------------------
+  socket.on("board-round-changed", ({ roomCode, round }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    game.currentRound = round;
+    io.to(rc).emit("spectator-round-changed", { round });
+  });
+
+  // --------------------------------
+  // Turn Update
+  // --------------------------------
+  socket.on("board-turn-update", ({ roomCode, playerName }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    io.to(rc).emit("spectator-turn-update", { playerName });
+  });
+
+  // --------------------------------
+  // Estimate Reveal an Spectators
+  // --------------------------------
+  socket.on("board-estimate-reveal", ({ roomCode, answers }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    io.to(rc).emit("spectator-estimate-reveal", { answers });
   });
 
   // -----------------------------
@@ -192,7 +303,6 @@ io.on("connection", (socket) => {
     io.to(rc).emit("buzzing-status", { enabled: game.buzzingEnabled });
   });
 
-  // Board will Buzz wieder freigeben (z.B. nach Falsch)
   socket.on("board-enable-buzz", ({ roomCode }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
@@ -203,10 +313,9 @@ io.on("connection", (socket) => {
     game.buzzingEnabled = true;
     game.firstBuzzId = null;
 
-    // 1️⃣ Buzz ist wieder offen
     io.to(rc).emit("buzzing-status", { enabled: true });
 
-    // 2️⃣ ABER: gelockte Spieler explizit erneut sperren (Client-State!)
+    // Gelockte Spieler erneut sperren
     for (const playerId of game.lockedPlayers) {
       const socketId = game.players[playerId]?.socketId;
       if (socketId) {
@@ -215,7 +324,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // Spieler drückt Buzzer
   socket.on("player-buzz", ({ roomCode }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
@@ -223,15 +331,12 @@ io.on("connection", (socket) => {
 
     ensureLockedPlayers(game);
 
-    // wenn schon jemand gebuzzert hat -> ignorieren
     if (game.firstBuzzId) return;
 
     const playerId = game.socketToPlayerId[socket.id] || socket.data.playerId;
     if (!playerId) return;
 
-    // ✅ wenn gelockt -> darf NICHT buzzern
     if (game.lockedPlayers.has(playerId)) {
-      // optional: nochmal an Client schicken, falls UI out-of-sync
       socket.emit("you-are-locked");
       return;
     }
@@ -272,36 +377,29 @@ io.on("connection", (socket) => {
     }
   });
 
-  // ✅ Board sperrt einen Player für die AKTUELLE Frage
   socket.on("board-lock-player", ({ roomCode, playerId }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
     if (!game) return;
 
     ensureLockedPlayers(game);
-
     if (!playerId) return;
 
     game.lockedPlayers.add(playerId);
-
-    // 1) Board/alle: optional UI-Info
     io.to(rc).emit("player-locked", { playerId });
 
-    // 2) NUR an den betroffenen Player: "du bist gesperrt"
     const targetSocketId = game.players?.[playerId]?.socketId;
     if (targetSocketId) {
       io.to(targetSocketId).emit("you-are-locked");
     }
   });
 
-  // ✅ Board setzt Locks zurück (wenn Frage geschlossen wird)
   socket.on("board-clear-locks", ({ roomCode }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
     if (!game) return;
 
     ensureLockedPlayers(game);
-
     game.lockedPlayers.clear();
     io.to(rc).emit("round-reset");
   });
@@ -314,23 +412,18 @@ io.on("connection", (socket) => {
     const game = games[rc];
     if (!game) return;
 
-    // nur CONNECTED Spieler zählen
     const connectedIds = Object.entries(game.players)
       .filter(([, p]) => p && p.connected !== false)
       .map(([pid]) => pid);
 
     game.estimateRound = {
       active: true,
-      answers: {}, // playerId -> { name, value, noAnswer }
+      answers: {},
       totalPlayers: connectedIds.length,
     };
 
-    io.to(rc).emit("estimate-question-started", {
-      question,
-      timeLimit,
-    });
+    io.to(rc).emit("estimate-question-started", { question, timeLimit });
 
-    // Edge case: 0 connected
     if (game.estimateRound.totalPlayers === 0) {
       game.estimateRound.active = false;
       io.to(rc).emit("estimate-all-answered");
@@ -388,7 +481,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log("Client getrennt:", socket.id);
 
-    // 1) Wenn Host weg -> Spiel beenden
+    // Host weg -> Spiel beenden
     for (const [rc, game] of Object.entries(games)) {
       if (game.hostId === socket.id) {
         io.to(rc).emit("game-ended");
@@ -397,7 +490,15 @@ io.on("connection", (socket) => {
       }
     }
 
-    // 2) Primär über socket.data (sauberer Weg)
+    // Spectator entfernen
+    for (const [rc, game] of Object.entries(games)) {
+      ensureSpectators(game);
+      if (game.spectators.has(socket.id)) {
+        game.spectators.delete(socket.id);
+      }
+    }
+
+    // Player disconnect
     const rc = socket.data.roomCode;
     const pid = socket.data.playerId;
 
@@ -416,7 +517,7 @@ io.on("connection", (socket) => {
       }
     }
 
-    // 3) Fallback: über Mapping / Scan (falls socket.data leer ist)
+    // Fallback
     for (const [roomCode, game] of Object.entries(games)) {
       const playerId = game.socketToPlayerId?.[socket.id];
       if (!playerId) continue;
