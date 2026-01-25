@@ -15,8 +15,9 @@ const hostPassError = document.getElementById("hostPassError");
 const hostPassOk = document.getElementById("hostPassOk");
 const hostPassCancel = document.getElementById("hostPassCancel");
 
-// NEU: Board öffnen Button
+// NEU: Board öffnen Buttons
 const openBoardBtn = document.getElementById("openBoardBtn");
+const openBoardCamBtn = document.getElementById("openBoardCamBtn");
 
 let currentRoomCode = null;
 let players = {};
@@ -130,9 +131,12 @@ function createGameWithPassword(passwordRaw) {
     currentRoomCode = res.roomCode;
     if (roomCodeEl) roomCodeEl.textContent = currentRoomCode;
 
-    // NEU: Board öffnen Button aktivieren
+    // NEU: Board öffnen Buttons aktivieren
     if (openBoardBtn) {
       openBoardBtn.disabled = false;
+    }
+    if (openBoardCamBtn) {
+      openBoardCamBtn.disabled = false;
     }
 
     try {
@@ -152,6 +156,18 @@ if (openBoardBtn) {
     }
     const boardUrl = `/board.html?room=${encodeURIComponent(currentRoomCode)}`;
     window.open(boardUrl, "_blank");
+  });
+}
+
+// NEU: Board + Kamera öffnen Button Click Handler
+if (openBoardCamBtn) {
+  openBoardCamBtn.addEventListener("click", () => {
+    if (!currentRoomCode) {
+      alert("Bitte zuerst ein Spiel erstellen.");
+      return;
+    }
+    const boardCamUrl = `/board-cam.html?room=${encodeURIComponent(currentRoomCode)}`;
+    window.open(boardCamUrl, "_blank");
   });
 }
 
