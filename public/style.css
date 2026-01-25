@@ -3546,3 +3546,297 @@ body.is-buzz-locked #qMedia {
     font-size: 0.65rem;
   }
 }
+/* ═══════════════════════════════════════════════════════════
+   CAM-MODE CSS - Am Ende von style.css einfügen
+   ═══════════════════════════════════════════════════════════ */
+
+/* Player Video in Pills */
+.player-video-wrap {
+  width: 100%;
+  aspect-ratio: 4/3;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(30, 41, 59, 0.8);
+  position: relative;
+}
+
+.player-video-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: rgba(148, 163, 184, 0.5);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
+}
+
+.player-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  position: absolute;
+  inset: 0;
+}
+
+.player-video.hidden {
+  display: none;
+}
+
+.player-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-align: center;
+}
+
+/* Eigener Spieler hervorgehoben */
+.player-pill.is-self {
+  border: 2px solid rgba(139, 92, 246, 0.7);
+  box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+  position: relative;
+}
+
+.player-pill.is-self .player-video-wrap {
+  border: 2px solid rgba(139, 92, 246, 0.6);
+}
+
+.player-pill.is-self::after {
+  content: "DU";
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(139, 92, 246, 0.9);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: #fff;
+  z-index: 5;
+}
+
+/* Active Player Video Border */
+.player-pill.player-pill-active .player-video-wrap,
+.player-pill.player-pill-turn-active .player-video-wrap {
+  border: 2px solid #22c55e;
+  box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+}
+
+/* Host Cam (oben links auf Board) */
+.host-cam-wrap {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 7500;
+  width: 160px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.95);
+  border: 2px solid rgba(251, 146, 60, 0.6);
+  box-shadow: 0 6px 25px rgba(0, 0, 0, 0.5), 0 0 20px rgba(251, 146, 60, 0.2);
+}
+
+.host-cam {
+  width: 100%;
+  aspect-ratio: 4/3;
+  object-fit: cover;
+  transform: scaleX(-1);
+  display: block;
+}
+
+.host-cam-label {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(251, 146, 60, 0.9);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: #fff;
+  text-transform: uppercase;
+}
+
+.host-cam-toggle {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.8rem;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.15s;
+}
+
+.host-cam-toggle:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+/* Cam-Mode: Kompaktere Layouts */
+.board-cam-mode .board-grid,
+.spectator-cam-mode .board-grid {
+  gap: 8px;
+  padding: 10px 20px;
+}
+
+.board-cam-mode .board-cell,
+.spectator-cam-mode .board-cell {
+  min-height: 52px;
+  font-size: 1.4rem;
+}
+
+.board-cam-mode .board-category,
+.spectator-cam-mode .board-category {
+  font-size: 0.85rem;
+  padding: 10px 8px;
+  min-height: 50px;
+}
+
+.board-cam-mode .jt-header,
+.spectator-cam-mode .jt-header {
+  padding: 8px 0;
+}
+
+.board-cam-mode .jt-logo,
+.spectator-cam-mode .jt-logo {
+  max-height: 60px;
+}
+
+/* Spieler-Leiste für Cam-Mode: ZENTRIERT */
+.board-cam-mode .players-bar,
+.spectator-cam-mode .players-bar {
+  padding: 12px 30px;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: nowrap;
+  min-height: 130px;
+}
+
+.board-cam-mode .player-pill,
+.spectator-cam-mode .player-pill {
+  flex-direction: column;
+  padding: 8px;
+  min-width: 130px;
+  max-width: 180px;
+  flex: 1 1 auto;
+  border-radius: 14px;
+  gap: 6px;
+}
+
+.board-cam-mode .player-pill .player-name,
+.spectator-cam-mode .player-pill .player-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.board-cam-mode .player-pill .player-score,
+.spectator-cam-mode .player-pill .player-score {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+/* Buzzer Button Position für Cam-Mode */
+.board-cam-mode .board-buzz-btn {
+  bottom: 150px;
+}
+
+/* Cam Preview im Join Screen */
+.cam-preview-wrap {
+  width: 100%;
+  max-width: 220px;
+  aspect-ratio: 4/3;
+  margin: 0 auto 16px auto;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.9);
+  border: 2px solid rgba(139, 92, 246, 0.4);
+  position: relative;
+}
+
+.cam-preview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.cam-preview.active {
+  opacity: 1;
+}
+
+.cam-preview-status {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.9);
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+
+/* Join Card für Cam */
+.cam-join-card {
+  border-color: rgba(139, 92, 246, 0.4) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 30px rgba(139, 92, 246, 0.15) !important;
+}
+
+.cam-join-card .spectator-join-title {
+  color: #a78bfa;
+}
+
+.cam-join-btn {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6) !important;
+}
+
+.cam-join-btn:hover {
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5) !important;
+}
+
+.cam-fallback-link {
+  display: block;
+  margin-top: 14px;
+  font-size: 0.8rem;
+  color: #64748b;
+  text-decoration: none;
+}
+
+.cam-fallback-link:hover {
+  color: #94a3b8;
+  text-decoration: underline;
+}
+
+/* Responsive für Cam-Mode */
+@media (max-width: 768px) {
+  .host-cam-wrap {
+    width: 120px;
+    top: 8px;
+    left: 8px;
+  }
+
+  .board-cam-mode .player-pill,
+  .spectator-cam-mode .player-pill {
+    min-width: 100px;
+    max-width: 130px;
+  }
+
+  .board-cam-mode .players-bar,
+  .spectator-cam-mode .players-bar {
+    padding: 10px 15px;
+    gap: 10px;
+  }
+}
