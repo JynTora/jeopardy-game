@@ -191,28 +191,34 @@
       }
 
       /* ───────────────────────────────────────────────
-         BOARD ÖFFNEN BUTTON
+         BOARD ÖFFNEN BUTTONS
          ─────────────────────────────────────────────── */
       .host-board-link {
         margin-top: 14px;
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        gap: 5px;
+        gap: 6px;
+      }
+
+      .board-btn-row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
       }
 
       .open-board-btn {
-        padding: 10px 18px;
+        padding: 10px 16px;
         border-radius: 999px;
         border: 2px solid #3b82f6;
         background: linear-gradient(135deg, #1e40af, #3b82f6);
         color: #fff;
         font-weight: 700;
-        font-size: 0.85rem;
+        font-size: 0.8rem;
         cursor: pointer;
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
         letter-spacing: 0.03em;
         transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
       }
@@ -234,6 +240,17 @@
         background: linear-gradient(135deg, #334155, #475569);
       }
 
+      /* Kamera-Button: Lila/Pink */
+      .board-cam-btn {
+        border-color: #a855f7;
+        background: linear-gradient(135deg, #7c3aed, #a855f7);
+      }
+
+      .board-cam-btn:hover:not(:disabled) {
+        box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
+        background: linear-gradient(135deg, #8b5cf6, #c084fc);
+      }
+
       .board-link-hint {
         font-size: 0.7rem;
         color: #64748b;
@@ -251,12 +268,17 @@
         <div id="roomCode" class="room-code">-----</div>
         <div class="muted">Diesen Code gibst du deinen Spielern.</div>
 
-        <!-- NEU: Board öffnen Button -->
+        <!-- Board öffnen Buttons -->
         <div class="host-board-link">
-          <button id="openBoardBtn" class="open-board-btn" disabled>
-            📺 Board öffnen
-          </button>
-          <span class="board-link-hint">Öffnet das Spielfeld in neuem Tab</span>
+          <div class="board-btn-row">
+            <button id="openBoardBtn" class="open-board-btn" disabled>
+              📺 Board öffnen
+            </button>
+            <button id="openBoardCamBtn" class="open-board-btn board-cam-btn" disabled>
+              📹 Board + Kamera
+            </button>
+          </div>
+          <span class="board-link-hint">Für Streaming: Board + Kamera wählen</span>
         </div>
 
         <div style="margin-top: 16px" class="section-title">Buzzer</div>
