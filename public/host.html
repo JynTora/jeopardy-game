@@ -171,7 +171,7 @@
         text-shadow:
           0 0 18px rgba(255, 255, 255, 0.7),
           0 0 40px rgba(59, 130, 246, 0.7);
-        min-height: 2.8em; /* Platz reservieren, damit nichts springt */
+        min-height: 2.8em;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -189,6 +189,56 @@
         font-size: 0.75rem;
         opacity: 0.7;
       }
+
+      /* ───────────────────────────────────────────────
+         BOARD ÖFFNEN BUTTON
+         ─────────────────────────────────────────────── */
+      .host-board-link {
+        margin-top: 14px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+      }
+
+      .open-board-btn {
+        padding: 10px 18px;
+        border-radius: 999px;
+        border: 2px solid #3b82f6;
+        background: linear-gradient(135deg, #1e40af, #3b82f6);
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        letter-spacing: 0.03em;
+        transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+      }
+
+      .open-board-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
+        background: linear-gradient(135deg, #2563eb, #60a5fa);
+      }
+
+      .open-board-btn:active:not(:disabled) {
+        transform: scale(0.98);
+      }
+
+      .open-board-btn:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+        border-color: #475569;
+        background: linear-gradient(135deg, #334155, #475569);
+      }
+
+      .board-link-hint {
+        font-size: 0.7rem;
+        color: #64748b;
+        margin-left: 2px;
+      }
     </style>
   </head>
   <body>
@@ -200,6 +250,14 @@
         <div class="section-title">Raumcode</div>
         <div id="roomCode" class="room-code">-----</div>
         <div class="muted">Diesen Code gibst du deinen Spielern.</div>
+
+        <!-- NEU: Board öffnen Button -->
+        <div class="host-board-link">
+          <button id="openBoardBtn" class="open-board-btn" disabled>
+            📺 Board öffnen
+          </button>
+          <span class="board-link-hint">Öffnet das Spielfeld in neuem Tab</span>
+        </div>
 
         <div style="margin-top: 16px" class="section-title">Buzzer</div>
         <div class="buzz-controls">
@@ -246,36 +304,7 @@
     </script>
     <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
     <script src="/transition.js"></script>
-    <div id="hostPassModal" class="jt-modal hidden">
-      <div class="jt-modal-card">
-        <div class="jt-modal-title">Host-Passwort</div>
-        <div class="jt-modal-subtitle">
-          Bitte Passwort eingeben, um das Host-Panel zu öffnen.
-        </div>
 
-        <input
-          id="hostPassInput"
-          class="jt-modal-input"
-          type="password"
-          placeholder="Passwort…"
-        />
-
-        <div id="hostPassError" class="jt-modal-error"></div>
-
-        <div class="jt-modal-actions">
-          <button
-            id="hostPassCancel"
-            class="jt-modal-btn secondary"
-            type="button"
-          >
-            Abbrechen
-          </button>
-          <button id="hostPassOk" class="jt-modal-btn primary" type="button">
-            OK
-          </button>
-        </div>
-      </div>
-    </div>
     <!-- Host Passwort Modal -->
     <div id="hostPassModal" class="jt-modal hidden">
       <div class="jt-modal-card">
