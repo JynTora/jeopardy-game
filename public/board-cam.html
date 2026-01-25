@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Jeopardy – Board (Kamera)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="manifest" href="/manifest.json">
+    <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
+    <link rel="stylesheet" href="style.css" />
+
+    <script src="/socket.io/socket.io.js"></script>
+    <!-- Erst board.js laden (Hauptlogik), dann board-cam.js (Kamera-Erweiterung) -->
+    <script src="/board.js"></script>
+    <script defer src="/board-cam.js"></script>
+  </head>
+
+  <body class="jt-body board-cam-mode">
+    <!-- Screen-Flash für richtig/falsch -->
+    <div id="screenFlash" class="screen-flash"></div>
+
+    <!-- ===========================
+         HOST KAMERA (oben links)
+         =========================== -->
+    <div id="hostCamWrap" class="host-cam-wrap">
+      <video id="hostCam" class="host-cam" autoplay muted playsinline></video>
+      <div class="host-cam-label">SPIELLEITER</div>
+      <button id="hostCamToggle" class="host-cam-toggle">📹</button>
+    </div>
+
+    <!-- ===========================
+         MAIN PAGE (Board)
+         =========================== -->
+    <div class="jt-page" id="boardPage">
+      <!-- Logo oben mittig -->
+      <header class="jt-header">
+        <img
+          src="/images/jt-logo.png"
+          alt="Jyn Tora Jeopardy"
+          class="jt-logo"
+        />
+      </header>
+
+      <!-- Turn-Bar oben rechts -->
+      <div class="turn-bar">
+        <div id="turnIndicator" class="turn-indicator">Warte auf Spieler…</div>
+        <button id="startGameBtn" class="turn-start-btn">SPIEL STARTEN</button>
+      </div>
+
+      <!-- Ambient Background -->
+      <div class="board-ambient-layer">
+        <span class="ambient-orb orb-1"></span>
+        <span class="ambient-orb orb-2"></span>
+        <span class="ambient-orb orb-3"></span>
+        <span class="ambient-orb orb-4"></span>
+        <span class="ambient-orb orb-5"></span>
+        <span class="ambient-orb orb-6"></span>
+        <span class="ambient-rect rect-1"></span>
+        <span class="ambient-rect rect-2"></span>
+        <span class="ambient-rect rect-3"></span>
+        <span class="ambient-rect rect-4"></span>
+      </div>
+
+      <main class="jt-main">
+        <!-- Board Grid -->
+        <div id="board" class="board-grid"></div>
+      </main>
+
+      <!-- Spieler-Leiste unten MIT Video-Feeds -->
+      <div id="players-bar" class="players-bar players-bar-cam"></div>
+    </div>
+
+    <!-- ===========================
+         Fragen-Overlay
+         =========================== -->
+    <div id="questionOverlay" class="question-overlay hidden">
+      <div id="questionCard" class="question-card">
+        <div class="question-toprow">
+          <div id="questionPoints" class="question-points">
+            <span class="points-inner"></span>
+          </div>
+          <div id="estimateBoardTimer" class="estimate-board-timer hidden">
+            ⏱ –
+          </div>
+        </div>
+
+        <div id="questionText" class="question-text"></div>
+
+        <!-- Bildfrage -->
+        <div id="qMedia" class="q-media hidden">
+          <img id="qImage" class="q-image" alt="" />
+          <div class="q-hint">Klicken zum Vergrößern</div>
+        </div>
+
+        <div id="answerText" class="answer-text hidden"></div>
+
+        <!-- Schätzfragen Reveal -->
+        <div id="estimateRevealContainer" class="estimate-reveal hidden">
+          <h3 class="estimate-reveal-title">Schätzantworten</h3>
+          <div id="estimateRevealList" class="estimate-reveal-list"></div>
+          <div class="estimate-reveal-controls">
+            <button id="btnRevealNextEstimate" class="estimate-reveal-button primary">
+              Nächste Antwort aufdecken
+            </button>
+          </div>
+        </div>
+
+        <!-- Gebuzzerter Spieler -->
+        <div id="buzzInfo" class="buzz-info hidden"></div>
+
+        <!-- Action Buttons -->
+        <div class="question-actions">
+          <button id="showAnswerBtn">Antwort zeigen</button>
+          <button id="correctBtn">✔ Richtig</button>
+          <button id="wrongBtn">✖ Falsch</button>
+          <button id="closeQuestionBtn">Frage schliessen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Runden-Wechsel Overlay -->
+    <div id="roundSwitchOverlay" class="round-switch-overlay hidden">
+      <div class="round-switch-card">
+        <h2 class="round-switch-title">🎉 Runde 1 abgeschlossen!</h2>
+        <p class="round-switch-subtitle">
+          Bereit für Runde 2?<br>
+          Alle Punktwerte werden verdoppelt!
+        </p>
+        <button id="startRound2Btn" class="round-switch-btn">
+          Runde 2 starten (x2)
+        </button>
+      </div>
+    </div>
+
+    <!-- Final Podium -->
+    <div id="finalPodiumOverlay" class="final-podium-overlay hidden">
+      <div class="final-podium-card">
+        <h2 class="final-title">🏆 ENDERGEBNIS 🏆</h2>
+        <div id="podiumContainer" class="podium"></div>
+        <button id="backToMenuBtn" class="final-menu-btn">
+          Zurück zum Menü
+        </button>
+      </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox hidden">
+      <button id="lightboxClose" class="lightbox-close" aria-label="Close">×</button>
+      <img id="lightboxImg" class="lightbox-img" alt="" />
+    </div>
+
+    <!-- Buzzer Button (rechts unten, weil Host-Cam oben links) -->
+    <button id="boardBuzzBtn" class="board-buzz-btn">
+      BUZZER<br>FREI
+    </button>
+
+    <!-- Fullscreen Button -->
+    <script>
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          }
+        }
+      }
+    </script>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+    <script src="/transition.js"></script>
+  </body>
+</html>
