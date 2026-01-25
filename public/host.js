@@ -15,6 +15,9 @@ const hostPassError = document.getElementById("hostPassError");
 const hostPassOk = document.getElementById("hostPassOk");
 const hostPassCancel = document.getElementById("hostPassCancel");
 
+// NEU: Board öffnen Button
+const openBoardBtn = document.getElementById("openBoardBtn");
+
 let currentRoomCode = null;
 let players = {};
 
@@ -127,11 +130,28 @@ function createGameWithPassword(passwordRaw) {
     currentRoomCode = res.roomCode;
     if (roomCodeEl) roomCodeEl.textContent = currentRoomCode;
 
+    // NEU: Board öffnen Button aktivieren
+    if (openBoardBtn) {
+      openBoardBtn.disabled = false;
+    }
+
     try {
       localStorage.setItem("jyn-jeopardy-room", currentRoomCode);
     } catch {}
 
     closeHostPassModal();
+  });
+}
+
+// NEU: Board öffnen Button Click Handler
+if (openBoardBtn) {
+  openBoardBtn.addEventListener("click", () => {
+    if (!currentRoomCode) {
+      alert("Bitte zuerst ein Spiel erstellen.");
+      return;
+    }
+    const boardUrl = `/board.html?room=${encodeURIComponent(currentRoomCode)}`;
+    window.open(boardUrl, "_blank");
   });
 }
 
