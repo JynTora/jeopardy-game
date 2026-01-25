@@ -1,5 +1,5 @@
 // server/index.js
-// Jeopardy Server - MIT SPECTATOR/ONLINE-MODUS SUPPORT
+// Jeopardy Server - MIT SPECTATOR/ONLINE-MODUS + WEBRTC KAMERA SUPPORT
 
 const express = require("express");
 const http = require("http");
@@ -54,6 +54,12 @@ function ensureSpectators(game) {
   }
 }
 
+function ensureCamPlayers(game) {
+  if (!game.camPlayers || !(game.camPlayers instanceof Set)) {
+    game.camPlayers = new Set();
+  }
+}
+
 io.on("connection", (socket) => {
   console.log("Client verbunden:", socket.id);
 
@@ -75,9 +81,11 @@ io.on("connection", (socket) => {
       firstBuzzId: null,
       lockedPlayers: new Set(),
       spectators: new Set(),
+      camPlayers: new Set(), // Spieler mit Kamera
+      boardSocketId: null,   // Board-Socket für WebRTC
       estimateRound: null,
       currentRound: 1,
-      currentQuestion: null, // Für Late-Joiner
+      currentQuestion: null,
     };
 
     socket.join(roomCode);
@@ -88,7 +96,7 @@ io.on("connection", (socket) => {
   // --------------------------------
   // Spieler joint / re-joint
   // --------------------------------
-  socket.on("player-join", ({ roomCode, name }, callback) => {
+  socket.on("player-join", ({ roomCode, name, hasCamera }, callback) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
 
@@ -96,6 +104,7 @@ io.on("connection", (socket) => {
 
     ensureLockedPlayers(game);
     ensureSpectators(game);
+    ensureCamPlayers(game);
 
     const cleanName = String(name || "").trim();
     if (!cleanName) return callback?.({ success: false, error: "Bitte einen Namen eingeben" });
@@ -111,18 +120,26 @@ io.on("connection", (socket) => {
       game.players[playerId].connected = true;
       game.players[playerId].socketId = socket.id;
       game.players[playerId].name = cleanName;
+      game.players[playerId].hasCamera = !!hasCamera;
     } else {
       game.players[playerId] = {
         name: cleanName,
         score: 0,
         connected: true,
         socketId: socket.id,
+        hasCamera: !!hasCamera,
       };
+    }
+
+    // Kamera-Tracking
+    if (hasCamera) {
+      game.camPlayers.add(playerId);
     }
 
     game.socketToPlayerId[socket.id] = playerId;
     socket.data.roomCode = rc;
     socket.data.playerId = playerId;
+    socket.data.hasCamera = !!hasCamera;
 
     socket.join(rc);
     emitPlayers(rc);
@@ -132,13 +149,13 @@ io.on("connection", (socket) => {
     }
 
     callback?.({ success: true, playerId });
-    console.log(`Player "${cleanName}" ist Room ${rc} beigetreten (playerId=${playerId})`);
+    console.log(`Player "${cleanName}" ist Room ${rc} beigetreten (playerId=${playerId}, cam=${hasCamera})`);
   });
 
   // --------------------------------
   // Spectator joint Raum (für Board-Sync)
   // --------------------------------
-  socket.on("spectator-join-room", ({ roomCode }) => {
+  socket.on("spectator-join-room", ({ roomCode, hasCamera }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
     if (!game) {
@@ -149,9 +166,10 @@ io.on("connection", (socket) => {
     ensureSpectators(game);
     game.spectators.add(socket.id);
     socket.data.isSpectator = true;
+    socket.data.hasCamera = !!hasCamera;
 
     socket.join(rc);
-    console.log("Spectator verbunden mit Raum:", rc);
+    console.log("Spectator verbunden mit Raum:", rc, "hasCamera:", hasCamera);
 
     // Aktuelle Runde senden
     socket.emit("spectator-round-changed", { round: game.currentRound || 1 });
@@ -168,7 +186,7 @@ io.on("connection", (socket) => {
   // --------------------------------
   // Board joint Raum
   // --------------------------------
-  socket.on("board-join-room", ({ roomCode }) => {
+  socket.on("board-join-room", ({ roomCode, isCamMode }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
     if (!game) {
@@ -178,19 +196,123 @@ io.on("connection", (socket) => {
 
     ensureLockedPlayers(game);
     ensureSpectators(game);
+    ensureCamPlayers(game);
 
     socket.join(rc);
     socket.data.roomCode = rc;
     socket.data.isBoard = true;
-    console.log("Board verbunden mit Raum:", rc);
+    socket.data.isCamMode = !!isCamMode;
+
+    // Board-Socket speichern für WebRTC
+    if (isCamMode) {
+      game.boardSocketId = socket.id;
+    }
+
+    console.log("Board verbunden mit Raum:", rc, "camMode:", isCamMode);
 
     socket.emit("players-updated", game.players);
     socket.emit("buzzing-status", { enabled: game.buzzingEnabled });
+
+    // Wenn Cam-Modus, alle bereits verbundenen Cam-Player mitteilen
+    if (isCamMode) {
+      for (const playerId of game.camPlayers) {
+        const player = game.players[playerId];
+        if (player && player.connected && player.socketId) {
+          socket.emit("cam-player-connected", {
+            playerId,
+            socketId: player.socketId,
+            name: player.name,
+          });
+        }
+      }
+    }
   });
 
   // --------------------------------
-  // Board öffnet Frage -> an Spectators senden
+  // Cam Player bereit (signalisiert Board)
   // --------------------------------
+  socket.on("cam-player-ready", ({ roomCode, playerId }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    ensureCamPlayers(game);
+
+    const player = game.players[playerId];
+    if (!player) return;
+
+    game.camPlayers.add(playerId);
+
+    // Board benachrichtigen
+    if (game.boardSocketId) {
+      io.to(game.boardSocketId).emit("cam-player-connected", {
+        playerId,
+        socketId: socket.id,
+        name: player.name,
+      });
+    }
+
+    console.log("Cam player ready:", playerId);
+  });
+
+  // ================================
+  // WEBRTC SIGNALING
+  // ================================
+
+  // Board fragt Player nach Offer
+  socket.on("webrtc-request-offer", ({ roomCode, targetId }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    io.to(targetId).emit("webrtc-request-offer", { fromId: socket.id });
+    console.log("WebRTC: Request offer from", targetId, "to", socket.id);
+  });
+
+  // Player/Board sendet Offer
+  socket.on("webrtc-offer", ({ roomCode, targetId, offer }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    io.to(targetId).emit("webrtc-offer", { fromId: socket.id, offer });
+    console.log("WebRTC: Offer from", socket.id, "to", targetId);
+  });
+
+  // Player/Board sendet Answer
+  socket.on("webrtc-answer", ({ roomCode, targetId, answer }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    io.to(targetId).emit("webrtc-answer", { fromId: socket.id, answer });
+    console.log("WebRTC: Answer from", socket.id, "to", targetId);
+  });
+
+  // ICE Candidate weiterleiten
+  socket.on("webrtc-ice-candidate", ({ roomCode, targetId, candidate }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    io.to(targetId).emit("webrtc-ice-candidate", { fromId: socket.id, candidate });
+  });
+
+  // Host Cam bereit
+  socket.on("host-cam-ready", ({ roomCode }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    // An alle Spectators (mit Cam) und Board senden
+    io.to(rc).emit("host-cam-available", { socketId: socket.id });
+    console.log("Host cam ready in room:", rc);
+  });
+
+  // ================================
+  // BOARD SYNC EVENTS (wie vorher)
+  // ================================
+
   socket.on("board-question-opened", ({ roomCode, categoryIndex, questionIndex, question, answer, value, type, imageUrl, timeLimit }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
@@ -209,9 +331,6 @@ io.on("connection", (socket) => {
     io.to(rc).emit("spectator-question-opened", game.currentQuestion);
   });
 
-  // --------------------------------
-  // Board zeigt Antwort
-  // --------------------------------
   socket.on("board-answer-shown", ({ roomCode, answer }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
@@ -220,9 +339,6 @@ io.on("connection", (socket) => {
     io.to(rc).emit("spectator-answer-shown", { answer });
   });
 
-  // --------------------------------
-  // Board schliesst Frage
-  // --------------------------------
   socket.on("board-question-closed", ({ roomCode, categoryIndex, questionIndex }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
@@ -232,9 +348,6 @@ io.on("connection", (socket) => {
     io.to(rc).emit("spectator-question-closed", { categoryIndex, questionIndex });
   });
 
-  // --------------------------------
-  // Board: Richtig
-  // --------------------------------
   socket.on("board-correct", ({ roomCode }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
@@ -243,9 +356,6 @@ io.on("connection", (socket) => {
     io.to(rc).emit("spectator-correct");
   });
 
-  // --------------------------------
-  // Board: Falsch
-  // --------------------------------
   socket.on("board-wrong", ({ roomCode }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
@@ -254,9 +364,6 @@ io.on("connection", (socket) => {
     io.to(rc).emit("spectator-wrong");
   });
 
-  // --------------------------------
-  // Runde wechseln
-  // --------------------------------
   socket.on("board-round-changed", ({ roomCode, round }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
@@ -266,9 +373,6 @@ io.on("connection", (socket) => {
     io.to(rc).emit("spectator-round-changed", { round });
   });
 
-  // --------------------------------
-  // Turn Update
-  // --------------------------------
   socket.on("board-turn-update", ({ roomCode, playerName }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
@@ -277,9 +381,6 @@ io.on("connection", (socket) => {
     io.to(rc).emit("spectator-turn-update", { playerName });
   });
 
-  // --------------------------------
-  // Estimate Reveal an Spectators
-  // --------------------------------
   socket.on("board-estimate-reveal", ({ roomCode, answers }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
@@ -288,9 +389,9 @@ io.on("connection", (socket) => {
     io.to(rc).emit("spectator-estimate-reveal", { answers });
   });
 
-  // -----------------------------
-  // BUZZER & PUNKTE
-  // -----------------------------
+  // ================================
+  // BUZZER & PUNKTE (wie vorher)
+  // ================================
   socket.on("host-set-buzzing", ({ roomCode, enabled }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
@@ -315,7 +416,6 @@ io.on("connection", (socket) => {
 
     io.to(rc).emit("buzzing-status", { enabled: true });
 
-    // Gelockte Spieler erneut sperren
     for (const playerId of game.lockedPlayers) {
       const socketId = game.players[playerId]?.socketId;
       if (socketId) {
@@ -404,9 +504,9 @@ io.on("connection", (socket) => {
     io.to(rc).emit("round-reset");
   });
 
-  // -----------------------------
-  // SCHÄTZFRAGEN
-  // -----------------------------
+  // ================================
+  // SCHÄTZFRAGEN (wie vorher)
+  // ================================
   socket.on("board-estimate-start", ({ roomCode, question, timeLimit }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
@@ -475,9 +575,9 @@ io.on("connection", (socket) => {
     }
   });
 
-  // -----------------------------
-  // Verbindung getrennt
-  // -----------------------------
+  // ================================
+  // DISCONNECT
+  // ================================
   socket.on("disconnect", () => {
     console.log("Client getrennt:", socket.id);
 
@@ -490,6 +590,13 @@ io.on("connection", (socket) => {
       }
     }
 
+    // Board disconnect
+    for (const [rc, game] of Object.entries(games)) {
+      if (game.boardSocketId === socket.id) {
+        game.boardSocketId = null;
+      }
+    }
+
     // Spectator entfernen
     for (const [rc, game] of Object.entries(games)) {
       ensureSpectators(game);
@@ -498,22 +605,31 @@ io.on("connection", (socket) => {
       }
     }
 
-    // Player disconnect
+    // Cam Player entfernen
     const rc = socket.data.roomCode;
     const pid = socket.data.playerId;
 
     if (rc && pid) {
       const game = games[rc];
-      if (game && game.players[pid]) {
-        game.players[pid].connected = false;
-        game.players[pid].socketId = null;
+      if (game) {
+        ensureCamPlayers(game);
 
-        if (game.socketToPlayerId && game.socketToPlayerId[socket.id]) {
-          delete game.socketToPlayerId[socket.id];
+        // Cam Player disconnect an Board melden
+        if (game.camPlayers.has(pid) && game.boardSocketId) {
+          io.to(game.boardSocketId).emit("cam-player-disconnected", { playerId: pid });
         }
 
-        emitPlayers(rc);
-        return;
+        if (game.players[pid]) {
+          game.players[pid].connected = false;
+          game.players[pid].socketId = null;
+
+          if (game.socketToPlayerId && game.socketToPlayerId[socket.id]) {
+            delete game.socketToPlayerId[socket.id];
+          }
+
+          emitPlayers(rc);
+          return;
+        }
       }
     }
 
