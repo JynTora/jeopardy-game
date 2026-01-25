@@ -1,8 +1,8 @@
 // public/board-cam.js
-// =========================================
-// ERWEITERUNG FÜR BOARD.JS - KAMERA SUPPORT
+// ═══════════════════════════════════════════════════════════
+// KAMERA-ERWEITERUNG FÜR BOARD.JS
 // Muss NACH board.js geladen werden!
-// =========================================
+// ═══════════════════════════════════════════════════════════
 
 (function() {
   "use strict";
@@ -16,93 +16,76 @@
     iceServers: [
       { urls: 'stun:stun.l.google.com:19302' },
       { urls: 'stun:stun1.l.google.com:19302' },
-      { urls: 'stun:stun2.l.google.com:19302' },
     ]
   };
 
   // ===============================
-  // Camera State
+  // State
   // ===============================
   let hostStream = null;
-  let hostCameraReady = false;
   const playerStreams = {}; // { playerId: MediaStream }
   const peerConnections = {}; // { socketId: RTCPeerConnection }
   const socketToPlayer = {}; // { socketId: playerId }
 
-  // DOM Elements
+  // DOM
   const hostCamWrap = document.getElementById("hostCamWrap");
   const hostCam = document.getElementById("hostCam");
   const hostCamToggle = document.getElementById("hostCamToggle");
   const playersBarEl = document.getElementById("players-bar");
 
   // ===============================
-  // Host Camera Functions
+  // Host Camera
   // ===============================
   async function initHostCamera() {
-    if (!hostCam) {
-      console.log("Host cam element not found - skipping");
-      return false;
-    }
+    if (!hostCam) return false;
 
     try {
       hostStream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          width: { ideal: 320 },
-          height: { ideal: 240 },
-          facingMode: "user"
-        },
+        video: { width: { ideal: 320 }, height: { ideal: 240 }, facingMode: "user" },
         audio: false
       });
 
       hostCam.srcObject = hostStream;
-      hostCameraReady = true;
       console.log("✅ Host camera ready");
 
-      // Server mitteilen
-      if (typeof boardRoomCode !== 'undefined' && boardRoomCode) {
-        socket.emit("host-cam-ready", { roomCode: boardRoomCode });
-      }
+      // Server informieren
+      setTimeout(() => {
+        if (typeof boardRoomCode !== 'undefined' && boardRoomCode) {
+          socket.emit("host-cam-ready", { roomCode: boardRoomCode });
+        }
+      }, 500);
 
       return true;
     } catch (err) {
       console.error("Host camera error:", err);
-      hostCameraReady = false;
-
       if (hostCamWrap) {
         hostCamWrap.innerHTML = `
-          <div style="padding: 20px; text-align: center; color: #94a3b8; font-size: 0.85rem;">
-            <div style="font-size: 1.8rem; margin-bottom: 8px;">📷</div>
+          <div style="padding: 20px; text-align: center; color: #94a3b8; font-size: 0.8rem;">
+            <div style="font-size: 1.5rem; margin-bottom: 6px;">📷</div>
             Kamera nicht verfügbar
           </div>
         `;
       }
-
       return false;
     }
   }
 
-  function toggleHostCamera() {
-    if (!hostStream) return;
-
-    const videoTrack = hostStream.getVideoTracks()[0];
-    if (videoTrack) {
-      videoTrack.enabled = !videoTrack.enabled;
-
-      if (hostCamToggle) {
-        hostCamToggle.textContent = videoTrack.enabled ? "📹" : "🚫";
-        hostCamToggle.style.opacity = videoTrack.enabled ? "1" : "0.5";
-      }
-    }
-  }
-
   if (hostCamToggle) {
-    hostCamToggle.addEventListener("click", toggleHostCamera);
+    hostCamToggle.addEventListener("click", () => {
+      if (!hostStream) return;
+      const track = hostStream.getVideoTracks()[0];
+      if (track) {
+        track.enabled = !track.enabled;
+        hostCamToggle.textContent = track.enabled ? "📹" : "🚫";
+        hostCamToggle.style.opacity = track.enabled ? "1" : "0.5";
+      }
+    });
   }
 
   // ===============================
-  // WebRTC - Receive Player Streams
+  // WebRTC - Player Streams empfangen
   // ===============================
-  function createPeerConnectionForPlayer(socketId, playerId) {
+  function createPeerConnection(socketId, playerId) {
     if (peerConnections[socketId]) {
       try { peerConnections[socketId].close(); } catch {}
     }
@@ -111,18 +94,13 @@
     peerConnections[socketId] = pc;
     socketToPlayer[socketId] = playerId;
 
-    // Remote Track empfangen
     pc.ontrack = (event) => {
-      console.log("📹 Received video track from:", playerId);
-
+      console.log("📹 Video-Track empfangen von:", playerId);
       const stream = event.streams[0];
       playerStreams[playerId] = stream;
-
-      // Video-Element aktualisieren
       updatePlayerVideo(playerId, stream);
     };
 
-    // ICE Candidates senden
     pc.onicecandidate = (event) => {
       if (event.candidate && typeof boardRoomCode !== 'undefined') {
         socket.emit("webrtc-ice-candidate", {
@@ -135,7 +113,6 @@
 
     pc.onconnectionstatechange = () => {
       console.log(`WebRTC [${playerId}]: ${pc.connectionState}`);
-
       if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
         delete playerStreams[playerId];
         updatePlayerVideo(playerId, null);
@@ -145,9 +122,9 @@
     return pc;
   }
 
-  async function handlePlayerOffer(socketId, offer) {
+  async function handleOffer(socketId, offer) {
     const playerId = socketToPlayer[socketId] || socketId;
-    const pc = createPeerConnectionForPlayer(socketId, playerId);
+    const pc = createPeerConnection(socketId, playerId);
 
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
@@ -159,48 +136,26 @@
         targetId: socketId,
         answer: pc.localDescription
       });
-
-      console.log("Sent WebRTC answer to:", playerId);
+      console.log("Answer gesendet an:", playerId);
     } catch (err) {
-      console.error("Error handling player offer:", err);
+      console.error("Offer handling error:", err);
     }
   }
 
-  async function handleIceCandidate(socketId, candidate) {
-    const pc = peerConnections[socketId];
-    if (!pc) return;
-
-    try {
-      await pc.addIceCandidate(new RTCIceCandidate(candidate));
-    } catch (err) {
-      console.error("Error adding ICE candidate:", err);
-    }
-  }
-
-  function requestOfferFromPlayer(socketId) {
+  function requestOffer(socketId) {
     if (typeof boardRoomCode === 'undefined' || !boardRoomCode) return;
-
-    socket.emit("webrtc-request-offer", {
-      roomCode: boardRoomCode,
-      targetId: socketId
-    });
-
-    console.log("Requested WebRTC offer from:", socketId);
+    socket.emit("webrtc-request-offer", { roomCode: boardRoomCode, targetId: socketId });
+    console.log("Offer angefordert von:", socketId);
   }
 
   // ===============================
-  // Update Player Video in Bar
+  // Video in Spieler-Pill aktualisieren
   // ===============================
   function updatePlayerVideo(playerId, stream) {
     const videoEl = document.getElementById(`video-${playerId}`);
-    const wrapEl = document.getElementById(`video-wrap-${playerId}`);
-    
-    if (!videoEl) {
-      // Video-Element existiert noch nicht, wird beim nächsten renderPlayersBar erstellt
-      return;
-    }
+    const placeholder = document.querySelector(`#video-wrap-${playerId} .player-video-placeholder`);
 
-    const placeholder = wrapEl?.querySelector('.player-video-placeholder');
+    if (!videoEl) return;
 
     if (stream) {
       videoEl.srcObject = stream;
@@ -216,30 +171,26 @@
   // ===============================
   // Override renderPlayersBar
   // ===============================
-  // Warte bis board.js geladen ist und überschreibe die Funktion
-  function setupPlayersBarOverride() {
+  function overridePlayersBar() {
     if (typeof window.renderPlayersBar !== 'function') {
-      console.log("Waiting for board.js to load...");
-      setTimeout(setupPlayersBarOverride, 100);
+      setTimeout(overridePlayersBar, 100);
       return;
     }
 
-    const originalRenderPlayersBar = window.renderPlayersBar;
+    const originalFn = window.renderPlayersBar;
 
     window.renderPlayersBar = function() {
       if (!playersBarEl) return;
 
-      // Prüfen ob wir im Cam-Mode sind
+      // Prüfen ob Cam-Mode aktiv
       if (!document.body.classList.contains('board-cam-mode')) {
-        // Nicht im Cam-Mode, original verwenden
-        return originalRenderPlayersBar();
+        return originalFn();
       }
 
       const players = typeof latestPlayers !== 'undefined' ? latestPlayers : {};
       const entries = Object.entries(players);
 
       playersBarEl.innerHTML = "";
-      playersBarEl.classList.add("players-bar-cam");
 
       if (entries.length === 0) {
         playersBarEl.innerHTML = '<div class="players-empty">Noch keine Spieler verbunden.</div>';
@@ -248,66 +199,59 @@
 
       entries.forEach(([id, player]) => {
         const pill = document.createElement("div");
-        pill.className = "player-pill player-pill-cam";
+        pill.className = "player-pill";
 
-        // Video-Container
+        // Video Container
         const videoWrap = document.createElement("div");
         videoWrap.className = "player-video-wrap";
         videoWrap.id = `video-wrap-${id}`;
 
-        // Placeholder
         const placeholder = document.createElement("div");
         placeholder.className = "player-video-placeholder";
         placeholder.textContent = (player.name?.charAt(0) || "?").toUpperCase();
 
-        // Video Element
-        const videoEl = document.createElement("video");
-        videoEl.className = "player-video";
-        videoEl.id = `video-${id}`;
-        videoEl.autoplay = true;
-        videoEl.muted = true;
-        videoEl.playsInline = true;
+        const video = document.createElement("video");
+        video.className = "player-video";
+        video.id = `video-${id}`;
+        video.autoplay = true;
+        video.muted = true;
+        video.playsInline = true;
 
-        // Falls Stream schon vorhanden
         if (playerStreams[id]) {
-          videoEl.srcObject = playerStreams[id];
+          video.srcObject = playerStreams[id];
           placeholder.style.display = "none";
         } else {
-          videoEl.classList.add("hidden");
+          video.classList.add("hidden");
         }
 
         videoWrap.appendChild(placeholder);
-        videoWrap.appendChild(videoEl);
+        videoWrap.appendChild(video);
 
         // Info
-        const infoDiv = document.createElement("div");
-        infoDiv.className = "player-info";
+        const info = document.createElement("div");
+        info.className = "player-info";
 
-        const nameSpan = document.createElement("span");
-        nameSpan.className = "player-name";
-        nameSpan.textContent = player.name || "(Unbekannt)";
+        const name = document.createElement("span");
+        name.className = "player-name";
+        name.textContent = player.name || "(Unbekannt)";
 
-        const scoreSpan = document.createElement("span");
-        scoreSpan.className = "player-score";
-        scoreSpan.textContent = `${player.score ?? 0} Pkt`;
+        const score = document.createElement("span");
+        score.className = "player-score";
+        score.textContent = `${player.score ?? 0} Pkt`;
 
-        infoDiv.appendChild(nameSpan);
-        infoDiv.appendChild(scoreSpan);
+        info.appendChild(name);
+        info.appendChild(score);
 
         pill.appendChild(videoWrap);
-        pill.appendChild(infoDiv);
+        pill.appendChild(info);
 
-        // States von board.js
+        // States
         if (typeof turnActivePlayerId !== 'undefined' && turnActivePlayerId === id) {
           pill.classList.add("player-pill-turn-active");
-        } else if (typeof turnPreviewPlayerId !== 'undefined' && turnPreviewPlayerId === id) {
-          pill.classList.add("player-pill-turn-preview");
         }
-
         if (typeof activePlayerId !== 'undefined' && activePlayerId === id) {
           pill.classList.add("player-pill-active");
         }
-
         if (typeof lockedPlayersLocal !== 'undefined' && lockedPlayersLocal.has(id)) {
           pill.classList.add("player-pill-locked");
         }
@@ -316,142 +260,93 @@
       });
     };
 
-    console.log("✅ Players bar override installed");
+    console.log("✅ renderPlayersBar override installiert");
   }
 
   // ===============================
-  // Socket Events für WebRTC
+  // Socket Events
   // ===============================
   function setupSocketEvents() {
     if (typeof socket === 'undefined') {
-      console.log("Waiting for socket...");
       setTimeout(setupSocketEvents, 100);
       return;
     }
 
-    // Spieler mit Kamera verbunden
     socket.on("cam-player-connected", ({ playerId, socketId, name }) => {
-      console.log("📹 Cam player connected:", name, "(", playerId, ")");
-
+      console.log("📹 Cam-Spieler verbunden:", name);
       socketToPlayer[socketId] = playerId;
-
-      // Kurz warten, dann Offer anfordern
-      setTimeout(() => {
-        requestOfferFromPlayer(socketId);
-      }, 500);
+      setTimeout(() => requestOffer(socketId), 300);
     });
 
-    // Spieler getrennt
     socket.on("cam-player-disconnected", ({ playerId }) => {
-      console.log("📹 Cam player disconnected:", playerId);
-
+      console.log("📹 Cam-Spieler getrennt:", playerId);
       delete playerStreams[playerId];
       updatePlayerVideo(playerId, null);
+    });
 
-      // Peer Connection aufräumen
-      for (const [sid, pid] of Object.entries(socketToPlayer)) {
-        if (pid === playerId && peerConnections[sid]) {
-          try { peerConnections[sid].close(); } catch {}
-          delete peerConnections[sid];
-          delete socketToPlayer[sid];
-        }
+    socket.on("webrtc-offer", ({ fromId, offer }) => {
+      handleOffer(fromId, offer);
+    });
+
+    socket.on("webrtc-answer", ({ fromId, answer }) => {
+      const pc = peerConnections[fromId];
+      if (pc) {
+        pc.setRemoteDescription(new RTCSessionDescription(answer)).catch(console.error);
       }
     });
 
-    // WebRTC Offer von Spieler
-    socket.on("webrtc-offer", ({ fromId, offer }) => {
-      console.log("Received WebRTC offer from:", fromId);
-      handlePlayerOffer(fromId, offer);
-    });
-
-    // WebRTC Answer
-    socket.on("webrtc-answer", ({ fromId, answer }) => {
-      const pc = peerConnections[fromId];
-      if (!pc) return;
-
-      pc.setRemoteDescription(new RTCSessionDescription(answer))
-        .then(() => console.log("Remote description set for:", fromId))
-        .catch(err => console.error("Error:", err));
-    });
-
-    // ICE Candidate
     socket.on("webrtc-ice-candidate", ({ fromId, candidate }) => {
-      handleIceCandidate(fromId, candidate);
+      const pc = peerConnections[fromId];
+      if (pc) {
+        pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
+      }
     });
 
-    // Wenn neue Spieler kommen, Offers anfordern
-    const originalPlayersUpdated = socket._callbacks?.['$players-updated']?.[0];
-    
+    // Bei players-updated: Offers für neue Cam-Spieler anfordern
     socket.on("players-updated", (players) => {
-      // Check ob Spieler mit Kamera dabei sind
       for (const [playerId, player] of Object.entries(players)) {
         if (player.hasCamera && player.connected && player.socketId) {
           socketToPlayer[player.socketId] = playerId;
-
-          // Wenn noch keine Verbindung, Offer anfordern
           if (!playerStreams[playerId] && !peerConnections[player.socketId]) {
-            setTimeout(() => {
-              requestOfferFromPlayer(player.socketId);
-            }, 300);
+            setTimeout(() => requestOffer(player.socketId), 200);
           }
         }
       }
     });
 
-    console.log("✅ WebRTC socket events installed");
+    console.log("✅ WebRTC Socket-Events installiert");
   }
 
   // ===============================
-  // Board Join mit Cam-Mode Flag
+  // Board im Cam-Mode joinen
   // ===============================
-  function setupBoardJoinOverride() {
-    // Warte auf boardRoomCode
-    const checkAndJoin = () => {
-      if (typeof boardRoomCode !== 'undefined' && boardRoomCode) {
-        // Erneut joinen mit isCamMode flag
-        socket.emit("board-join-room", { 
-          roomCode: boardRoomCode, 
-          isCamMode: true 
-        });
-        console.log("✅ Joined room in cam mode:", boardRoomCode);
-
-        // Host-Cam dem Server melden
-        if (hostCameraReady) {
-          socket.emit("host-cam-ready", { roomCode: boardRoomCode });
-        }
+  function joinWithCamMode() {
+    const check = () => {
+      if (typeof boardRoomCode !== 'undefined' && boardRoomCode && typeof socket !== 'undefined') {
+        socket.emit("board-join-room", { roomCode: boardRoomCode, isCamMode: true });
+        console.log("✅ Board joined in Cam-Mode:", boardRoomCode);
       } else {
-        setTimeout(checkAndJoin, 200);
+        setTimeout(check, 200);
       }
     };
-
-    setTimeout(checkAndJoin, 500);
+    setTimeout(check, 300);
   }
 
   // ===============================
-  // Initialize
+  // Init
   // ===============================
   async function init() {
-    // Host Kamera starten
     await initHostCamera();
-
-    // Override installieren
-    setupPlayersBarOverride();
-
-    // Socket Events
+    overridePlayersBar();
     setupSocketEvents();
-
-    // Board Join mit Cam-Mode
-    setupBoardJoinOverride();
-
+    joinWithCamMode();
     console.log("🎥 Board-Cam Extension geladen!");
   }
 
-  // Start wenn DOM bereit
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
+    document.addEventListener('DOMContentLoaded', () => setTimeout(init, 100));
   } else {
-    // DOM ist bereits geladen, kurz warten bis board.js fertig ist
-    setTimeout(init, 200);
+    setTimeout(init, 100);
   }
 
 })();
