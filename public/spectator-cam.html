@@ -11,57 +11,111 @@
 
     <style>
       /* ═══════════════════════════════════════════════
-         SPECTATOR CAM MODE STYLES
+         SPECTATOR CAM MODE
          ═══════════════════════════════════════════════ */
 
-      /* Board kompakter */
-      .spectator-cam-mode .board-grid {
-        gap: 8px;
-        padding: 10px 20px;
-      }
-
-      .spectator-cam-mode .board-cell {
-        min-height: 52px;
-        font-size: 1.4rem;
-      }
-
-      .spectator-cam-mode .board-category {
-        font-size: 0.85rem;
-        padding: 10px 8px;
-        min-height: 50px;
-      }
-
+      /* Header mit Host-Cam */
       .spectator-cam-mode .jt-header {
-        padding: 8px 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 20px;
+        min-height: 85px;
+        position: relative;
       }
 
       .spectator-cam-mode .jt-logo {
-        max-height: 60px;
+        max-height: 75px;
       }
 
-      /* Spieler-Leiste ZENTRIERT */
+      /* Host-Cam links (wie beim Board) */
+      .host-cam-box {
+        position: absolute;
+        left: 20px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 120px;
+        border-radius: 10px;
+        overflow: hidden;
+        background: rgba(15, 23, 42, 0.95);
+        border: 2px solid rgba(251, 146, 60, 0.7);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 12px rgba(251, 146, 60, 0.25);
+        z-index: 100;
+      }
+
+      .host-cam-box.hidden { display: none; }
+
+      .host-cam-video {
+        width: 100%;
+        aspect-ratio: 4/3;
+        object-fit: cover;
+        transform: scaleX(-1);
+        display: block;
+        background: #0f172a;
+      }
+
+      .host-cam-label {
+        position: absolute;
+        bottom: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(251, 146, 60, 0.9);
+        font-size: 0.5rem;
+        font-weight: 700;
+        color: #fff;
+        text-transform: uppercase;
+      }
+
+      /* Board kompakter */
+      .spectator-cam-mode .board-grid {
+        gap: 4px;
+        padding: 4px 15px 2px 15px;
+      }
+
+      .spectator-cam-mode .board-cell {
+        min-height: 42px;
+        font-size: 1.2rem;
+        padding: 5px 3px;
+      }
+
+      .spectator-cam-mode .board-category {
+        font-size: 0.7rem;
+        padding: 5px 4px;
+        min-height: 32px;
+      }
+
+      .spectator-cam-mode .jt-main {
+        padding-top: 0;
+        padding-bottom: 0;
+      }
+
+      /* Spieler-Leiste */
       .spectator-cam-mode .players-bar {
-        padding: 12px 30px;
-        gap: 16px;
+        padding: 6px 25px;
+        gap: 10px;
         justify-content: center;
         flex-wrap: nowrap;
-        min-height: 130px;
+        min-height: 105px;
+        margin-top: 2px;
       }
 
       .spectator-cam-mode .player-pill {
         flex-direction: column;
-        padding: 8px;
-        min-width: 130px;
-        max-width: 180px;
+        padding: 5px;
+        min-width: 100px;
+        max-width: 140px;
         flex: 1 1 auto;
-        border-radius: 14px;
-        gap: 6px;
+        border-radius: 10px;
+        gap: 3px;
+        position: relative;
       }
 
       .player-video-wrap {
         width: 100%;
         aspect-ratio: 4/3;
-        border-radius: 10px;
+        border-radius: 6px;
         overflow: hidden;
         background: rgba(30, 41, 59, 0.8);
         position: relative;
@@ -73,7 +127,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 1.8rem;
+        font-size: 1.4rem;
         font-weight: 800;
         color: rgba(148, 163, 184, 0.5);
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
@@ -86,66 +140,63 @@
         transform: scaleX(-1);
         position: absolute;
         inset: 0;
+        background: #0f172a;
       }
 
-      .player-video.hidden {
-        display: none;
-      }
+      .player-video.hidden { display: none; }
 
       .player-info {
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 2px;
+        gap: 0;
         text-align: center;
       }
 
       .spectator-cam-mode .player-pill .player-name {
-        font-size: 0.85rem;
+        font-size: 0.7rem;
         font-weight: 700;
         margin: 0;
       }
 
       .spectator-cam-mode .player-pill .player-score {
-        font-size: 0.75rem;
+        font-size: 0.6rem;
         opacity: 0.85;
       }
 
-      /* Eigener Spieler-Pill hervorgehoben */
+      /* Eigener Spieler */
       .player-pill.is-self {
         border: 2px solid rgba(139, 92, 246, 0.7);
-        box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
-      }
-
-      .player-pill.is-self .player-video-wrap {
-        border: 2px solid rgba(139, 92, 246, 0.6);
+        box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
       }
 
       .player-pill.is-self::after {
         content: "DU";
         position: absolute;
-        top: -8px;
-        right: -8px;
-        padding: 2px 8px;
+        top: -5px;
+        right: -5px;
+        padding: 1px 5px;
         border-radius: 999px;
         background: rgba(139, 92, 246, 0.9);
-        font-size: 0.6rem;
+        font-size: 0.5rem;
         font-weight: 700;
         color: #fff;
+        z-index: 5;
       }
 
+      /* Active */
       .player-pill.player-pill-active .player-video-wrap {
         border: 2px solid #22c55e;
-        box-shadow: 0 0 15px rgba(34, 197, 94, 0.5);
+        box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
       }
 
-      /* Kamera Preview im Join Screen */
+      /* Join Screen Cam Preview */
       .cam-preview-wrap {
         width: 100%;
-        max-width: 220px;
+        max-width: 180px;
         aspect-ratio: 4/3;
-        margin: 0 auto 16px auto;
-        border-radius: 14px;
+        margin: 0 auto 12px auto;
+        border-radius: 10px;
         overflow: hidden;
         background: rgba(15, 23, 42, 0.9);
         border: 2px solid rgba(139, 92, 246, 0.4);
@@ -161,52 +212,38 @@
         transition: opacity 0.3s;
       }
 
-      .cam-preview.active {
-        opacity: 1;
-      }
+      .cam-preview.active { opacity: 1; }
 
       .cam-preview-status {
         position: absolute;
-        bottom: 8px;
+        bottom: 5px;
         left: 50%;
         transform: translateX(-50%);
-        padding: 4px 12px;
+        padding: 2px 8px;
         border-radius: 999px;
         background: rgba(15, 23, 42, 0.9);
-        font-size: 0.75rem;
+        font-size: 0.65rem;
         color: #94a3b8;
       }
 
-      /* Join Card Styling */
       .cam-join-card {
         border-color: rgba(139, 92, 246, 0.4) !important;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5), 0 0 30px rgba(139, 92, 246, 0.15) !important;
       }
 
-      .cam-join-card .spectator-join-title {
-        color: #a78bfa;
-      }
+      .cam-join-card .spectator-join-title { color: #a78bfa; }
 
       .cam-join-btn {
         background: linear-gradient(135deg, #7c3aed, #8b5cf6) !important;
       }
 
-      .cam-join-btn:hover {
-        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5) !important;
-      }
-
       .cam-fallback-link {
         display: block;
-        margin-top: 14px;
-        font-size: 0.8rem;
+        margin-top: 10px;
+        font-size: 0.7rem;
         color: #64748b;
         text-decoration: none;
       }
-
-      .cam-fallback-link:hover {
-        color: #94a3b8;
-        text-decoration: underline;
-      }
+      .cam-fallback-link:hover { color: #94a3b8; text-decoration: underline; }
     </style>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -214,18 +251,14 @@
   </head>
 
   <body class="jt-body spectator-cam-mode">
-    <!-- Screen-Flash -->
     <div id="screenFlash" class="screen-flash"></div>
 
-    <!-- ═══════════════════════════════════════════════
-         JOIN OVERLAY
-         ═══════════════════════════════════════════════ -->
+    <!-- JOIN OVERLAY -->
     <div id="spectatorJoinOverlay" class="spectator-join-overlay">
       <div class="spectator-join-card cam-join-card">
         <div class="spectator-join-title">📹 Online mit Kamera</div>
         <div class="spectator-join-subtitle">Tritt einem Spiel bei</div>
 
-        <!-- Kamera-Vorschau -->
         <div class="cam-preview-wrap">
           <video id="camPreview" class="cam-preview" autoplay muted playsinline></video>
           <div id="camPreviewStatus" class="cam-preview-status">Kamera wird geladen...</div>
@@ -237,23 +270,23 @@
           <button id="spectatorJoinBtn" class="spectator-join-btn cam-join-btn">📹 Mit Kamera beitreten</button>
         </div>
         <div id="spectatorJoinStatus" class="spectator-join-status"></div>
-
         <a href="/spectator.html" class="cam-fallback-link">Ohne Kamera beitreten →</a>
       </div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════
-         BUZZER INDICATOR (oben links)
-         ═══════════════════════════════════════════════ -->
+    <!-- Buzzer Indicator -->
     <div id="buzzerIndicator" class="buzzer-indicator buzzer-locked hidden">
       <span id="buzzerText">GESPERRT</span>
     </div>
 
-    <!-- ═══════════════════════════════════════════════
-         MAIN PAGE
-         ═══════════════════════════════════════════════ -->
+    <!-- MAIN PAGE -->
     <div class="jt-page spectator-page hidden" id="spectatorMainPage">
       <header class="jt-header">
+        <!-- Host-Cam (wird sichtbar wenn verbunden) -->
+        <div id="hostCamBox" class="host-cam-box hidden">
+          <video id="hostCamVideo" class="host-cam-video" autoplay muted playsinline></video>
+          <div class="host-cam-label">SPIELLEITER</div>
+        </div>
         <img src="/images/jt-logo.png" alt="Jyn Tora Jeopardy" class="jt-logo" />
       </header>
 
@@ -272,13 +305,10 @@
         <div id="board" class="board-grid spectator-board"></div>
       </main>
 
-      <!-- Spieler-Leiste (eigene Cam wird hier integriert!) -->
       <div id="players-bar" class="players-bar"></div>
     </div>
 
-    <!-- ═══════════════════════════════════════════════
-         QUESTION OVERLAY
-         ═══════════════════════════════════════════════ -->
+    <!-- Question Overlay -->
     <div id="questionOverlay" class="question-overlay hidden">
       <div id="questionCard" class="question-card spectator-question-card">
         <div class="question-toprow">
@@ -299,7 +329,7 @@
       </div>
     </div>
 
-    <!-- Schätzfrage Modal -->
+    <!-- Estimate Modal -->
     <div id="estimateModal" class="estimate-modal hidden">
       <div class="estimate-card">
         <div class="estimate-header">
@@ -307,19 +337,17 @@
           <div class="estimate-timer">⏱ <span id="estimateTimer">–</span></div>
         </div>
         <div id="estimateQuestionText" class="estimate-question-text"></div>
-        <input id="estimateInput" class="estimate-input" type="text" inputmode="decimal" placeholder="Dein Tipp (z.B. 13,8)" />
+        <input id="estimateInput" class="estimate-input" type="text" inputmode="decimal" placeholder="Dein Tipp" />
         <button id="sendEstimateBtn" class="estimate-send-btn">Antwort senden</button>
         <div id="estimateStatus" class="estimate-status"></div>
       </div>
     </div>
 
-    <!-- Lightbox -->
     <div id="lightbox" class="lightbox hidden">
       <button id="lightboxClose" class="lightbox-close">×</button>
       <img id="lightboxImg" class="lightbox-img" alt="" />
     </div>
 
-    <!-- Fullscreen -->
     <script>
       function toggleFullscreen() {
         if (!document.fullscreenElement) document.documentElement.requestFullscreen();
