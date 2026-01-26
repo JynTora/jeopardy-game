@@ -1,16 +1,36 @@
 // public/spectator-cam.js
-// Spectator mit Kamera - eigene Cam wird in der Spielerleiste angezeigt
+// ═══════════════════════════════════════════════════════════
+// SPECTATOR MIT KAMERA - Sendet eigene Cam an Board, empfängt Host-Cam
+// ═══════════════════════════════════════════════════════════
 
 const socket = io();
 
 // ===============================
-// WebRTC Config
+// WebRTC Config mit TURN
 // ===============================
 const rtcConfig = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
     { urls: 'stun:stun1.l.google.com:19302' },
-  ]
+    { urls: 'stun:stun2.l.google.com:19302' },
+    // TURN Server für NAT Traversal
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    }
+  ],
+  iceCandidatePoolSize: 10
 };
 
 // ===============================
@@ -48,6 +68,8 @@ const estimateInput = document.getElementById("estimateInput");
 const estimateTimerEl = document.getElementById("estimateTimer");
 const estimateStatusEl = document.getElementById("estimateStatus");
 const sendEstimateBtn = document.getElementById("sendEstimateBtn");
+const hostCamBox = document.getElementById("hostCamBox");
+const hostCamVideo = document.getElementById("hostCamVideo");
 
 // ===============================
 // State
@@ -60,12 +82,19 @@ let buzzingEnabled = false;
 let isLocked = false;
 let localStream = null;
 let cameraReady = false;
-let peerConnections = {};
+
+// WebRTC
+let outgoingPC = null; // Meine Cam -> Board
+let hostPC = null; // Host-Cam -> Mir
+
+// Game State
 let latestPlayers = {};
 let activePlayerId = null;
 let activePlayerName = null;
 let currentRound = 1;
 let usedCells = new Set();
+
+// Estimate
 let estimateActive = false;
 let estimateLocked = false;
 let estimateDeadline = null;
@@ -80,10 +109,6 @@ const sfxCorrect = new Audio("/sounds/correct-button.wav");
 const sfxWrong = new Audio("/sounds/wrong-button.wav");
 
 function safePlay(a) { try { a.currentTime = 0; a.play().catch(() => {}); } catch {} }
-function playTick() { safePlay(sfxTick); }
-function playBuzzSound() { safePlay(sfxBuzz); }
-function playCorrectSound() { safePlay(sfxCorrect); }
-function playWrongSound() { safePlay(sfxWrong); }
 
 // ===============================
 // Screen Flash
@@ -117,7 +142,7 @@ function setJoinStatus(msg, err = false) {
 }
 
 // ===============================
-// Camera
+// Eigene Kamera
 // ===============================
 async function initCamera() {
   try {
@@ -127,13 +152,13 @@ async function initCamera() {
       audio: false
     });
     if (camPreview) { camPreview.srcObject = localStream; camPreview.classList.add("active"); }
-    if (camPreviewStatus) { camPreviewStatus.textContent = "✅ Kamera bereit!"; camPreviewStatus.style.color = "#22c55e"; }
+    if (camPreviewStatus) { camPreviewStatus.textContent = "✅ Bereit!"; camPreviewStatus.style.color = "#22c55e"; }
     cameraReady = true;
     return true;
   } catch (err) {
     console.error("Camera error:", err);
     if (camPreviewStatus) {
-      camPreviewStatus.textContent = err.name === "NotAllowedError" ? "❌ Kamera verweigert" : "❌ Keine Kamera";
+      camPreviewStatus.textContent = err.name === "NotAllowedError" ? "❌ Verweigert" : "❌ Keine Kamera";
       camPreviewStatus.style.color = "#ef4444";
     }
     cameraReady = false;
@@ -142,44 +167,140 @@ async function initCamera() {
 }
 
 // ===============================
-// WebRTC
+// WebRTC: Meine Cam -> Board
 // ===============================
-function createPeerConnection(peerId) {
-  if (peerConnections[peerId]) { try { peerConnections[peerId].close(); } catch {} }
-  const pc = new RTCPeerConnection(rtcConfig);
-  peerConnections[peerId] = pc;
+function createOutgoingPC(targetId) {
+  if (outgoingPC) {
+    try { outgoingPC.close(); } catch {}
+  }
 
+  const pc = new RTCPeerConnection(rtcConfig);
+  outgoingPC = pc;
+
+  // Lokale Tracks hinzufügen
   if (localStream) {
     localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
   }
 
   pc.onicecandidate = (e) => {
     if (e.candidate && currentRoomCode) {
-      socket.emit("webrtc-ice-candidate", { roomCode: currentRoomCode, targetId: peerId, candidate: e.candidate });
+      socket.emit("webrtc-ice-candidate", {
+        roomCode: currentRoomCode,
+        targetId: targetId,
+        candidate: e.candidate,
+        streamType: "player"
+      });
+    }
+  };
+
+  pc.onconnectionstatechange = () => {
+    console.log(`Meine Cam -> Board: ${pc.connectionState}`);
+  };
+
+  return pc;
+}
+
+async function sendOfferToBoard(boardSocketId) {
+  if (!localStream) return;
+
+  console.log("Sende meinen Stream an Board:", boardSocketId);
+  const pc = createOutgoingPC(boardSocketId);
+
+  try {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    socket.emit("webrtc-offer", {
+      roomCode: currentRoomCode,
+      targetId: boardSocketId,
+      offer: pc.localDescription,
+      streamType: "player",
+      playerId: myPlayerId
+    });
+  } catch (err) {
+    console.error("Offer error:", err);
+  }
+}
+
+// ===============================
+// WebRTC: Host-Cam empfangen
+// ===============================
+function createHostPC(hostSocketId) {
+  if (hostPC) {
+    try { hostPC.close(); } catch {}
+  }
+
+  const pc = new RTCPeerConnection(rtcConfig);
+  hostPC = pc;
+
+  pc.ontrack = (event) => {
+    console.log("📹 Host-Cam empfangen!");
+    if (hostCamVideo) {
+      hostCamVideo.srcObject = event.streams[0];
+    }
+    if (hostCamBox) {
+      hostCamBox.classList.remove("hidden");
+    }
+  };
+
+  pc.onicecandidate = (e) => {
+    if (e.candidate && currentRoomCode) {
+      socket.emit("webrtc-ice-candidate", {
+        roomCode: currentRoomCode,
+        targetId: hostSocketId,
+        candidate: e.candidate,
+        streamType: "host"
+      });
+    }
+  };
+
+  pc.onconnectionstatechange = () => {
+    console.log(`Host-Cam: ${pc.connectionState}`);
+    if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+      if (hostCamBox) hostCamBox.classList.add("hidden");
     }
   };
 
   return pc;
 }
 
-async function sendOfferTo(peerId) {
-  const pc = createPeerConnection(peerId);
-  try {
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-    socket.emit("webrtc-offer", { roomCode: currentRoomCode, targetId: peerId, offer: pc.localDescription });
-    console.log("Offer sent to:", peerId);
-  } catch (err) { console.error("Offer error:", err); }
-}
+async function handleHostOffer(hostSocketId, offer) {
+  console.log("Host-Offer empfangen");
+  const pc = createHostPC(hostSocketId);
 
-async function handleOffer(fromId, offer) {
-  const pc = createPeerConnection(fromId);
   try {
     await pc.setRemoteDescription(new RTCSessionDescription(offer));
     const answer = await pc.createAnswer();
     await pc.setLocalDescription(answer);
-    socket.emit("webrtc-answer", { roomCode: currentRoomCode, targetId: fromId, answer: pc.localDescription });
-  } catch (err) { console.error("Answer error:", err); }
+
+    socket.emit("webrtc-answer", {
+      roomCode: currentRoomCode,
+      targetId: hostSocketId,
+      answer: pc.localDescription,
+      streamType: "host"
+    });
+  } catch (err) {
+    console.error("Host offer handling error:", err);
+  }
+}
+
+// ===============================
+// ICE Candidates
+// ===============================
+async function handleIceCandidate(fromId, candidate, streamType) {
+  let pc;
+  if (streamType === "host") {
+    pc = hostPC;
+  } else {
+    pc = outgoingPC;
+  }
+  if (!pc) return;
+
+  try {
+    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+  } catch (err) {
+    console.error("ICE error:", err);
+  }
 }
 
 // ===============================
@@ -247,7 +368,7 @@ function buildBoard() {
 }
 
 // ===============================
-// Players Bar (mit eigener Cam integriert!)
+// Players Bar (eigene Cam integriert)
 // ===============================
 function renderPlayersBar() {
   if (!playersBarEl) return;
@@ -262,9 +383,7 @@ function renderPlayersBar() {
   entries.forEach(([id, player]) => {
     const pill = document.createElement("div");
     pill.className = "player-pill";
-    pill.style.position = "relative";
 
-    // Video Container
     const videoWrap = document.createElement("div");
     videoWrap.className = "player-video-wrap";
 
@@ -278,7 +397,7 @@ function renderPlayersBar() {
     video.muted = true;
     video.playsInline = true;
 
-    // WICHTIG: Eigene Kamera hier einbinden!
+    // EIGENE Cam anzeigen
     if (id === myPlayerId && localStream) {
       video.srcObject = localStream;
       placeholder.style.display = "none";
@@ -290,7 +409,6 @@ function renderPlayersBar() {
     videoWrap.appendChild(placeholder);
     videoWrap.appendChild(video);
 
-    // Info
     const info = document.createElement("div");
     info.className = "player-info";
     const name = document.createElement("span");
@@ -339,8 +457,15 @@ function doJoin(roomCode, name) {
     if (joinOverlay) joinOverlay.classList.add("hidden");
     if (mainPage) mainPage.classList.remove("hidden");
     updateBuzzerIndicator();
+
+    // Als Spectator joinen
     socket.emit("spectator-join-room", { roomCode: rc, hasCamera: true });
+
+    // Cam bereit melden
     socket.emit("cam-player-ready", { roomCode: rc, playerId: myPlayerId });
+
+    // Host-Stream anfragen
+    socket.emit("request-host-stream", { roomCode: rc });
   });
 }
 
@@ -394,7 +519,7 @@ function updateEstimateTimer() {
   estimateTimerEl.classList.remove("is-warning", "is-danger");
   if (sec <= 5 && sec > 3) estimateTimerEl.classList.add("is-warning");
   if (sec <= 3 && sec > 0) estimateTimerEl.classList.add("is-danger");
-  if (sec <= 3 && sec > 0 && lastTickSec !== sec) { lastTickSec = sec; playTick(); }
+  if (sec <= 3 && sec > 0 && lastTickSec !== sec) { lastTickSec = sec; safePlay(sfxTick); }
   if (sec > 0) { estimateTimerEl.textContent = sec + "s"; return; }
   estimateTimerEl.textContent = "0s";
   if (estimateTimerInterval) clearInterval(estimateTimerInterval);
@@ -429,6 +554,8 @@ if (estimateInput) estimateInput.addEventListener("keydown", e => { if (e.key ==
 // ===============================
 // Socket Events
 // ===============================
+
+// Buzzer
 socket.on("buzzing-status", ({ enabled }) => { buzzingEnabled = !!enabled; updateBuzzerIndicator(); });
 socket.on("you-are-locked", () => { isLocked = true; updateBuzzerIndicator(); });
 socket.on("round-reset", () => { isLocked = false; updateBuzzerIndicator(); });
@@ -438,18 +565,54 @@ socket.on("player-buzzed-first", (payload) => {
   activePlayerId = payload?.playerId;
   activePlayerName = payload?.name || latestPlayers?.[activePlayerId]?.name;
   renderPlayersBar();
-  playBuzzSound();
+  safePlay(sfxBuzz);
   if (buzzInfoEl) { buzzInfoEl.textContent = `${activePlayerName} hat gebuzzert!`; buzzInfoEl.classList.remove("hidden"); }
   if (questionCardEl) questionCardEl.classList.add("question-card-buzzed");
 });
 
-// WebRTC
-socket.on("webrtc-request-offer", ({ fromId }) => { if (cameraReady && localStream) sendOfferTo(fromId); });
-socket.on("webrtc-offer", ({ fromId, offer }) => handleOffer(fromId, offer));
-socket.on("webrtc-answer", ({ fromId, answer }) => { const pc = peerConnections[fromId]; if (pc) pc.setRemoteDescription(new RTCSessionDescription(answer)).catch(console.error); });
-socket.on("webrtc-ice-candidate", ({ fromId, candidate }) => { const pc = peerConnections[fromId]; if (pc) pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error); });
+// ===============================
+// WebRTC Socket Events
+// ===============================
 
-// Board Sync
+// Board fragt nach unserem Stream
+socket.on("webrtc-request-offer", ({ fromId }) => {
+  console.log("Board fragt nach meinem Stream:", fromId);
+  if (cameraReady && localStream) {
+    sendOfferToBoard(fromId);
+  }
+});
+
+// Host-Cam Offer empfangen
+socket.on("webrtc-offer", ({ fromId, offer, streamType }) => {
+  if (streamType === "host") {
+    handleHostOffer(fromId, offer);
+  }
+});
+
+// Answer auf unseren Offer
+socket.on("webrtc-answer", ({ fromId, answer, streamType }) => {
+  if (streamType === "player" && outgoingPC) {
+    outgoingPC.setRemoteDescription(new RTCSessionDescription(answer)).catch(console.error);
+    console.log("Answer von Board empfangen");
+  } else if (streamType === "host" && hostPC) {
+    hostPC.setRemoteDescription(new RTCSessionDescription(answer)).catch(console.error);
+  }
+});
+
+// ICE Candidates
+socket.on("webrtc-ice-candidate", ({ fromId, candidate, streamType }) => {
+  handleIceCandidate(fromId, candidate, streamType);
+});
+
+// Host-Cam verfügbar
+socket.on("host-cam-available", ({ socketId }) => {
+  console.log("Host-Cam verfügbar:", socketId);
+  // Host wird uns ein Offer senden
+});
+
+// ===============================
+// Board Sync Events
+// ===============================
 socket.on("spectator-question-opened", (data) => {
   const { categoryIndex, questionIndex, question, value, type, imageUrl } = data;
   const cell = boardEl?.querySelector(`[data-category-index="${categoryIndex}"][data-question-index="${questionIndex}"]`);
@@ -480,8 +643,8 @@ socket.on("spectator-question-closed", ({ categoryIndex, questionIndex }) => {
   if (qMediaEl) qMediaEl.classList.add("hidden");
 });
 
-socket.on("spectator-correct", () => { playCorrectSound(); flashScreen("correct"); });
-socket.on("spectator-wrong", () => { playWrongSound(); flashScreen("wrong"); });
+socket.on("spectator-correct", () => { safePlay(sfxCorrect); flashScreen("correct"); });
+socket.on("spectator-wrong", () => { safePlay(sfxWrong); flashScreen("wrong"); });
 socket.on("spectator-round-changed", ({ round }) => { currentRound = round; usedCells.clear(); buildBoard(); if (turnIndicatorEl) turnIndicatorEl.textContent = round >= 2 ? "Runde 2 (x2)" : "Warte auf Spieler…"; });
 socket.on("spectator-turn-update", ({ playerName }) => { if (turnIndicatorEl && playerName) turnIndicatorEl.textContent = `⭐ ${playerName} ist dran ⭐`; });
 socket.on("estimate-question-started", ({ question, timeLimit }) => { if (joined) openEstimateModal(question, timeLimit); });
@@ -505,10 +668,11 @@ socket.on("spectator-estimate-reveal", ({ answers }) => {
 
 socket.on("game-ended", () => {
   joined = false; currentRoomCode = null; myPlayerId = null; buzzingEnabled = false; isLocked = false;
-  Object.values(peerConnections).forEach(pc => { try { pc.close(); } catch {} });
-  peerConnections = {};
+  if (outgoingPC) { try { outgoingPC.close(); } catch {} outgoingPC = null; }
+  if (hostPC) { try { hostPC.close(); } catch {} hostPC = null; }
   if (joinOverlay) joinOverlay.classList.remove("hidden");
   if (mainPage) mainPage.classList.add("hidden");
+  if (hostCamBox) hostCamBox.classList.add("hidden");
   updateBuzzerIndicator();
   closeEstimateModal();
   if (overlayEl) overlayEl.classList.add("hidden");
