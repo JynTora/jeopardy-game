@@ -439,6 +439,26 @@
   }
 
   // ===============================
+  // Buzzer Button Handler (Backup)
+  // ===============================
+  function setupBuzzerButton() {
+    const buzzBtn = document.getElementById("boardBuzzBtn");
+    if (buzzBtn) {
+      // Entferne alte Handler
+      const newBtn = buzzBtn.cloneNode(true);
+      buzzBtn.parentNode.replaceChild(newBtn, buzzBtn);
+      
+      newBtn.addEventListener("click", () => {
+        if (typeof boardRoomCode !== 'undefined' && boardRoomCode && typeof socket !== 'undefined') {
+          console.log("🔔 Buzzer aktiviert für Raum:", boardRoomCode);
+          socket.emit("board-enable-buzz", { roomCode: boardRoomCode });
+        }
+      });
+      console.log("✅ Buzzer-Button Handler aktiviert");
+    }
+  }
+
+  // ===============================
   // Init
   // ===============================
   async function init() {
@@ -446,6 +466,7 @@
     overridePlayersBar();
     setupSocketEvents();
     joinWithCamMode();
+    setupBuzzerButton();
     console.log("🎥 Board-Cam bereit!");
   }
 
