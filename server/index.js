@@ -256,7 +256,7 @@ io.on("connection", (socket) => {
   });
 
   // ================================
-  // WEBRTC SIGNALING
+  // WEBRTC SIGNALING - FIXED!
   // ================================
 
   // Board fragt Player nach Offer
@@ -269,33 +269,46 @@ io.on("connection", (socket) => {
     console.log("WebRTC: Request offer from", targetId, "to", socket.id);
   });
 
-  // Player/Board sendet Offer
-  socket.on("webrtc-offer", ({ roomCode, targetId, offer }) => {
+  // Player/Board sendet Offer - FIXED: streamType und playerId weiterleiten
+  socket.on("webrtc-offer", ({ roomCode, targetId, offer, streamType, playerId }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
     if (!game) return;
 
-    io.to(targetId).emit("webrtc-offer", { fromId: socket.id, offer });
-    console.log("WebRTC: Offer from", socket.id, "to", targetId);
+    io.to(targetId).emit("webrtc-offer", { 
+      fromId: socket.id, 
+      offer,
+      streamType: streamType || "player",
+      playerId: playerId || null
+    });
+    console.log("WebRTC: Offer from", socket.id, "to", targetId, "type:", streamType);
   });
 
-  // Player/Board sendet Answer
-  socket.on("webrtc-answer", ({ roomCode, targetId, answer }) => {
+  // Player/Board sendet Answer - FIXED: streamType weiterleiten
+  socket.on("webrtc-answer", ({ roomCode, targetId, answer, streamType }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
     if (!game) return;
 
-    io.to(targetId).emit("webrtc-answer", { fromId: socket.id, answer });
-    console.log("WebRTC: Answer from", socket.id, "to", targetId);
+    io.to(targetId).emit("webrtc-answer", { 
+      fromId: socket.id, 
+      answer,
+      streamType: streamType || "player"
+    });
+    console.log("WebRTC: Answer from", socket.id, "to", targetId, "type:", streamType);
   });
 
-  // ICE Candidate weiterleiten
-  socket.on("webrtc-ice-candidate", ({ roomCode, targetId, candidate }) => {
+  // ICE Candidate weiterleiten - FIXED: streamType weiterleiten
+  socket.on("webrtc-ice-candidate", ({ roomCode, targetId, candidate, streamType }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
     if (!game) return;
 
-    io.to(targetId).emit("webrtc-ice-candidate", { fromId: socket.id, candidate });
+    io.to(targetId).emit("webrtc-ice-candidate", { 
+      fromId: socket.id, 
+      candidate,
+      streamType: streamType || "player"
+    });
   });
 
   // Host Cam bereit
