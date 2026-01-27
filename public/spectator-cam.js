@@ -6,28 +6,31 @@
 const socket = io();
 
 // ===============================
-// WebRTC Config mit TURN
+// WebRTC Config mit Metered.ca TURN
 // ===============================
 const rtcConfig = {
   iceServers: [
     { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-    { urls: 'stun:stun2.l.google.com:19302' },
-    // TURN Server für NAT Traversal
+    { urls: 'stun:bamangames.metered.live:80' },
     {
-      urls: 'turn:openrelay.metered.ca:80',
-      username: 'openrelayproject',
-      credential: 'openrelayproject'
+      urls: 'turn:bamangames.metered.live:80',
+      username: 'f0a80f469f8b8590832f8da3',
+      credential: 'crkMbNXmiA79CgUn'
     },
     {
-      urls: 'turn:openrelay.metered.ca:443',
-      username: 'openrelayproject',
-      credential: 'openrelayproject'
+      urls: 'turn:bamangames.metered.live:80?transport=tcp',
+      username: 'f0a80f469f8b8590832f8da3',
+      credential: 'crkMbNXmiA79CgUn'
     },
     {
-      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
-      username: 'openrelayproject',
-      credential: 'openrelayproject'
+      urls: 'turn:bamangames.metered.live:443',
+      username: 'f0a80f469f8b8590832f8da3',
+      credential: 'crkMbNXmiA79CgUn'
+    },
+    {
+      urls: 'turns:bamangames.metered.live:443',
+      username: 'f0a80f469f8b8590832f8da3',
+      credential: 'crkMbNXmiA79CgUn'
     }
   ],
   iceCandidatePoolSize: 10
