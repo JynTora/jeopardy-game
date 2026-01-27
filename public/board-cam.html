@@ -19,24 +19,24 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 10px 20px;
-        min-height: 100px;
+        padding: 8px 20px;
+        min-height: 110px;
         position: relative;
         margin-bottom: 0;
       }
 
       .board-cam-mode .jt-logo {
-        max-height: 90px;
+        max-height: 100px;
       }
 
-      /* Host-Cam Box - links im Header, nicht überlappend */
+      /* Host-Cam Box - links im Header, kompakt */
       .host-cam-box {
         position: absolute;
-        left: 20px;
+        left: 10px;
         top: 50%;
         transform: translateY(-50%);
-        width: 130px;
-        border-radius: 10px;
+        width: 105px;
+        border-radius: 8px;
         overflow: hidden;
         background: rgba(15, 23, 42, 0.95);
         border: 2px solid rgba(251, 146, 60, 0.7);
@@ -85,36 +85,37 @@
 
       /* Board Grid - kompakter */
       .board-cam-mode .board-grid {
-        gap: 4px;
-        padding: 4px 15px 2px 15px;
+        gap: 3px;
+        padding: 2px 15px 0 15px;
       }
 
       .board-cam-mode .board-cell {
-        min-height: 42px;
-        font-size: 1.2rem;
-        padding: 5px 3px;
+        min-height: 38px;
+        font-size: 1.15rem;
+        padding: 4px 3px;
       }
 
       .board-cam-mode .board-category {
-        font-size: 0.7rem;
-        padding: 5px 4px;
-        min-height: 32px;
+        font-size: 0.65rem;
+        padding: 4px 4px;
+        min-height: 28px;
       }
 
       /* Main - weniger Padding */
       .board-cam-mode .jt-main {
         padding-top: 0;
         padding-bottom: 0;
+        gap: 0;
       }
 
       /* Spieler-Leiste - direkt unter Board */
       .board-cam-mode .players-bar {
-        padding: 6px 25px;
-        gap: 10px;
+        padding: 4px 25px;
+        gap: 8px;
         justify-content: center;
         flex-wrap: nowrap;
-        min-height: 105px;
-        margin-top: 2px;
+        min-height: 100px;
+        margin-top: 0;
       }
 
       .board-cam-mode .player-pill {
