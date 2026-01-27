@@ -366,8 +366,15 @@
 
     // Spieler mit Kamera verbunden
     socket.on("cam-player-connected", ({ playerId, socketId, name }) => {
-      console.log("📹 Cam-Spieler:", name, socketId);
+      console.log("📹 Cam-Spieler verbunden:", name, socketId);
       socketToPlayer[socketId] = playerId;
+      
+      // WICHTIG: Request den Stream vom Spieler!
+      console.log("📤 Fordere Stream an von:", socketId);
+      socket.emit("webrtc-request-offer", { 
+        roomCode: boardRoomCode, 
+        targetId: socketId 
+      });
     });
 
     // Spieler getrennt
