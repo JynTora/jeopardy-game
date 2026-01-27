@@ -11,37 +11,63 @@
 
     <style>
       /* ═══════════════════════════════════════════════
-         BOARD CAM MODE - Kompaktes Layout
+         BOARD CAM MODE - Grosses Logo, grosse Cam
          ═══════════════════════════════════════════════ */
 
-      /* Header: Host-Cam links, Logo mittig - ÜBER den Kategorien */
+      /* Body & Page - Flexbox für Vollbild */
+      .board-cam-mode {
+        display: flex;
+        flex-direction: column;
+        min-height: 100vh;
+      }
+
+      .board-cam-mode .jt-page {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        min-height: 100vh;
+      }
+
+      /* Header: Logo gross und zentriert */
       .board-cam-mode .jt-header {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 8px 20px;
-        min-height: 110px;
+        padding: 6px 20px;
+        min-height: 80px;
         position: relative;
         margin-bottom: 0;
+        flex-shrink: 0;
       }
 
       .board-cam-mode .jt-logo {
-        max-height: 100px;
+        max-height: 130px;
       }
 
-      /* Host-Cam Box - links im Header, kompakt */
-      .host-cam-box {
+      /* Buttons rechts oben */
+      .board-cam-mode .jt-header .header-buttons {
         position: absolute;
-        left: 10px;
+        right: 20px;
         top: 50%;
         transform: translateY(-50%);
-        width: 105px;
-        border-radius: 8px;
+      }
+
+      /* Host-Cam Container - ÜBER dem Board, links ausgerichtet */
+      .host-cam-row {
+        display: flex;
+        align-items: flex-end;
+        padding: 0 15px 5px 15px;
+        flex-shrink: 0;
+      }
+
+      .host-cam-box {
+        width: 185px;
+        border-radius: 10px;
         overflow: hidden;
         background: rgba(15, 23, 42, 0.95);
         border: 2px solid rgba(251, 146, 60, 0.7);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 12px rgba(251, 146, 60, 0.25);
-        z-index: 100;
+        position: relative;
       }
 
       .host-cam-video {
@@ -55,13 +81,13 @@
 
       .host-cam-label {
         position: absolute;
-        bottom: 4px;
+        bottom: 6px;
         left: 50%;
         transform: translateX(-50%);
-        padding: 2px 8px;
+        padding: 3px 10px;
         border-radius: 999px;
         background: rgba(251, 146, 60, 0.9);
-        font-size: 0.5rem;
+        font-size: 0.55rem;
         font-weight: 700;
         letter-spacing: 0.05em;
         color: #fff;
@@ -70,52 +96,55 @@
 
       .host-cam-toggle {
         position: absolute;
-        top: 4px;
-        right: 4px;
-        width: 22px;
-        height: 22px;
+        top: 6px;
+        right: 6px;
+        width: 26px;
+        height: 26px;
         border-radius: 50%;
         border: none;
         background: rgba(0, 0, 0, 0.6);
         color: #fff;
-        font-size: 0.65rem;
+        font-size: 0.75rem;
         cursor: pointer;
         z-index: 10;
       }
 
-      /* Board Grid - kompakter */
-      .board-cam-mode .board-grid {
-        gap: 3px;
-        padding: 2px 15px 0 15px;
-      }
-
-      .board-cam-mode .board-cell {
-        min-height: 38px;
-        font-size: 1.15rem;
-        padding: 4px 3px;
-      }
-
-      .board-cam-mode .board-category {
-        font-size: 0.65rem;
-        padding: 4px 4px;
-        min-height: 28px;
-      }
-
-      /* Main - weniger Padding */
+      /* Main - kein extra flex, Board und Players bar sind separat */
       .board-cam-mode .jt-main {
         padding-top: 0;
         padding-bottom: 0;
         gap: 0;
+        flex-shrink: 0;
       }
 
-      /* Spieler-Leiste - direkt unter Board */
+      /* Board Grid - kompakt */
+      .board-cam-mode .board-grid {
+        gap: 4px;
+        padding: 0 15px;
+        flex-shrink: 0;
+      }
+
+      .board-cam-mode .board-cell {
+        min-height: 45px;
+        font-size: 1.3rem;
+        padding: 6px 4px;
+      }
+
+      .board-cam-mode .board-category {
+        font-size: 0.7rem;
+        padding: 6px 4px;
+        min-height: 32px;
+      }
+
+      /* Spieler-Leiste - wird nach unten gedrückt im Vollbild */
       .board-cam-mode .players-bar {
-        padding: 4px 25px;
-        gap: 8px;
+        padding: 8px 25px;
+        gap: 10px;
         justify-content: center;
         flex-wrap: nowrap;
-        min-height: 100px;
-        margin-top: 0;
+        min-height: 110px;
+        margin-top: auto; /* Drückt nach unten im Vollbild */
+        flex-shrink: 0;
       }
 
       .board-cam-mode .player-pill {
@@ -210,19 +239,23 @@
     <div id="screenFlash" class="screen-flash"></div>
 
     <div class="jt-page" id="boardPage">
-      <!-- Header: Host-Cam + Logo -->
+      <!-- Header: nur Logo -->
       <header class="jt-header">
-        <div id="hostCamBox" class="host-cam-box">
-          <video id="hostCamVideo" class="host-cam-video" autoplay muted playsinline></video>
-          <div class="host-cam-label">SPIELLEITER</div>
-          <button id="hostCamToggle" class="host-cam-toggle">📹</button>
-        </div>
         <img src="/images/jt-logo.png" alt="Jyn Tora Jeopardy" class="jt-logo" />
       </header>
 
       <div class="turn-bar">
         <div id="turnIndicator" class="turn-indicator">Warte auf Spieler…</div>
         <button id="startGameBtn" class="turn-start-btn">SPIEL STARTEN</button>
+      </div>
+
+      <!-- Host-Cam: eigene Zeile über dem Board, links ausgerichtet -->
+      <div class="host-cam-row">
+        <div id="hostCamBox" class="host-cam-box">
+          <video id="hostCamVideo" class="host-cam-video" autoplay muted playsinline></video>
+          <div class="host-cam-label">SPIELLEITER</div>
+          <button id="hostCamToggle" class="host-cam-toggle">📹</button>
+        </div>
       </div>
 
       <div class="board-ambient-layer">
