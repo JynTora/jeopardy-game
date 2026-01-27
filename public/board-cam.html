@@ -11,7 +11,7 @@
 
     <style>
       /* ═══════════════════════════════════════════════
-         BOARD CAM MODE - Grosses Logo, grosse Cam
+         BOARD CAM MODE - Cam und Logo auf einer Zeile
          ═══════════════════════════════════════════════ */
 
       /* Body & Page - Flexbox für Vollbild */
@@ -19,55 +19,46 @@
         display: flex;
         flex-direction: column;
         min-height: 100vh;
+        overflow: hidden;
       }
 
       .board-cam-mode .jt-page {
         display: flex;
         flex-direction: column;
         flex: 1;
-        min-height: 100vh;
+        height: 100vh;
+        overflow: hidden;
       }
 
-      /* Header: Logo gross und zentriert, mit etwas Abstand */
+      /* Header: Cam LINKS, Logo MITTE - auf einer Zeile */
       .board-cam-mode .jt-header {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 15px 20px 10px 20px;
-        min-height: 100px;
+        padding: 10px 20px;
+        min-height: 130px;
         position: relative;
-        margin-bottom: 0;
+        margin-bottom: 5px;
         flex-shrink: 0;
       }
 
       .board-cam-mode .jt-logo {
-        max-height: 150px;
+        max-height: 120px;
       }
 
-      /* Buttons rechts oben */
-      .board-cam-mode .jt-header .header-buttons {
+      /* Host-Cam Box - links im Header, auf gleicher Höhe wie Logo */
+      .host-cam-box {
         position: absolute;
-        right: 20px;
+        left: 15px;
         top: 50%;
         transform: translateY(-50%);
-      }
-
-      /* Host-Cam Container - ÜBER dem Board, links ausgerichtet, ganz oben */
-      .host-cam-row {
-        display: flex;
-        align-items: flex-start;
-        padding: 0 15px 3px 15px;
-        flex-shrink: 0;
-      }
-
-      .host-cam-box {
         width: 220px;
         border-radius: 10px;
         overflow: hidden;
         background: rgba(15, 23, 42, 0.95);
         border: 2px solid rgba(251, 146, 60, 0.7);
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 12px rgba(251, 146, 60, 0.25);
-        position: relative;
+        z-index: 100;
       }
 
       .host-cam-video {
@@ -109,23 +100,29 @@
         z-index: 10;
       }
 
-      /* Main - kein extra flex, Board und Players bar sind separat */
+      /* Main - füllt den Rest */
       .board-cam-mode .jt-main {
         padding-top: 0;
         padding-bottom: 0;
         gap: 0;
-        flex-shrink: 0;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       }
 
-      /* Board Grid - kompakt */
+      /* Board Grid */
       .board-cam-mode .board-grid {
         gap: 4px;
         padding: 0 15px;
-        flex-shrink: 0;
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        grid-template-rows: auto repeat(5, 1fr);
       }
 
       .board-cam-mode .board-cell {
-        min-height: 45px;
+        min-height: 0;
         font-size: 1.3rem;
         padding: 6px 4px;
       }
@@ -133,17 +130,16 @@
       .board-cam-mode .board-category {
         font-size: 0.7rem;
         padding: 6px 4px;
-        min-height: 32px;
+        min-height: 0;
       }
 
-      /* Spieler-Leiste - wird nach unten gedrückt im Vollbild */
+      /* Spieler-Leiste - am unteren Rand, vollständig sichtbar */
       .board-cam-mode .players-bar {
-        padding: 10px 25px;
+        padding: 10px 25px 15px 25px;
         gap: 15px;
         justify-content: center;
         flex-wrap: nowrap;
         min-height: 140px;
-        margin-top: auto; /* Drückt nach unten im Vollbild */
         flex-shrink: 0;
         overflow-x: auto;
       }
@@ -241,23 +237,19 @@
     <div id="screenFlash" class="screen-flash"></div>
 
     <div class="jt-page" id="boardPage">
-      <!-- Header: nur Logo -->
+      <!-- Header: Cam links, Logo mitte - auf EINER Zeile -->
       <header class="jt-header">
+        <div id="hostCamBox" class="host-cam-box">
+          <video id="hostCamVideo" class="host-cam-video" autoplay muted playsinline></video>
+          <div class="host-cam-label">SPIELLEITER</div>
+          <button id="hostCamToggle" class="host-cam-toggle">📹</button>
+        </div>
         <img src="/images/jt-logo.png" alt="Jyn Tora Jeopardy" class="jt-logo" />
       </header>
 
       <div class="turn-bar">
         <div id="turnIndicator" class="turn-indicator">Warte auf Spieler…</div>
         <button id="startGameBtn" class="turn-start-btn">SPIEL STARTEN</button>
-      </div>
-
-      <!-- Host-Cam: eigene Zeile über dem Board, links ausgerichtet -->
-      <div class="host-cam-row">
-        <div id="hostCamBox" class="host-cam-box">
-          <video id="hostCamVideo" class="host-cam-video" autoplay muted playsinline></video>
-          <div class="host-cam-label">SPIELLEITER</div>
-          <button id="hostCamToggle" class="host-cam-toggle">📹</button>
-        </div>
       </div>
 
       <div class="board-ambient-layer">
