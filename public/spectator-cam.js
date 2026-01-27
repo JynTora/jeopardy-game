@@ -476,19 +476,44 @@ if (joinBtn) joinBtn.addEventListener("click", () => doJoin(roomCodeInput?.value
 [roomCodeInput, nameInput].forEach(el => el?.addEventListener("keydown", e => { if (e.key === "Enter") joinBtn?.click(); }));
 
 // ===============================
-// Buzzer (Space)
+// Buzzer (Space + Touch/Click)
 // ===============================
+function triggerBuzz() {
+  if (!joined || !currentRoomCode || !buzzingEnabled || isLocked) return;
+  if (buzzerIndicator) { 
+    buzzerIndicator.classList.add("buzzer-pressed"); 
+    setTimeout(() => buzzerIndicator.classList.remove("buzzer-pressed"), 150); 
+  }
+  socket.emit("player-buzz", { roomCode: currentRoomCode });
+  buzzingEnabled = false;
+  updateBuzzerIndicator();
+  
+  // Vibration feedback auf Handy
+  if (navigator.vibrate) navigator.vibrate(50);
+}
+
+// Space-Taste
 document.addEventListener("keydown", (e) => {
   if (e.code !== "Space") return;
   const t = e.target;
   if (t?.tagName === "INPUT" || t?.tagName === "TEXTAREA") return;
-  if (!joined || !currentRoomCode || !buzzingEnabled || isLocked) return;
   e.preventDefault();
-  if (buzzerIndicator) { buzzerIndicator.classList.add("buzzer-pressed"); setTimeout(() => buzzerIndicator.classList.remove("buzzer-pressed"), 150); }
-  socket.emit("player-buzz", { roomCode: currentRoomCode });
-  buzzingEnabled = false;
-  updateBuzzerIndicator();
+  triggerBuzz();
 });
+
+// Touch/Click auf Buzzer-Indicator
+if (buzzerIndicator) {
+  buzzerIndicator.addEventListener("click", (e) => {
+    e.preventDefault();
+    triggerBuzz();
+  });
+  
+  // Prevent double-tap zoom auf Mobile
+  buzzerIndicator.addEventListener("touchend", (e) => {
+    e.preventDefault();
+    triggerBuzz();
+  });
+}
 
 // ===============================
 // Estimate Modal
