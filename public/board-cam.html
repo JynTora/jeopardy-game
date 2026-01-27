@@ -28,20 +28,20 @@
         min-height: 100vh;
       }
 
-      /* Header: Logo gross und zentriert */
+      /* Header: Logo gross und zentriert, mit etwas Abstand */
       .board-cam-mode .jt-header {
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 6px 20px;
-        min-height: 80px;
+        padding: 15px 20px 10px 20px;
+        min-height: 100px;
         position: relative;
         margin-bottom: 0;
         flex-shrink: 0;
       }
 
       .board-cam-mode .jt-logo {
-        max-height: 130px;
+        max-height: 150px;
       }
 
       /* Buttons rechts oben */
@@ -52,16 +52,16 @@
         transform: translateY(-50%);
       }
 
-      /* Host-Cam Container - ÜBER dem Board, links ausgerichtet */
+      /* Host-Cam Container - ÜBER dem Board, links ausgerichtet, ganz oben */
       .host-cam-row {
         display: flex;
-        align-items: flex-end;
-        padding: 0 15px 5px 15px;
+        align-items: flex-start;
+        padding: 0 15px 3px 15px;
         flex-shrink: 0;
       }
 
       .host-cam-box {
-        width: 185px;
+        width: 220px;
         border-radius: 10px;
         overflow: hidden;
         background: rgba(15, 23, 42, 0.95);
@@ -72,7 +72,7 @@
 
       .host-cam-video {
         width: 100%;
-        aspect-ratio: 4/3;
+        aspect-ratio: 16/9;
         object-fit: cover;
         transform: scaleX(-1);
         display: block;
@@ -138,29 +138,31 @@
 
       /* Spieler-Leiste - wird nach unten gedrückt im Vollbild */
       .board-cam-mode .players-bar {
-        padding: 8px 25px;
-        gap: 10px;
+        padding: 10px 25px;
+        gap: 15px;
         justify-content: center;
         flex-wrap: nowrap;
-        min-height: 110px;
+        min-height: 140px;
         margin-top: auto; /* Drückt nach unten im Vollbild */
         flex-shrink: 0;
+        overflow-x: auto;
       }
 
       .board-cam-mode .player-pill {
         flex-direction: column;
         padding: 5px;
-        min-width: 100px;
-        max-width: 140px;
-        flex: 1 1 auto;
+        width: 220px;
+        min-width: 220px;
+        max-width: 220px;
+        flex: 0 0 auto;
         border-radius: 10px;
         gap: 3px;
       }
 
-      /* Video in Player Pill */
+      /* Video in Player Pill - 16:9 wie Host-Cam */
       .player-video-wrap {
         width: 100%;
-        aspect-ratio: 4/3;
+        aspect-ratio: 16/9;
         border-radius: 6px;
         overflow: hidden;
         background: rgba(30, 41, 59, 0.8);
