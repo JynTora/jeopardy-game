@@ -30,28 +30,28 @@
         overflow: hidden;
       }
 
-      /* Header: Cam LINKS, Logo MITTE - auf einer Zeile */
+      /* Header: Cam LINKS, Logo MITTE - Unterkanten auf gleicher Höhe */
       .board-cam-mode .jt-header {
         display: flex;
-        align-items: center;
+        align-items: flex-end; /* Unterkanten ausrichten! */
         justify-content: center;
-        padding: 10px 20px;
-        min-height: 130px;
+        padding: 10px 20px 10px 20px;
+        min-height: 140px;
         position: relative;
         margin-bottom: 5px;
         flex-shrink: 0;
       }
 
       .board-cam-mode .jt-logo {
-        max-height: 120px;
+        max-height: 140px;
+        margin-bottom: 0;
       }
 
-      /* Host-Cam Box - links im Header, auf gleicher Höhe wie Logo */
+      /* Host-Cam Box - links im Header, Unterkante auf gleicher Höhe wie Logo */
       .host-cam-box {
         position: absolute;
         left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
+        bottom: 10px; /* Gleiche Unterkante wie Logo */
         width: 220px;
         border-radius: 10px;
         overflow: hidden;
@@ -111,7 +111,7 @@
         overflow: hidden;
       }
 
-      /* Board Grid */
+      /* Board Grid - Kategorien sichtbar! */
       .board-cam-mode .board-grid {
         gap: 4px;
         padding: 0 15px;
@@ -128,9 +128,12 @@
       }
 
       .board-cam-mode .board-category {
-        font-size: 0.7rem;
-        padding: 6px 4px;
-        min-height: 0;
+        font-size: 0.75rem;
+        padding: 8px 4px;
+        min-height: 35px !important;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
       }
 
       /* Spieler-Leiste - am unteren Rand, vollständig sichtbar */
@@ -221,11 +224,13 @@
         right: 15px;
       }
 
-      /* Buzzer */
+      /* Buzzer - oben rechts unter SPIEL STARTEN */
       .board-cam-mode .board-buzz-btn {
-        bottom: 120px;
-        width: 70px;
-        height: 70px;
+        top: 55px;
+        bottom: auto;
+        right: 15px;
+        width: 75px;
+        height: 75px;
         font-size: 0.65rem;
       }
     </style>
