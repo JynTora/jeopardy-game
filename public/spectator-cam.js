@@ -182,7 +182,14 @@ function createOutgoingPC(targetId) {
 
   // Lokale Tracks hinzufügen
   if (localStream) {
-    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    const tracks = localStream.getTracks();
+    console.log("📹 Füge", tracks.length, "Tracks hinzu");
+    tracks.forEach(track => {
+      console.log("  - Track:", track.kind, track.label);
+      pc.addTrack(track, localStream);
+    });
+  } else {
+    console.log("⚠️ Kein localStream beim PC erstellen!");
   }
 
   pc.onicecandidate = (e) => {
@@ -197,21 +204,36 @@ function createOutgoingPC(targetId) {
   };
 
   pc.onconnectionstatechange = () => {
-    console.log(`Meine Cam -> Board: ${pc.connectionState}`);
+    console.log(`🔌 Meine Cam -> Board: ${pc.connectionState}`);
+    if (pc.connectionState === "connected") {
+      console.log("✅ Stream-Verbindung zum Board erfolgreich!");
+    }
+    if (pc.connectionState === "failed") {
+      console.log("❌ Stream-Verbindung zum Board fehlgeschlagen!");
+    }
+  };
+  
+  pc.oniceconnectionstatechange = () => {
+    console.log(`🧊 ICE -> Board: ${pc.iceConnectionState}`);
   };
 
   return pc;
 }
 
 async function sendOfferToBoard(boardSocketId) {
-  if (!localStream) return;
+  if (!localStream) {
+    console.log("⚠️ Kein localStream vorhanden!");
+    return;
+  }
 
-  console.log("Sende meinen Stream an Board:", boardSocketId);
+  console.log("📤 Sende meinen Stream an Board:", boardSocketId);
   const pc = createOutgoingPC(boardSocketId);
 
   try {
     const offer = await pc.createOffer();
+    console.log("✅ Offer erstellt");
     await pc.setLocalDescription(offer);
+    console.log("✅ Local Description gesetzt");
 
     socket.emit("webrtc-offer", {
       roomCode: currentRoomCode,
@@ -220,8 +242,9 @@ async function sendOfferToBoard(boardSocketId) {
       streamType: "player",
       playerId: myPlayerId
     });
+    console.log("📤 Offer an Board gesendet, playerId:", myPlayerId);
   } catch (err) {
-    console.error("Offer error:", err);
+    console.error("❌ Offer error:", err);
   }
 }
 
@@ -469,6 +492,9 @@ function doJoin(roomCode, name) {
 
     // Host-Stream anfragen
     socket.emit("request-host-stream", { roomCode: rc });
+    
+    // Board Socket-ID anfragen (um Stream zu senden)
+    socket.emit("request-board-socket-id", { roomCode: rc });
   });
 }
 
@@ -604,9 +630,38 @@ socket.on("player-buzzed-first", (payload) => {
 
 // Board fragt nach unserem Stream
 socket.on("webrtc-request-offer", ({ fromId }) => {
-  console.log("Board fragt nach meinem Stream:", fromId);
+  console.log("📥 Board fragt nach meinem Stream:", fromId);
   if (cameraReady && localStream) {
+    console.log("📤 Sende Stream an Board...");
     sendOfferToBoard(fromId);
+  } else {
+    console.log("⚠️ Kamera noch nicht bereit, versuche in 1s nochmal...");
+    setTimeout(() => {
+      if (cameraReady && localStream) {
+        console.log("📤 Retry: Sende Stream an Board...");
+        sendOfferToBoard(fromId);
+      }
+    }, 1000);
+  }
+});
+
+// Board Socket-ID empfangen (damit wir unseren Stream senden können)
+let boardSocketId = null;
+socket.on("board-socket-id", ({ socketId }) => {
+  console.log("📍 Board Socket-ID erhalten:", socketId);
+  boardSocketId = socketId;
+  if (cameraReady && localStream && joined) {
+    console.log("📤 Sende Stream automatisch an Board...");
+    sendOfferToBoard(socketId);
+  } else {
+    console.log("⏳ Warte auf Kamera, dann sende Stream...");
+    // Retry nach kurzer Zeit
+    setTimeout(() => {
+      if (cameraReady && localStream && joined && boardSocketId) {
+        console.log("📤 Retry: Sende Stream an Board...");
+        sendOfferToBoard(boardSocketId);
+      }
+    }, 2000);
   }
 });
 
@@ -619,9 +674,11 @@ socket.on("webrtc-offer", ({ fromId, offer, streamType }) => {
 
 // Answer auf unseren Offer
 socket.on("webrtc-answer", ({ fromId, answer, streamType }) => {
+  console.log("📥 Answer empfangen, streamType:", streamType, "fromId:", fromId);
   if (streamType === "player" && outgoingPC) {
-    outgoingPC.setRemoteDescription(new RTCSessionDescription(answer)).catch(console.error);
-    console.log("Answer von Board empfangen");
+    outgoingPC.setRemoteDescription(new RTCSessionDescription(answer))
+      .then(() => console.log("✅ Remote Description gesetzt für Board-Verbindung"))
+      .catch(err => console.error("❌ Remote Description Fehler:", err));
   } else if (streamType === "host" && hostPC) {
     hostPC.setRemoteDescription(new RTCSessionDescription(answer)).catch(console.error);
   }
