@@ -124,24 +124,35 @@
     };
 
     pc.onconnectionstatechange = () => {
-      console.log(`Incoming [${playerId}]: ${pc.connectionState}`);
+      console.log(`🔌 Incoming [${playerId}]: ${pc.connectionState}`);
+      if (pc.connectionState === "connected") {
+        console.log(`✅ Stream-Verbindung erfolgreich für: ${playerId}`);
+      }
       if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
+        console.log(`❌ Stream-Verbindung verloren für: ${playerId}`);
         delete playerStreams[playerId];
         updatePlayerVideo(playerId);
       }
+    };
+    
+    pc.oniceconnectionstatechange = () => {
+      console.log(`🧊 ICE [${playerId}]: ${pc.iceConnectionState}`);
     };
 
     return pc;
   }
 
   async function handlePlayerOffer(socketId, playerId, offer) {
-    console.log("Verarbeite Offer von Spieler:", playerId);
+    console.log("📥 Verarbeite Offer von Spieler:", playerId, "socket:", socketId);
     const pc = createIncomingPC(socketId, playerId);
 
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      console.log("✅ Remote Description gesetzt für:", playerId);
+      
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
+      console.log("✅ Answer erstellt für:", playerId);
 
       socket.emit("webrtc-answer", {
         roomCode: boardRoomCode,
@@ -149,9 +160,9 @@
         answer: pc.localDescription,
         streamType: "player"
       });
-      console.log("Answer gesendet an:", playerId);
+      console.log("📤 Answer gesendet an:", playerId);
     } catch (err) {
-      console.error("Offer handling error:", err);
+      console.error("❌ Offer handling error für", playerId, ":", err);
     }
   }
 
@@ -375,6 +386,28 @@
         roomCode: boardRoomCode, 
         targetId: socketId 
       });
+      
+      // Retry nach 2 Sekunden falls kein Stream kommt
+      setTimeout(() => {
+        if (!playerStreams[playerId]) {
+          console.log("🔄 Retry: Fordere Stream nochmal an von:", name);
+          socket.emit("webrtc-request-offer", { 
+            roomCode: boardRoomCode, 
+            targetId: socketId 
+          });
+        }
+      }, 2000);
+      
+      // Nochmal nach 5 Sekunden
+      setTimeout(() => {
+        if (!playerStreams[playerId]) {
+          console.log("🔄 Retry 2: Fordere Stream nochmal an von:", name);
+          socket.emit("webrtc-request-offer", { 
+            roomCode: boardRoomCode, 
+            targetId: socketId 
+          });
+        }
+      }, 5000);
     });
 
     // Spieler getrennt
