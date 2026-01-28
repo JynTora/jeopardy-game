@@ -28,15 +28,15 @@
         height: 100%;
       }
 
-      /* Header: Cam LINKS, Logo MITTE - beide sichtbar, nicht überlappend */
+      /* Header: Cam LINKS, Logo MITTE - Unterkanten gleich, genug Höhe */
       .board-cam-mode .jt-header {
         display: flex;
-        align-items: center;
+        align-items: flex-end; /* Unterkanten gleich! */
         justify-content: center;
-        padding: 10px 20px;
-        min-height: 150px; /* Gross genug für Cam + Logo */
+        padding: 10px 20px 12px 20px;
+        min-height: 160px; /* Gross genug damit Cam nicht überlappt */
         position: relative;
-        margin-bottom: 5px;
+        margin-bottom: 8px; /* Abstand zu Kategorien */
         flex-shrink: 0;
       }
 
@@ -44,12 +44,11 @@
         max-height: 130px;
       }
 
-      /* Host-Cam Box - links im Header, vertikal zentriert */
+      /* Host-Cam Box - links im Header, Unterkante gleich wie Logo */
       .host-cam-box {
         position: absolute;
         left: 15px;
-        top: 50%;
-        transform: translateY(-50%);
+        bottom: 12px; /* Gleiche Unterkante wie Logo (padding-bottom) */
         width: 220px;
         border-radius: 10px;
         overflow: hidden;
@@ -122,10 +121,10 @@
       }
 
       .board-cam-mode .board-category {
-        font-size: 0.7rem;
+        font-size: 1rem; /* Grösser - fast wie Fragenfelder */
         font-weight: 700;
         padding: 8px 4px;
-        min-height: 40px;
+        min-height: 45px;
       }
 
       /* Spieler-Leiste - am unteren Rand, vollständig sichtbar */
