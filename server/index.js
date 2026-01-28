@@ -206,6 +206,16 @@ io.on("connection", (socket) => {
     // Board-Socket speichern für WebRTC
     if (isCamMode) {
       game.boardSocketId = socket.id;
+      
+      // WICHTIG: Allen Kamera-Spielern mitteilen, dass Board bereit ist!
+      for (const playerId of game.camPlayers) {
+        const player = game.players[playerId];
+        if (player && player.connected && player.socketId) {
+          // Spieler soll seinen Stream zum Board senden
+          io.to(player.socketId).emit("board-socket-id", { socketId: socket.id });
+          console.log("Board-Socket-ID an Spieler gesendet:", player.name, player.socketId);
+        }
+      }
     }
 
     console.log("Board verbunden mit Raum:", rc, "camMode:", isCamMode);
@@ -250,6 +260,10 @@ io.on("connection", (socket) => {
         socketId: socket.id,
         name: player.name,
       });
+      
+      // WICHTIG: Spieler auch Board-Socket-ID senden, damit er proaktiv streamen kann!
+      socket.emit("board-socket-id", { socketId: game.boardSocketId });
+      console.log("Board-Socket-ID an neuen Spieler gesendet:", player.name);
     }
 
     console.log("Cam player ready:", playerId);
@@ -258,6 +272,26 @@ io.on("connection", (socket) => {
   // ================================
   // WEBRTC SIGNALING - FIXED!
   // ================================
+
+  // Spieler fragt nach Board Socket-ID
+  socket.on("request-board-socket-id", ({ roomCode }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game || !game.boardSocketId) return;
+
+    socket.emit("board-socket-id", { socketId: game.boardSocketId });
+    console.log("Board Socket-ID gesendet an:", socket.id, "->", game.boardSocketId);
+  });
+
+  // Board sendet seine Socket-ID an einen Spieler
+  socket.on("send-board-socket-id", ({ roomCode, targetId }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    io.to(targetId).emit("board-socket-id", { socketId: socket.id });
+    console.log("Board Socket-ID direkt gesendet an:", targetId);
+  });
 
   // Board fragt Player nach Offer
   socket.on("webrtc-request-offer", ({ roomCode, targetId }) => {
