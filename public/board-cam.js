@@ -406,11 +406,19 @@
       handleIceCandidate(fromId, candidate, streamType);
     });
 
-    // Players updated
+    // Players updated - Streams von neuen Cam-Spielern anfordern!
     socket.on("players-updated", (players) => {
       for (const [playerId, player] of Object.entries(players)) {
-        if (player.hasCamera && player.socketId) {
-          socketToPlayer[player.socketId] = playerId;
+        if (player.hasCamera && player.socketId && player.connected) {
+          // Prüfen ob wir den Stream schon haben
+          if (!socketToPlayer[player.socketId] || !playerStreams[playerId]) {
+            socketToPlayer[player.socketId] = playerId;
+            console.log("📤 Fordere Stream an von neuem Spieler:", player.name, player.socketId);
+            socket.emit("webrtc-request-offer", { 
+              roomCode: boardRoomCode, 
+              targetId: player.socketId 
+            });
+          }
         }
       }
     });
