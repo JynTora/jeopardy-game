@@ -239,6 +239,17 @@ io.on("connection", (socket) => {
   });
 
   // --------------------------------
+  // Board fragt nach Spielerliste (für periodische Überprüfung)
+  // --------------------------------
+  socket.on("request-players", ({ roomCode }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+    
+    socket.emit("players-list", game.players);
+  });
+
+  // --------------------------------
   // Cam Player bereit (signalisiert Board + andere Spieler)
   // --------------------------------
   socket.on("cam-player-ready", ({ roomCode, playerId }) => {
