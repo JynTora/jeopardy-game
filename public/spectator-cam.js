@@ -398,6 +398,11 @@ async function sendOfferToPlayer(targetPlayerId, targetSocketId) {
 // Handle incoming P2P offer
 async function handleP2POffer(fromPlayerId, fromSocketId, offer) {
   console.log("📥 P2P: Offer empfangen von:", fromPlayerId);
+  
+  // Speichere Socket-ID
+  if (!window.otherPlayerSockets) window.otherPlayerSockets = {};
+  window.otherPlayerSockets[fromPlayerId] = fromSocketId;
+  
   const pc = createPlayerIncomingPC(fromPlayerId, fromSocketId);
 
   try {
@@ -413,6 +418,16 @@ async function handleP2POffer(fromPlayerId, fromSocketId, offer) {
       playerId: myPlayerId
     });
     console.log("📤 P2P: Answer gesendet an:", fromPlayerId);
+    
+    // WICHTIG: Auch unseren Stream zu diesem Spieler senden (bidirektional)
+    // Warte kurz damit die erste Verbindung stabil ist
+    setTimeout(() => {
+      if (localStream && !playerOutgoingPCs[fromPlayerId]) {
+        console.log("📤 P2P: Sende auch meinen Stream an:", fromPlayerId);
+        sendOfferToPlayer(fromPlayerId, fromSocketId);
+      }
+    }, 1000);
+    
   } catch (err) {
     console.error("❌ P2P Answer error:", err);
   }
@@ -967,7 +982,11 @@ socket.on("webrtc-ice-candidate", ({ fromId, candidate, streamType, fromPlayerId
 
 // Anderer Spieler ist bereit - sende meinen Stream zu ihm
 socket.on("other-player-cam-ready", ({ playerId, socketId, name }) => {
-  console.log("👤 Anderer Spieler bereit:", name, playerId);
+  console.log("👤 Anderer Spieler bereit:", name, playerId, socketId);
+  
+  // Speichere Socket-ID für später
+  if (!window.otherPlayerSockets) window.otherPlayerSockets = {};
+  window.otherPlayerSockets[playerId] = socketId;
   
   if (!localStream || !joined) {
     console.log("⏳ Warte auf eigene Kamera bevor P2P gestartet wird...");
@@ -976,9 +995,28 @@ socket.on("other-player-cam-ready", ({ playerId, socketId, name }) => {
   
   // Sende meinen Stream zu diesem Spieler
   setTimeout(() => {
+    console.log("📤 P2P: Initiiere Verbindung zu:", name);
     sendOfferToPlayer(playerId, socketId);
   }, 500);
 });
+
+// Periodische P2P-Überprüfung alle 5 Sekunden
+setInterval(() => {
+  if (!joined || !localStream || !currentRoomCode) return;
+  
+  // Prüfe ob wir von allen Spielern Streams haben
+  const entries = Object.entries(latestPlayers || {});
+  entries.forEach(([id, player]) => {
+    if (id === myPlayerId) return; // Nicht uns selbst
+    if (!player.hasCamera || !player.connected) return;
+    
+    // Haben wir einen Stream von diesem Spieler?
+    if (!otherPlayerStreams[id] && window.otherPlayerSockets && window.otherPlayerSockets[id]) {
+      console.log("🔄 P2P Retry: Sende Stream an:", player.name);
+      sendOfferToPlayer(id, window.otherPlayerSockets[id]);
+    }
+  });
+}, 5000);
 
 // Host-Cam verfügbar
 socket.on("host-cam-available", ({ socketId }) => {
