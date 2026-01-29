@@ -475,17 +475,44 @@
 
     // Players updated - Streams von neuen Cam-Spielern anfordern!
     socket.on("players-updated", (players) => {
+      console.log("📋 Players updated:", Object.keys(players).length, "Spieler");
+      
       for (const [playerId, player] of Object.entries(players)) {
+        console.log(`  - ${player.name}: cam=${player.hasCamera}, connected=${player.connected}, socketId=${player.socketId}`);
+        
         if (player.hasCamera && player.socketId && player.connected) {
-          // Prüfen ob wir den Stream schon haben
-          if (!socketToPlayer[player.socketId] || !playerStreams[playerId]) {
-            socketToPlayer[player.socketId] = playerId;
-            console.log("📤 Fordere Stream an von neuem Spieler:", player.name, player.socketId);
+          socketToPlayer[player.socketId] = playerId;
+          
+          // Stream anfordern falls nicht vorhanden
+          if (!playerStreams[playerId]) {
+            console.log("📤 Fordere Stream an von:", player.name, player.socketId);
             socket.emit("webrtc-request-offer", { 
               roomCode: boardRoomCode, 
               targetId: player.socketId 
             });
           }
+        }
+      }
+    });
+    
+    // Periodische Überprüfung alle 5 Sekunden
+    setInterval(() => {
+      if (typeof boardRoomCode === 'undefined' || !boardRoomCode) return;
+      
+      // Frage Server nach aktuellen Spielern
+      socket.emit("request-players", { roomCode: boardRoomCode });
+    }, 5000);
+    
+    // Antwort auf request-players
+    socket.on("players-list", (players) => {
+      for (const [playerId, player] of Object.entries(players)) {
+        if (player.hasCamera && player.socketId && player.connected && !playerStreams[playerId]) {
+          console.log("🔄 Periodische Prüfung: Fordere Stream an von:", player.name);
+          socketToPlayer[player.socketId] = playerId;
+          socket.emit("webrtc-request-offer", { 
+            roomCode: boardRoomCode, 
+            targetId: player.socketId 
+          });
         }
       }
     });
