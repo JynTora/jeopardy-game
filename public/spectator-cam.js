@@ -193,6 +193,11 @@ async function initCamera() {
 // ===============================
 // WebRTC: Meine Cam -> Board
 // ===============================
+
+// Connections zu anderen Spielern (für P2P)
+const playerPCs = {}; // playerId -> { outgoing: RTCPeerConnection, incoming: RTCPeerConnection }
+const otherPlayerStreams = {}; // playerId -> MediaStream
+
 function createOutgoingPC(targetId) {
   if (outgoingPC) {
     try { outgoingPC.close(); } catch {}
@@ -284,6 +289,156 @@ async function sendOfferToBoard(targetBoardSocketId) {
   } catch (err) {
     console.error("❌ Offer error:", err);
     streamSentToBoard = false;
+  }
+}
+
+// ===============================
+// WebRTC: Player-to-Player Streaming
+// ===============================
+const playerOutgoingPCs = {}; // targetPlayerId -> RTCPeerConnection
+const playerIncomingPCs = {}; // fromPlayerId -> RTCPeerConnection
+
+// Erstellt PC um meinen Stream zu einem anderen Spieler zu senden
+function createPlayerOutgoingPC(targetPlayerId, targetSocketId) {
+  if (playerOutgoingPCs[targetPlayerId]) {
+    try { playerOutgoingPCs[targetPlayerId].close(); } catch {}
+  }
+
+  const pc = new RTCPeerConnection(rtcConfig);
+  playerOutgoingPCs[targetPlayerId] = pc;
+
+  if (localStream) {
+    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+    console.log("📹 P2P: Tracks hinzugefügt für:", targetPlayerId);
+  }
+
+  pc.onicecandidate = (e) => {
+    if (e.candidate && currentRoomCode) {
+      socket.emit("webrtc-ice-candidate", {
+        roomCode: currentRoomCode,
+        targetId: targetSocketId,
+        candidate: e.candidate,
+        streamType: "p2p-outgoing",
+        fromPlayerId: myPlayerId,
+        toPlayerId: targetPlayerId
+      });
+    }
+  };
+
+  pc.onconnectionstatechange = () => {
+    console.log(`🔌 P2P Outgoing [${targetPlayerId}]: ${pc.connectionState}`);
+  };
+
+  return pc;
+}
+
+// Erstellt PC um Stream von anderem Spieler zu empfangen
+function createPlayerIncomingPC(fromPlayerId, fromSocketId) {
+  if (playerIncomingPCs[fromPlayerId]) {
+    try { playerIncomingPCs[fromPlayerId].close(); } catch {}
+  }
+
+  const pc = new RTCPeerConnection(rtcConfig);
+  playerIncomingPCs[fromPlayerId] = pc;
+
+  pc.ontrack = (event) => {
+    console.log("📹 P2P: Stream empfangen von:", fromPlayerId);
+    otherPlayerStreams[fromPlayerId] = event.streams[0];
+    updatePlayerVideoInBar(fromPlayerId);
+  };
+
+  pc.onicecandidate = (e) => {
+    if (e.candidate && currentRoomCode) {
+      socket.emit("webrtc-ice-candidate", {
+        roomCode: currentRoomCode,
+        targetId: fromSocketId,
+        candidate: e.candidate,
+        streamType: "p2p-incoming",
+        fromPlayerId: myPlayerId,
+        toPlayerId: fromPlayerId
+      });
+    }
+  };
+
+  pc.onconnectionstatechange = () => {
+    console.log(`🔌 P2P Incoming [${fromPlayerId}]: ${pc.connectionState}`);
+    if (pc.connectionState === "disconnected" || pc.connectionState === "failed") {
+      delete otherPlayerStreams[fromPlayerId];
+      updatePlayerVideoInBar(fromPlayerId);
+    }
+  };
+
+  return pc;
+}
+
+// Sende meinen Stream zu einem anderen Spieler
+async function sendOfferToPlayer(targetPlayerId, targetSocketId) {
+  if (!localStream) return;
+
+  console.log("📤 P2P: Sende Offer an:", targetPlayerId);
+  const pc = createPlayerOutgoingPC(targetPlayerId, targetSocketId);
+
+  try {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    socket.emit("webrtc-offer", {
+      roomCode: currentRoomCode,
+      targetId: targetSocketId,
+      offer: pc.localDescription,
+      streamType: "p2p",
+      playerId: myPlayerId
+    });
+    console.log("📤 P2P: Offer gesendet an:", targetPlayerId);
+  } catch (err) {
+    console.error("❌ P2P Offer error:", err);
+  }
+}
+
+// Handle incoming P2P offer
+async function handleP2POffer(fromPlayerId, fromSocketId, offer) {
+  console.log("📥 P2P: Offer empfangen von:", fromPlayerId);
+  const pc = createPlayerIncomingPC(fromPlayerId, fromSocketId);
+
+  try {
+    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+
+    socket.emit("webrtc-answer", {
+      roomCode: currentRoomCode,
+      targetId: fromSocketId,
+      answer: pc.localDescription,
+      streamType: "p2p",
+      playerId: myPlayerId
+    });
+    console.log("📤 P2P: Answer gesendet an:", fromPlayerId);
+  } catch (err) {
+    console.error("❌ P2P Answer error:", err);
+  }
+}
+
+// Update Video in der Players-Bar für einen bestimmten Spieler
+function updatePlayerVideoInBar(playerId) {
+  if (!playersBarEl) return;
+  
+  const pill = playersBarEl.querySelector(`[data-player-id="${playerId}"]`);
+  if (!pill) return;
+  
+  const video = pill.querySelector("video");
+  const placeholder = pill.querySelector(".player-video-placeholder");
+  
+  if (!video) return;
+  
+  const stream = otherPlayerStreams[playerId];
+  if (stream) {
+    video.srcObject = stream;
+    video.classList.remove("hidden");
+    if (placeholder) placeholder.style.display = "none";
+  } else {
+    video.srcObject = null;
+    video.classList.add("hidden");
+    if (placeholder) placeholder.style.display = "flex";
   }
 }
 
@@ -433,7 +588,7 @@ function buildBoard() {
 }
 
 // ===============================
-// Players Bar (eigene Cam integriert)
+// Players Bar (eigene Cam + P2P Streams)
 // ===============================
 function renderPlayersBar() {
   if (!playersBarEl) return;
@@ -448,6 +603,7 @@ function renderPlayersBar() {
   entries.forEach(([id, player]) => {
     const pill = document.createElement("div");
     pill.className = "player-pill";
+    pill.setAttribute("data-player-id", id); // Für updatePlayerVideoInBar
 
     const videoWrap = document.createElement("div");
     videoWrap.className = "player-video-wrap";
@@ -467,7 +623,13 @@ function renderPlayersBar() {
       video.srcObject = localStream;
       placeholder.style.display = "none";
       pill.classList.add("is-self");
-    } else {
+    } 
+    // ANDERE Spieler Cam anzeigen (P2P Stream)
+    else if (otherPlayerStreams[id]) {
+      video.srcObject = otherPlayerStreams[id];
+      placeholder.style.display = "none";
+    }
+    else {
       video.classList.add("hidden");
     }
 
@@ -753,28 +915,69 @@ socket.on("board-socket-id", ({ socketId }) => {
   }, 5500);
 });
 
-// Host-Cam Offer empfangen
-socket.on("webrtc-offer", ({ fromId, offer, streamType }) => {
+// Host-Cam Offer empfangen ODER P2P Offer
+socket.on("webrtc-offer", ({ fromId, offer, streamType, playerId }) => {
   if (streamType === "host") {
     handleHostOffer(fromId, offer);
+  } else if (streamType === "p2p" && playerId && playerId !== myPlayerId) {
+    // P2P Offer von anderem Spieler
+    handleP2POffer(playerId, fromId, offer);
   }
 });
 
-// Answer auf unseren Offer
-socket.on("webrtc-answer", ({ fromId, answer, streamType }) => {
-  console.log("📥 Answer empfangen, streamType:", streamType, "fromId:", fromId);
+// Answer auf unseren Offer (Board oder P2P)
+socket.on("webrtc-answer", ({ fromId, answer, streamType, playerId }) => {
+  console.log("📥 Answer empfangen, streamType:", streamType, "fromId:", fromId, "playerId:", playerId);
   if (streamType === "player" && outgoingPC) {
     outgoingPC.setRemoteDescription(new RTCSessionDescription(answer))
       .then(() => console.log("✅ Remote Description gesetzt für Board-Verbindung"))
       .catch(err => console.error("❌ Remote Description Fehler:", err));
   } else if (streamType === "host" && hostPC) {
     hostPC.setRemoteDescription(new RTCSessionDescription(answer)).catch(console.error);
+  } else if (streamType === "p2p" && playerId) {
+    // P2P Answer
+    const pc = playerOutgoingPCs[playerId];
+    if (pc) {
+      pc.setRemoteDescription(new RTCSessionDescription(answer))
+        .then(() => console.log("✅ P2P Remote Description gesetzt für:", playerId))
+        .catch(err => console.error("❌ P2P Remote Description Fehler:", err));
+    }
   }
 });
 
-// ICE Candidates
-socket.on("webrtc-ice-candidate", ({ fromId, candidate, streamType }) => {
-  handleIceCandidate(fromId, candidate, streamType);
+// ICE Candidates (inkl. P2P)
+socket.on("webrtc-ice-candidate", ({ fromId, candidate, streamType, fromPlayerId, toPlayerId }) => {
+  if (streamType === "p2p-outgoing" && fromPlayerId) {
+    // ICE für eine eingehende Verbindung (von einem anderen Spieler an uns)
+    const pc = playerIncomingPCs[fromPlayerId];
+    if (pc) {
+      pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
+    }
+  } else if (streamType === "p2p-incoming" && fromPlayerId) {
+    // ICE für eine ausgehende Verbindung (unser Stream zu einem anderen Spieler)
+    const pc = playerOutgoingPCs[fromPlayerId];
+    if (pc) {
+      pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(console.error);
+    }
+  } else {
+    // Standard ICE handling
+    handleIceCandidate(fromId, candidate, streamType);
+  }
+});
+
+// Anderer Spieler ist bereit - sende meinen Stream zu ihm
+socket.on("other-player-cam-ready", ({ playerId, socketId, name }) => {
+  console.log("👤 Anderer Spieler bereit:", name, playerId);
+  
+  if (!localStream || !joined) {
+    console.log("⏳ Warte auf eigene Kamera bevor P2P gestartet wird...");
+    return;
+  }
+  
+  // Sende meinen Stream zu diesem Spieler
+  setTimeout(() => {
+    sendOfferToPlayer(playerId, socketId);
+  }, 500);
 });
 
 // Host-Cam verfügbar
