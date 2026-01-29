@@ -239,7 +239,7 @@ io.on("connection", (socket) => {
   });
 
   // --------------------------------
-  // Cam Player bereit (signalisiert Board)
+  // Cam Player bereit (signalisiert Board + andere Spieler)
   // --------------------------------
   socket.on("cam-player-ready", ({ roomCode, playerId }) => {
     const rc = normRoomCode(roomCode);
@@ -251,7 +251,11 @@ io.on("connection", (socket) => {
     const player = game.players[playerId];
     if (!player) return;
 
+    // Socket-ID aktualisieren
+    player.socketId = socket.id;
     game.camPlayers.add(playerId);
+
+    console.log("Cam player ready:", playerId, "socket:", socket.id);
 
     // Board benachrichtigen
     if (game.boardSocketId) {
@@ -261,12 +265,35 @@ io.on("connection", (socket) => {
         name: player.name,
       });
       
-      // WICHTIG: Spieler auch Board-Socket-ID senden, damit er proaktiv streamen kann!
+      // Board-Socket-ID an neuen Spieler senden
       socket.emit("board-socket-id", { socketId: game.boardSocketId });
-      console.log("Board-Socket-ID an neuen Spieler gesendet:", player.name);
+      console.log("Board-Socket-ID an Spieler gesendet:", player.name);
     }
 
-    console.log("Cam player ready:", playerId);
+    // NEUE LOGIK: Andere Spieler über neuen Spieler informieren
+    // Und neuen Spieler über alle bestehenden Spieler informieren
+    for (const otherId of game.camPlayers) {
+      if (otherId === playerId) continue; // Nicht sich selbst
+      
+      const other = game.players[otherId];
+      if (!other || !other.connected || !other.socketId) continue;
+
+      // Anderen Spieler über diesen neuen informieren
+      io.to(other.socketId).emit("other-player-cam-ready", {
+        playerId,
+        socketId: socket.id,
+        name: player.name,
+      });
+      console.log("Informiere", other.name, "über neuen Spieler:", player.name);
+
+      // Diesen neuen Spieler über andere informieren
+      socket.emit("other-player-cam-ready", {
+        playerId: otherId,
+        socketId: other.socketId,
+        name: other.name,
+      });
+      console.log("Informiere", player.name, "über bestehenden Spieler:", other.name);
+    }
   });
 
   // ================================
@@ -318,8 +345,8 @@ io.on("connection", (socket) => {
     console.log("WebRTC: Offer from", socket.id, "to", targetId, "type:", streamType);
   });
 
-  // Player/Board sendet Answer - FIXED: streamType weiterleiten
-  socket.on("webrtc-answer", ({ roomCode, targetId, answer, streamType }) => {
+  // Player/Board sendet Answer - inkl. P2P playerId
+  socket.on("webrtc-answer", ({ roomCode, targetId, answer, streamType, playerId }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
     if (!game) return;
@@ -327,13 +354,14 @@ io.on("connection", (socket) => {
     io.to(targetId).emit("webrtc-answer", { 
       fromId: socket.id, 
       answer,
-      streamType: streamType || "player"
+      streamType: streamType || "player",
+      playerId: playerId || null
     });
     console.log("WebRTC: Answer from", socket.id, "to", targetId, "type:", streamType);
   });
 
-  // ICE Candidate weiterleiten - FIXED: streamType weiterleiten
-  socket.on("webrtc-ice-candidate", ({ roomCode, targetId, candidate, streamType }) => {
+  // ICE Candidate weiterleiten - inkl. P2P
+  socket.on("webrtc-ice-candidate", ({ roomCode, targetId, candidate, streamType, fromPlayerId, toPlayerId }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
     if (!game) return;
@@ -341,7 +369,9 @@ io.on("connection", (socket) => {
     io.to(targetId).emit("webrtc-ice-candidate", { 
       fromId: socket.id, 
       candidate,
-      streamType: streamType || "player"
+      streamType: streamType || "player",
+      fromPlayerId: fromPlayerId || null,
+      toPlayerId: toPlayerId || null
     });
   });
 
