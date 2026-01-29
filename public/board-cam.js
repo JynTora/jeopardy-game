@@ -9,12 +9,16 @@
   console.log("🎥 Board-Cam Extension lädt...");
 
   // ===============================
-  // WebRTC Config mit Metered.ca TURN Servern
+  // WebRTC Config mit TURN Servern (Metered + Backup)
   // ===============================
   const rtcConfig = {
     iceServers: [
+      // STUN Server
       { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:bamangames.metered.live:80' },
+      { urls: 'stun:stun1.l.google.com:19302' },
+      { urls: 'stun:stun2.l.google.com:19302' },
+      
+      // Metered.ca TURN (Primary)
       {
         urls: 'turn:bamangames.metered.live:80',
         username: 'f0a80f469f8b8590832f8da3',
@@ -34,6 +38,23 @@
         urls: 'turns:bamangames.metered.live:443',
         username: 'f0a80f469f8b8590832f8da3',
         credential: 'crkMbNXmiA79CgUn'
+      },
+      
+      // OpenRelay TURN (Backup - öffentlich)
+      {
+        urls: 'turn:openrelay.metered.ca:80',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
+      },
+      {
+        urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+        username: 'openrelayproject',
+        credential: 'openrelayproject'
       }
     ],
     iceCandidatePoolSize: 10
@@ -102,12 +123,13 @@
       try { incomingPCs[socketId].close(); } catch {}
     }
 
+    console.log("🔧 Erstelle RTCPeerConnection für:", playerId, "socket:", socketId);
     const pc = new RTCPeerConnection(rtcConfig);
     incomingPCs[socketId] = pc;
     socketToPlayer[socketId] = playerId;
 
     pc.ontrack = (event) => {
-      console.log("📹 Spieler-Video empfangen:", playerId);
+      console.log("📹 Spieler-Video empfangen:", playerId, "tracks:", event.streams[0]?.getTracks().length);
       playerStreams[playerId] = event.streams[0];
       updatePlayerVideo(playerId);
     };
@@ -120,6 +142,8 @@
           candidate: event.candidate,
           streamType: "player"
         });
+      } else if (!event.candidate) {
+        console.log("🧊 ICE gathering complete für:", playerId);
       }
     };
 
@@ -128,15 +152,28 @@
       if (pc.connectionState === "connected") {
         console.log(`✅ Stream-Verbindung erfolgreich für: ${playerId}`);
       }
-      if (pc.connectionState === "failed" || pc.connectionState === "disconnected") {
-        console.log(`❌ Stream-Verbindung verloren für: ${playerId}`);
+      if (pc.connectionState === "failed") {
+        console.log(`❌ Stream-Verbindung fehlgeschlagen für: ${playerId}, retry...`);
         delete playerStreams[playerId];
         updatePlayerVideo(playerId);
+        // Retry
+        setTimeout(() => {
+          if (!playerStreams[playerId]) {
+            socket.emit("webrtc-request-offer", { roomCode: boardRoomCode, targetId: socketId });
+          }
+        }, 2000);
+      }
+      if (pc.connectionState === "disconnected") {
+        console.log(`⚠️ Verbindung unterbrochen für: ${playerId}`);
       }
     };
     
     pc.oniceconnectionstatechange = () => {
       console.log(`🧊 ICE [${playerId}]: ${pc.iceConnectionState}`);
+      if (pc.iceConnectionState === "failed") {
+        console.log(`🧊 ICE failed für ${playerId}, restart...`);
+        pc.restartIce();
+      }
     };
 
     return pc;
@@ -377,37 +414,34 @@
 
     // Spieler mit Kamera verbunden
     socket.on("cam-player-connected", ({ playerId, socketId, name }) => {
-      console.log("📹 Cam-Spieler verbunden:", name, socketId);
+      console.log("📹 Cam-Spieler verbunden:", name, "socketId:", socketId, "playerId:", playerId);
       socketToPlayer[socketId] = playerId;
       
-      // WICHTIG: Request den Stream vom Spieler!
-      console.log("📤 Fordere Stream an von:", socketId);
-      socket.emit("webrtc-request-offer", { 
-        roomCode: boardRoomCode, 
-        targetId: socketId 
+      // Funktion um Stream anzufordern
+      const requestStream = () => {
+        if (playerStreams[playerId]) {
+          console.log("✅ Stream bereits vorhanden für:", name);
+          return;
+        }
+        console.log("📤 Fordere Stream an von:", name, socketId);
+        socket.emit("webrtc-request-offer", { 
+          roomCode: boardRoomCode, 
+          targetId: socketId 
+        });
+      };
+      
+      // Sofort anfordern
+      requestStream();
+      
+      // Retry nach 1s, 3s, 6s, 10s
+      [1000, 3000, 6000, 10000].forEach(delay => {
+        setTimeout(() => {
+          if (!playerStreams[playerId]) {
+            console.log(`🔄 Retry (${delay}ms): Fordere Stream an von:`, name);
+            requestStream();
+          }
+        }, delay);
       });
-      
-      // Retry nach 2 Sekunden falls kein Stream kommt
-      setTimeout(() => {
-        if (!playerStreams[playerId]) {
-          console.log("🔄 Retry: Fordere Stream nochmal an von:", name);
-          socket.emit("webrtc-request-offer", { 
-            roomCode: boardRoomCode, 
-            targetId: socketId 
-          });
-        }
-      }, 2000);
-      
-      // Nochmal nach 5 Sekunden
-      setTimeout(() => {
-        if (!playerStreams[playerId]) {
-          console.log("🔄 Retry 2: Fordere Stream nochmal an von:", name);
-          socket.emit("webrtc-request-offer", { 
-            roomCode: boardRoomCode, 
-            targetId: socketId 
-          });
-        }
-      }, 5000);
     });
 
     // Spieler getrennt
