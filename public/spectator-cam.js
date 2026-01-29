@@ -6,12 +6,16 @@
 const socket = io();
 
 // ===============================
-// WebRTC Config mit Metered.ca TURN
+// WebRTC Config mit TURN Servern (Metered + Backup)
 // ===============================
 const rtcConfig = {
   iceServers: [
+    // STUN Server
     { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:bamangames.metered.live:80' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+    { urls: 'stun:stun2.l.google.com:19302' },
+    
+    // Metered.ca TURN (Primary)
     {
       urls: 'turn:bamangames.metered.live:80',
       username: 'f0a80f469f8b8590832f8da3',
@@ -31,6 +35,23 @@ const rtcConfig = {
       urls: 'turns:bamangames.metered.live:443',
       username: 'f0a80f469f8b8590832f8da3',
       credential: 'crkMbNXmiA79CgUn'
+    },
+    
+    // OpenRelay TURN (Backup - öffentlich)
+    {
+      urls: 'turn:openrelay.metered.ca:80',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
+    },
+    {
+      urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+      username: 'openrelayproject',
+      credential: 'openrelayproject'
     }
   ],
   iceCandidatePoolSize: 10
@@ -185,7 +206,7 @@ function createOutgoingPC(targetId) {
     const tracks = localStream.getTracks();
     console.log("📹 Füge", tracks.length, "Tracks hinzu");
     tracks.forEach(track => {
-      console.log("  - Track:", track.kind, track.label);
+      console.log("  - Track:", track.kind, track.label, "enabled:", track.enabled);
       pc.addTrack(track, localStream);
     });
   } else {
@@ -200,6 +221,8 @@ function createOutgoingPC(targetId) {
         candidate: e.candidate,
         streamType: "player"
       });
+    } else if (!e.candidate) {
+      console.log("🧊 ICE gathering complete");
     }
   };
 
@@ -207,27 +230,41 @@ function createOutgoingPC(targetId) {
     console.log(`🔌 Meine Cam -> Board: ${pc.connectionState}`);
     if (pc.connectionState === "connected") {
       console.log("✅ Stream-Verbindung zum Board erfolgreich!");
+      streamSentToBoard = true;
     }
     if (pc.connectionState === "failed") {
       console.log("❌ Stream-Verbindung zum Board fehlgeschlagen!");
+      streamSentToBoard = false;
+      // Versuche erneut nach 2s
+      if (connectionAttempts < MAX_ATTEMPTS) {
+        setTimeout(() => connectToBoard(), 2000);
+      }
+    }
+    if (pc.connectionState === "disconnected") {
+      console.log("⚠️ Verbindung zum Board unterbrochen");
+      streamSentToBoard = false;
     }
   };
   
   pc.oniceconnectionstatechange = () => {
     console.log(`🧊 ICE -> Board: ${pc.iceConnectionState}`);
+    if (pc.iceConnectionState === "failed") {
+      console.log("🧊 ICE fehlgeschlagen, versuche ICE restart...");
+      pc.restartIce();
+    }
   };
 
   return pc;
 }
 
-async function sendOfferToBoard(boardSocketId) {
+async function sendOfferToBoard(targetBoardSocketId) {
   if (!localStream) {
     console.log("⚠️ Kein localStream vorhanden!");
     return;
   }
 
-  console.log("📤 Sende meinen Stream an Board:", boardSocketId);
-  const pc = createOutgoingPC(boardSocketId);
+  console.log("📤 Erstelle Verbindung zum Board:", targetBoardSocketId);
+  const pc = createOutgoingPC(targetBoardSocketId);
 
   try {
     const offer = await pc.createOffer();
@@ -237,14 +274,16 @@ async function sendOfferToBoard(boardSocketId) {
 
     socket.emit("webrtc-offer", {
       roomCode: currentRoomCode,
-      targetId: boardSocketId,
+      targetId: targetBoardSocketId,
       offer: pc.localDescription,
       streamType: "player",
       playerId: myPlayerId
     });
     console.log("📤 Offer an Board gesendet, playerId:", myPlayerId);
+    streamSentToBoard = true;
   } catch (err) {
     console.error("❌ Offer error:", err);
+    streamSentToBoard = false;
   }
 }
 
@@ -628,41 +667,90 @@ socket.on("player-buzzed-first", (payload) => {
 // WebRTC Socket Events
 // ===============================
 
+// Board Socket-ID speichern
+let boardSocketId = null;
+let streamSentToBoard = false;
+let connectionAttempts = 0;
+const MAX_ATTEMPTS = 5;
+
+// Funktion um Stream zum Board zu senden (mit Retry)
+async function connectToBoard() {
+  if (!boardSocketId) {
+    console.log("⚠️ Keine Board-Socket-ID bekannt");
+    return;
+  }
+  
+  if (!localStream) {
+    console.log("⚠️ Kein lokaler Stream");
+    return;
+  }
+  
+  if (!joined) {
+    console.log("⚠️ Noch nicht gejoined");
+    return;
+  }
+  
+  if (streamSentToBoard && outgoingPC && outgoingPC.connectionState === "connected") {
+    console.log("✅ Bereits verbunden mit Board");
+    return;
+  }
+  
+  connectionAttempts++;
+  console.log(`🔄 Verbindungsversuch ${connectionAttempts}/${MAX_ATTEMPTS} zum Board...`);
+  
+  try {
+    await sendOfferToBoard(boardSocketId);
+  } catch (err) {
+    console.error("❌ Verbindungsfehler:", err);
+  }
+}
+
 // Board fragt nach unserem Stream
 socket.on("webrtc-request-offer", ({ fromId }) => {
   console.log("📥 Board fragt nach meinem Stream:", fromId);
+  boardSocketId = fromId; // Speichere Board-ID
+  
   if (cameraReady && localStream) {
     console.log("📤 Sende Stream an Board...");
     sendOfferToBoard(fromId);
   } else {
-    console.log("⚠️ Kamera noch nicht bereit, versuche in 1s nochmal...");
-    setTimeout(() => {
+    console.log("⏳ Kamera noch nicht bereit, warte...");
+    // Warte bis Kamera bereit
+    const waitForCam = setInterval(() => {
       if (cameraReady && localStream) {
-        console.log("📤 Retry: Sende Stream an Board...");
+        clearInterval(waitForCam);
+        console.log("📤 Kamera jetzt bereit, sende Stream...");
         sendOfferToBoard(fromId);
       }
-    }, 1000);
+    }, 500);
+    // Timeout nach 10s
+    setTimeout(() => clearInterval(waitForCam), 10000);
   }
 });
 
-// Board Socket-ID empfangen (damit wir unseren Stream senden können)
-let boardSocketId = null;
+// Board Socket-ID empfangen
 socket.on("board-socket-id", ({ socketId }) => {
   console.log("📍 Board Socket-ID erhalten:", socketId);
   boardSocketId = socketId;
-  if (cameraReady && localStream && joined) {
-    console.log("📤 Sende Stream automatisch an Board...");
-    sendOfferToBoard(socketId);
-  } else {
-    console.log("⏳ Warte auf Kamera, dann sende Stream...");
-    // Retry nach kurzer Zeit
-    setTimeout(() => {
-      if (cameraReady && localStream && joined && boardSocketId) {
-        console.log("📤 Retry: Sende Stream an Board...");
-        sendOfferToBoard(boardSocketId);
-      }
-    }, 2000);
-  }
+  streamSentToBoard = false;
+  connectionAttempts = 0;
+  
+  // Versuche sofort zu verbinden
+  setTimeout(() => connectToBoard(), 500);
+  
+  // Retry nach 2s falls nicht verbunden
+  setTimeout(() => {
+    if (!streamSentToBoard || !outgoingPC || outgoingPC.connectionState !== "connected") {
+      connectToBoard();
+    }
+  }, 2500);
+  
+  // Nochmal nach 5s
+  setTimeout(() => {
+    if (!streamSentToBoard || !outgoingPC || outgoingPC.connectionState !== "connected") {
+      connectToBoard();
+    }
+  }, 5500);
 });
 
 // Host-Cam Offer empfangen
