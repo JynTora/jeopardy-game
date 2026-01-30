@@ -60,7 +60,7 @@ const rtcConfig = {
 // ===============================
 // DOM Elements
 // ===============================
-const joinOverlay = document.getElementById("spectatorJoinOverlay");
+const joinOverlay = document.getElementById("spectatorJoinPage");
 const roomCodeInput = document.getElementById("spectatorRoomCode");
 const nameInput = document.getElementById("spectatorName");
 const joinBtn = document.getElementById("spectatorJoinBtn");
