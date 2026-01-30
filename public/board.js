@@ -867,7 +867,7 @@ function closeQuestion() {
 
     // ✅ NEU: Turn-Update an Spectators
     if (boardRoomCode) {
-      socket.emit("board-turn-update", { roomCode: boardRoomCode, playerName: current.name });
+      socket.emit("board-turn-update", { roomCode: boardRoomCode, playerName: current.name, playerId: current.id });
     }
   }
 
@@ -1065,6 +1065,12 @@ if (startGameBtn) {
       setTurnIndicator(`⭐ ${p.name} ist dran ⭐`, true, false);
       turnPreviewPlayerId = p.id;
       renderPlayersBar();
+      
+      // Send preview to spectators for smooth animation
+      if (boardRoomCode) {
+        socket.emit("board-turn-preview", { roomCode: boardRoomCode, playerName: p.name, playerId: p.id });
+      }
+      
       step++;
 
       if (step <= totalSteps) {
@@ -1083,7 +1089,7 @@ if (startGameBtn) {
       renderPlayersBar();
 
       if (boardRoomCode) {
-        socket.emit("board-turn-update", { roomCode: boardRoomCode, playerName: startPlayer.name });
+        socket.emit("board-turn-update", { roomCode: boardRoomCode, playerName: startPlayer.name, playerId: startPlayer.id });
       }
       if (startGameBtn) startGameBtn.style.display = "none";
     }
