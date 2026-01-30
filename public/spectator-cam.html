@@ -28,7 +28,7 @@
         height: 100%;
       }
 
-      /* Header: Cam LINKS, Logo MITTE - EXAKT wie Board */
+      /* Header: Cam LINKS, Logo MITTE - Unterkanten gleich, genug Höhe */
       .spectator-cam-mode .jt-header {
         display: flex;
         align-items: flex-end;
@@ -41,10 +41,10 @@
       }
 
       .spectator-cam-mode .jt-logo {
-        max-height: 150px; /* EXAKT wie Board */
+        max-height: 150px;
       }
 
-      /* Host-Cam Box - links im Header - EXAKT wie Board */
+      /* Host-Cam Box - links im Header */
       .spectator-cam-mode .host-cam-box {
         position: absolute;
         left: 15px;
@@ -60,84 +60,129 @@
 
       .spectator-cam-mode .host-cam-video {
         width: 100%;
-        aspect-ratio: 4/3;
+        aspect-ratio: 16/9;
         object-fit: cover;
+        transform: scaleX(-1);
         display: block;
         background: #0f172a;
       }
 
       .spectator-cam-mode .host-cam-label {
         position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-        color: #fb923c;
-        font-size: 0.65rem;
+        bottom: 6px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: rgba(251, 146, 60, 0.9);
+        font-size: 0.55rem;
         font-weight: 700;
-        text-align: center;
-        padding: 6px 4px 4px;
-        letter-spacing: 0.08em;
+        letter-spacing: 0.05em;
+        color: #fff;
+        text-transform: uppercase;
       }
 
-      /* Main (Board) - EXAKT wie Board */
+      /* Main - füllt den Rest */
       .spectator-cam-mode .jt-main {
+        padding-top: 0;
+        padding-bottom: 0;
+        gap: 0;
         flex: 1;
         display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 5px 10px;
-        overflow: hidden;
+        flex-direction: column;
       }
 
+      /* Board Grid */
       .spectator-cam-mode .board-grid {
-        width: 100%;
-        max-width: 1400px;
-        height: 100%;
-        max-height: 70vh;
-        gap: 6px;
+        gap: 4px;
+        padding: 0 15px;
+        flex: 1;
       }
 
-      .spectator-cam-mode .board-column { gap: 5px; }
-      .spectator-cam-mode .board-category { font-size: clamp(0.6rem, 1.5vw, 0.9rem); padding: 6px 4px; }
-      .spectator-cam-mode .board-cell { font-size: clamp(1rem, 3vw, 1.8rem); }
+      .spectator-cam-mode .board-cell {
+        min-height: 50px;
+        font-size: 1.3rem;
+        padding: 8px 4px;
+        cursor: default !important;
+        pointer-events: none !important;
+      }
 
-      /* Spieler-Leiste unten - EXAKT wie Board */
+      .spectator-cam-mode .board-category {
+        font-size: 1rem;
+        font-weight: 700;
+        padding: 8px 4px;
+        min-height: 45px;
+      }
+
+      /* Spieler-Leiste - am unteren Rand, vollständig sichtbar */
       .spectator-cam-mode .players-bar {
-        flex-shrink: 0;
+        padding: 10px 25px 15px 25px;
+        gap: 15px;
         justify-content: center;
-        padding: 8px 10px;
-        gap: 12px;
-        min-height: 100px;
-        background: linear-gradient(to top, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.7));
+        flex-wrap: nowrap;
+        min-height: 140px;
+        flex-shrink: 0;
+        overflow-x: auto;
       }
 
       .spectator-cam-mode .player-pill {
         flex-direction: column;
-        min-width: 90px;
-        max-width: 120px;
-        padding: 6px;
-        gap: 4px;
+        padding: 5px;
+        width: 220px;
+        min-width: 220px;
+        max-width: 220px;
+        flex: 0 0 auto;
+        border-radius: 10px;
+        gap: 3px;
+        position: relative;
       }
 
+      /* Video in Player Pill - 16:9 wie Host-Cam */
       .spectator-cam-mode .player-video-wrap {
-        width: 70px;
-        height: 52px;
+        width: 100%;
+        aspect-ratio: 16/9;
         border-radius: 6px;
+        overflow: hidden;
+        background: rgba(30, 41, 59, 0.8);
+        position: relative;
       }
 
       .spectator-cam-mode .player-video-placeholder {
-        font-size: 1.2rem;
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.4rem;
+        font-weight: 800;
+        color: rgba(148, 163, 184, 0.5);
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
       }
 
+      .spectator-cam-mode .player-video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1);
+        position: absolute;
+        inset: 0;
+        background: #0f172a;
+      }
+
+      .spectator-cam-mode .player-video.hidden { display: none; }
+
       .spectator-cam-mode .player-info {
+        display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 1px;
+        gap: 0;
+        text-align: center;
       }
 
       .spectator-cam-mode .player-pill .player-name {
-        font-size: 0.65rem;
+        font-size: 0.7rem;
+        font-weight: 700;
+        margin: 0;
       }
 
       .spectator-cam-mode .player-pill .player-score {
@@ -145,72 +190,13 @@
         opacity: 0.85;
       }
 
-      /* Turn-Bar oben rechts - EXAKT wie Board */
-      .spectator-cam-mode .turn-bar {
-        top: 10px;
-        right: 15px;
-      }
-
-      /* Buzzer - oben rechts unter Turn-Bar - wie beim Board */
-      .spectator-cam-mode .buzzer-indicator {
-        position: fixed;
-        top: 55px;
-        right: 15px;
-        bottom: auto;
-        left: auto;
-        width: 75px;
-        height: 75px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 0.6rem;
-        font-weight: 800;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        cursor: pointer;
-        user-select: none;
-        -webkit-tap-highlight-color: transparent;
-        touch-action: manipulation;
-        z-index: 1000;
-        transition: transform 0.1s, box-shadow 0.2s;
-      }
-
-      .buzzer-indicator:active {
-        transform: scale(0.95);
-      }
-
-      .buzzer-indicator.buzzer-free {
-        background: linear-gradient(135deg, #22c55e, #16a34a);
-        color: #fff;
-        box-shadow: 0 0 20px rgba(34, 197, 94, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3);
-        animation: buzzer-pulse 1.5s infinite;
-      }
-
-      .buzzer-indicator.buzzer-locked {
-        background: linear-gradient(135deg, #475569, #334155);
-        color: #94a3b8;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-      }
-
-      .buzzer-indicator.buzzer-pressed {
-        transform: scale(0.9);
-        box-shadow: 0 0 30px rgba(34, 197, 94, 0.9), 0 2px 10px rgba(0, 0, 0, 0.3);
-      }
-
-      @keyframes buzzer-pulse {
-        0%, 100% { box-shadow: 0 0 20px rgba(34, 197, 94, 0.6), 0 4px 15px rgba(0, 0, 0, 0.3); }
-        50% { box-shadow: 0 0 35px rgba(34, 197, 94, 0.9), 0 4px 20px rgba(0, 0, 0, 0.4); }
-      }
-
       /* Eigener Spieler-Pill */
-      .player-pill.is-self {
+      .spectator-cam-mode .player-pill.is-self {
         border: 2px solid rgba(139, 92, 246, 0.7);
         box-shadow: 0 0 10px rgba(139, 92, 246, 0.4);
-        position: relative;
       }
 
-      .player-pill.is-self::after {
+      .spectator-cam-mode .player-pill.is-self::after {
         content: "DU";
         position: absolute;
         top: -5px;
@@ -253,8 +239,68 @@
         }
       }
 
+      /* Turn-Bar */
+      .spectator-cam-mode .turn-bar {
+        top: 10px;
+        right: 15px;
+      }
+
+      /* Buzzer - oben rechts unter Turn-Bar (gleiche Position wie Board) */
+      .spectator-cam-mode .buzzer-indicator {
+        position: fixed;
+        top: 55px;
+        bottom: auto;
+        left: auto;
+        right: 15px;
+        width: 75px;
+        height: 75px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.6rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: manipulation;
+        z-index: 1000;
+        transition: transform 0.1s, box-shadow 0.2s;
+      }
+
+      .buzzer-indicator:active {
+        transform: scale(0.95);
+      }
+
+      .buzzer-indicator.buzzer-free {
+        background: radial-gradient(circle at 30% 20%, #86efac, #22c55e 55%, #15803d 100%);
+        border: 1px solid rgba(34, 197, 94, 0.9);
+        color: #f0fdf4;
+        box-shadow: 0 0 26px rgba(34, 197, 94, 0.95), 0 12px 26px rgba(0, 0, 0, 0.75);
+        animation: buzzer-pulse 1.5s infinite;
+      }
+
+      .buzzer-indicator.buzzer-locked {
+        background: linear-gradient(135deg, #475569, #334155);
+        color: #94a3b8;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(100, 116, 139, 0.5);
+      }
+
+      .buzzer-indicator.buzzer-pressed {
+        transform: scale(0.9);
+        box-shadow: 0 0 30px rgba(34, 197, 94, 0.9), 0 2px 10px rgba(0, 0, 0, 0.3);
+      }
+
+      @keyframes buzzer-pulse {
+        0%, 100% { box-shadow: 0 0 26px rgba(34, 197, 94, 0.95), 0 12px 26px rgba(0, 0, 0, 0.75); }
+        50% { box-shadow: 0 0 38px rgba(34, 197, 94, 1), 0 16px 32px rgba(0, 0, 0, 0.9); }
+      }
+
       /* ═══════════════════════════════════════════════
-         JOIN SCREEN - Schöne Card in der Mitte
+         JOIN SCREEN
          ═══════════════════════════════════════════════ */
       .spectator-join-page {
         position: fixed;
@@ -334,7 +380,6 @@
         display: none;
       }
 
-      .cam-preview.active ~ .cam-ready-badge,
       .cam-preview-wrap.cam-ready .cam-ready-badge {
         display: block;
       }
@@ -468,6 +513,7 @@
         font-size: 1.3rem;
         text-align: center;
         margin-bottom: 12px;
+        box-sizing: border-box;
       }
 
       .estimate-input:focus {
@@ -512,12 +558,6 @@
         display: none !important;
       }
 
-      /* Board Cells nicht klickbar */
-      .spectator-board .board-cell {
-        cursor: default;
-        pointer-events: none;
-      }
-
       /* Q-Image klickbar für Lightbox */
       .spectator-question-card .q-image {
         cursor: pointer;
@@ -545,7 +585,7 @@
     <div id="screenFlash" class="screen-flash"></div>
 
     <!-- ═══════════════════════════════════════════════
-         JOIN SCREEN - Schöne Card
+         JOIN SCREEN
          ═══════════════════════════════════════════════ -->
     <div class="spectator-join-page" id="spectatorJoinPage">
       <div class="spectator-join-card">
@@ -578,7 +618,7 @@
          MAIN PAGE - EXAKT wie Board
          ═══════════════════════════════════════════════ -->
     <div class="jt-page spectator-page hidden" id="spectatorMainPage">
-      <!-- Header: Cam links, Logo mitte - EXAKT wie Board -->
+      <!-- Header: Cam links, Logo mitte -->
       <header class="jt-header">
         <div id="hostCamBox" class="host-cam-box hidden">
           <video id="hostCamVideo" class="host-cam-video" autoplay muted playsinline></video>
