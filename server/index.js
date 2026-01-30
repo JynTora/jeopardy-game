@@ -461,12 +461,20 @@ io.on("connection", (socket) => {
     io.to(rc).emit("spectator-round-changed", { round });
   });
 
-  socket.on("board-turn-update", ({ roomCode, playerName }) => {
+  socket.on("board-turn-update", ({ roomCode, playerName, playerId }) => {
     const rc = normRoomCode(roomCode);
     const game = games[rc];
     if (!game) return;
 
-    io.to(rc).emit("spectator-turn-update", { playerName });
+    io.to(rc).emit("spectator-turn-update", { playerName, playerId });
+  });
+
+  socket.on("board-turn-preview", ({ roomCode, playerName, playerId }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game) return;
+
+    io.to(rc).emit("spectator-turn-preview", { playerName, playerId });
   });
 
   socket.on("board-estimate-reveal", ({ roomCode, answers }) => {
