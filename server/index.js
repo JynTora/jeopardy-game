@@ -331,6 +331,17 @@ io.on("connection", (socket) => {
     console.log("Board Socket-ID direkt gesendet an:", targetId);
   });
 
+  // Spectator fragt nach Host-Stream
+  socket.on("request-host-stream", ({ roomCode }) => {
+    const rc = normRoomCode(roomCode);
+    const game = games[rc];
+    if (!game || !game.hostId) return;
+
+    // Weiterleiten an das Board
+    io.to(game.hostId).emit("request-host-stream", { fromSocketId: socket.id });
+    console.log("Host-Stream angefordert von", socket.id, "für Room", rc);
+  });
+
   // Board fragt Player nach Offer
   socket.on("webrtc-request-offer", ({ roomCode, targetId }) => {
     const rc = normRoomCode(roomCode);
