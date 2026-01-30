@@ -115,6 +115,8 @@ let hostPC = null; // Host-Cam -> Mir
 let latestPlayers = {};
 let activePlayerId = null;
 let activePlayerName = null;
+let turnActivePlayerId = null;
+let turnPreviewPlayerId = null;
 let currentRound = 1;
 let usedCells = new Set();
 
@@ -665,6 +667,11 @@ function renderPlayersBar() {
     pill.appendChild(videoWrap);
     pill.appendChild(info);
 
+    // Turn highlighting (orange glow)
+    if (id === turnPreviewPlayerId) pill.classList.add("player-pill-turn-preview");
+    if (id === turnActivePlayerId) pill.classList.add("player-pill-turn-active");
+    
+    // Buzz active (green)
     if (id === activePlayerId) pill.classList.add("player-pill-active");
 
     playersBarEl.appendChild(pill);
@@ -1051,16 +1058,51 @@ socket.on("spectator-question-closed", ({ categoryIndex, questionIndex }) => {
   if (cell) { cell.classList.remove("board-cell-active"); cell.classList.add("board-cell-used"); }
   if (overlayEl) overlayEl.classList.add("hidden");
   activePlayerId = null; activePlayerName = null;
+  renderPlayersBar(); // Wichtig: Grüne Markierung entfernen!
   if (buzzInfoEl) buzzInfoEl.classList.add("hidden");
   if (questionCardEl) questionCardEl.classList.remove("question-card-buzzed");
   closeLightbox();
   if (qMediaEl) qMediaEl.classList.add("hidden");
 });
 
-socket.on("spectator-correct", () => { safePlay(sfxCorrect); flashScreen("correct"); });
-socket.on("spectator-wrong", () => { safePlay(sfxWrong); flashScreen("wrong"); });
+socket.on("spectator-correct", () => { 
+  safePlay(sfxCorrect); 
+  flashScreen("correct");
+  // Reset active player after short delay
+  setTimeout(() => {
+    activePlayerId = null;
+    activePlayerName = null;
+    renderPlayersBar();
+    if (buzzInfoEl) buzzInfoEl.classList.add("hidden");
+    if (questionCardEl) questionCardEl.classList.remove("question-card-buzzed");
+  }, 1500);
+});
+
+socket.on("spectator-wrong", () => { 
+  safePlay(sfxWrong); 
+  flashScreen("wrong");
+  // Reset active player after short delay
+  setTimeout(() => {
+    activePlayerId = null;
+    activePlayerName = null;
+    renderPlayersBar();
+    if (buzzInfoEl) buzzInfoEl.classList.add("hidden");
+    if (questionCardEl) questionCardEl.classList.remove("question-card-buzzed");
+  }, 1000);
+});
 socket.on("spectator-round-changed", ({ round }) => { currentRound = round; usedCells.clear(); buildBoard(); if (turnIndicatorEl) turnIndicatorEl.textContent = round >= 2 ? "Runde 2 (x2)" : "Warte auf Spieler…"; });
-socket.on("spectator-turn-update", ({ playerName }) => { if (turnIndicatorEl && playerName) turnIndicatorEl.textContent = `⭐ ${playerName} ist dran ⭐`; });
+socket.on("spectator-turn-update", ({ playerName, playerId }) => { 
+  if (turnIndicatorEl && playerName) turnIndicatorEl.textContent = `⭐ ${playerName} ist dran ⭐`; 
+  turnActivePlayerId = playerId || null;
+  turnPreviewPlayerId = null;
+  renderPlayersBar();
+});
+
+socket.on("spectator-turn-preview", ({ playerName, playerId }) => {
+  if (turnIndicatorEl && playerName) turnIndicatorEl.textContent = `⭐ ${playerName} ist dran ⭐`;
+  turnPreviewPlayerId = playerId || null;
+  renderPlayersBar();
+});
 socket.on("estimate-question-started", ({ question, timeLimit }) => { if (joined) openEstimateModal(question, timeLimit); });
 socket.on("estimate-locked", () => { estimateLocked = true; if (estimateInput) estimateInput.disabled = true; if (sendEstimateBtn) sendEstimateBtn.disabled = true; });
 socket.on("estimate-all-answered", closeEstimateModal);
