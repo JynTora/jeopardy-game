@@ -178,13 +178,16 @@ async function initCamera() {
       audio: false
     });
     if (camPreview) { camPreview.srcObject = localStream; camPreview.classList.add("active"); }
-    if (camPreviewStatus) { camPreviewStatus.textContent = "✅ Bereit!"; camPreviewStatus.style.color = "#22c55e"; }
+    if (camPreviewStatus) { camPreviewStatus.style.display = "none"; }
+    // Add cam-ready class for badge
+    const camWrap = document.getElementById("camPreviewWrap");
+    if (camWrap) camWrap.classList.add("cam-ready");
     cameraReady = true;
     return true;
   } catch (err) {
     console.error("Camera error:", err);
     if (camPreviewStatus) {
-      camPreviewStatus.textContent = err.name === "NotAllowedError" ? "❌ Verweigert" : "❌ Keine Kamera";
+      camPreviewStatus.textContent = err.name === "NotAllowedError" ? "❌ Kamera verweigert - bitte erlaube Zugriff" : "❌ Keine Kamera gefunden";
       camPreviewStatus.style.color = "#ef4444";
     }
     cameraReady = false;
