@@ -206,6 +206,7 @@ io.on("connection", (socket) => {
     // Board-Socket speichern für WebRTC
     if (isCamMode) {
       game.boardSocketId = socket.id;
+      game.hostId = socket.id; // WICHTIG: hostId aktualisieren!
       
       // WICHTIG: Allen Kamera-Spielern mitteilen, dass Board bereit ist!
       for (const playerId of game.camPlayers) {
