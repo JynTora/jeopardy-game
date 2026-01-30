@@ -716,8 +716,18 @@ function doJoin(roomCode, name) {
     // Cam bereit melden
     socket.emit("cam-player-ready", { roomCode: rc, playerId: myPlayerId });
 
-    // Host-Stream anfragen
+    // Host-Stream anfragen (mit Retry)
     socket.emit("request-host-stream", { roomCode: rc });
+    
+    // Retry nach 1s, 3s, 5s falls Host-Cam noch nicht sichtbar
+    [1000, 3000, 5000].forEach(delay => {
+      setTimeout(() => {
+        if (hostCamBox && hostCamBox.classList.contains("hidden")) {
+          console.log(`🔄 Retry Host-Stream (${delay}ms)`);
+          socket.emit("request-host-stream", { roomCode: rc });
+        }
+      }, delay);
+    });
     
     // Board Socket-ID anfragen (um Stream zu senden)
     socket.emit("request-board-socket-id", { roomCode: rc });
@@ -1028,10 +1038,12 @@ setInterval(() => {
   });
 }, 5000);
 
-// Host-Cam verfügbar
+// Host-Cam verfügbar - aktiv anfragen!
 socket.on("host-cam-available", ({ socketId }) => {
-  console.log("Host-Cam verfügbar:", socketId);
-  // Host wird uns ein Offer senden
+  console.log("Host-Cam verfügbar, fordere Stream an:", socketId);
+  if (joined && currentRoomCode) {
+    socket.emit("request-host-stream", { roomCode: currentRoomCode });
+  }
 });
 
 // ===============================
