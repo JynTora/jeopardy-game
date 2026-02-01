@@ -194,19 +194,19 @@ function updateBuzzerIndicator() {
 // Kategorien (gleiche wie board.js)
 // ===============================
 const categoriesRound1 = [
-  { name: "Geographie", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
-  { name: "Filme & Serien", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
-  { name: "Musik", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
-  { name: "Wer ist das?", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
-  { name: "Schätzfragen", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
+  { name: "தமிழ் சினிமா", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
+  { name: "தமிழ் பண்பாடு", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
+  { name: "தமிழ் உணவு", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
+  { name: "யார் இது?", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
+  { name: "மதிப்பீடு", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
 ];
 
 const categoriesRound2 = [
-  { name: "Sport", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
-  { name: "Wissenschaft & Tech", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
-  { name: "Allgemeinwissen", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
-  { name: "Wer oder Was?", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
-  { name: "Schätzfragen", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
+  { name: "தமிழ் வரலாறு", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
+  { name: "தமிழ்நாடு", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
+  { name: "தமிழ் இலக்கியம்", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
+  { name: "யார்/என்ன இது?", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
+  { name: "மதிப்பீடு", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
 ];
 
 function getCategories() {
