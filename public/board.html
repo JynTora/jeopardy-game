@@ -2,267 +2,21 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <title>Jeopardy – Board (Kamera-Modus)</title>
+    <title>Jeopardy – Board</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <link rel="manifest" href="/manifest.json">
     <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
     <link rel="stylesheet" href="style.css" />
 
-    <style>
-      /* ═══════════════════════════════════════════════
-         BOARD CAM MODE - Cam und Logo auf einer Zeile
-         ═══════════════════════════════════════════════ */
-
-      /* Body & Page - Flexbox für Vollbild */
-      .board-cam-mode {
-        display: flex;
-        flex-direction: column;
-        height: 100vh;
-      }
-
-      .board-cam-mode .jt-page {
-        display: flex;
-        flex-direction: column;
-        flex: 1;
-        height: 100%;
-      }
-
-      /* Header: Cam LINKS, Logo MITTE - Unterkanten gleich, genug Höhe */
-      .board-cam-mode .jt-header {
-        display: flex;
-        align-items: flex-end; /* Unterkanten gleich! */
-        justify-content: center;
-        padding: 10px 20px 12px 20px;
-        min-height: 160px; /* Gross genug damit Cam nicht überlappt */
-        position: relative;
-        margin-bottom: 8px; /* Abstand zu Kategorien */
-        flex-shrink: 0;
-      }
-
-      .board-cam-mode .jt-logo {
-        max-height: 150px; /* 15% grösser */
-      }
-
-      /* Host-Cam Box - links im Header, höher positioniert */
-      .host-cam-box {
-        position: absolute;
-        left: 15px;
-        bottom: 50px; /* Höher - mehr Abstand zu Kategorien */
-        width: 220px;
-        border-radius: 10px;
-        overflow: hidden;
-        background: rgba(15, 23, 42, 0.95);
-        border: 2px solid rgba(251, 146, 60, 0.7);
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 12px rgba(251, 146, 60, 0.25);
-        z-index: 100;
-      }
-
-      .host-cam-video {
-        width: 100%;
-        aspect-ratio: 16/9;
-        object-fit: cover;
-        transform: scaleX(-1);
-        display: block;
-        background: #0f172a;
-      }
-
-      .host-cam-label {
-        position: absolute;
-        bottom: 6px;
-        left: 50%;
-        transform: translateX(-50%);
-        padding: 3px 10px;
-        border-radius: 999px;
-        background: rgba(251, 146, 60, 0.9);
-        font-size: 0.55rem;
-        font-weight: 700;
-        letter-spacing: 0.05em;
-        color: #fff;
-        text-transform: uppercase;
-      }
-
-      .host-cam-toggle {
-        position: absolute;
-        top: 6px;
-        right: 6px;
-        width: 26px;
-        height: 26px;
-        border-radius: 50%;
-        border: none;
-        background: rgba(0, 0, 0, 0.6);
-        color: #fff;
-        font-size: 0.75rem;
-        cursor: pointer;
-        z-index: 10;
-      }
-
-      /* Main - füllt den Rest */
-      .board-cam-mode .jt-main {
-        padding-top: 0;
-        padding-bottom: 0;
-        gap: 0;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-      }
-
-      /* Board Grid - NORMAL, nicht kaputt machen! */
-      .board-cam-mode .board-grid {
-        gap: 4px;
-        padding: 0 15px;
-        flex: 1;
-      }
-
-      .board-cam-mode .board-cell {
-        min-height: 50px;
-        font-size: 1.3rem;
-        padding: 8px 4px;
-      }
-
-      .board-cam-mode .board-category {
-        font-size: 1rem; /* Grösser - fast wie Fragenfelder */
-        font-weight: 700;
-        padding: 8px 4px;
-        min-height: 45px;
-      }
-
-      /* Spieler-Leiste - am unteren Rand, vollständig sichtbar */
-      .board-cam-mode .players-bar {
-        padding: 10px 25px 15px 25px;
-        gap: 15px;
-        justify-content: center;
-        flex-wrap: nowrap;
-        min-height: 140px;
-        flex-shrink: 0;
-        overflow-x: auto;
-      }
-
-      .board-cam-mode .player-pill {
-        flex-direction: column;
-        padding: 5px;
-        width: 220px;
-        min-width: 220px;
-        max-width: 220px;
-        flex: 0 0 auto;
-        border-radius: 10px;
-        gap: 3px;
-      }
-
-      /* Video in Player Pill - 16:9 wie Host-Cam */
-      .player-video-wrap {
-        width: 100%;
-        aspect-ratio: 16/9;
-        border-radius: 6px;
-        overflow: hidden;
-        background: rgba(30, 41, 59, 0.8);
-        position: relative;
-      }
-
-      .player-video-placeholder {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.4rem;
-        font-weight: 800;
-        color: rgba(148, 163, 184, 0.5);
-        background: linear-gradient(135deg, rgba(30, 41, 59, 0.9), rgba(15, 23, 42, 0.9));
-      }
-
-      .player-video {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transform: scaleX(-1);
-        position: absolute;
-        inset: 0;
-        background: #0f172a;
-      }
-
-      .player-video.hidden { display: none; }
-
-      .player-info {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0;
-        text-align: center;
-      }
-
-      .board-cam-mode .player-pill .player-name {
-        font-size: 0.7rem;
-        font-weight: 700;
-        margin: 0;
-      }
-
-      .board-cam-mode .player-pill .player-score {
-        font-size: 0.6rem;
-        opacity: 0.85;
-      }
-
-      /* Active Player (buzzed - green) */
-      .board-cam-mode .player-pill.player-pill-active .player-video-wrap {
-        border: 2px solid #22c55e;
-        box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
-      }
-
-      /* Turn Preview (orange - during spin animation) */
-      .board-cam-mode .player-pill.player-pill-turn-preview {
-        border-color: rgba(251, 146, 60, 0.5);
-        box-shadow: 0 0 12px rgba(251, 146, 60, 0.3);
-        transition: all 0.15s ease-out;
-      }
-
-      /* Turn Active (orange glow - whose turn to pick) */
-      .board-cam-mode .player-pill.player-pill-turn-active {
-        border-color: rgba(251, 146, 60, 0.7);
-        box-shadow: 0 0 18px rgba(251, 146, 60, 0.45), 0 0 30px rgba(251, 146, 60, 0.2);
-        animation: turnGlow 2s ease-in-out infinite;
-      }
-
-      @keyframes turnGlow {
-        0%, 100% {
-          box-shadow: 0 0 18px rgba(251, 146, 60, 0.45), 0 0 30px rgba(251, 146, 60, 0.2);
-        }
-        50% {
-          box-shadow: 0 0 25px rgba(251, 146, 60, 0.6), 0 0 40px rgba(251, 146, 60, 0.3);
-        }
-      }
-
-      /* Turn-Bar */
-      .board-cam-mode .turn-bar {
-        top: 10px;
-        right: 15px;
-      }
-
-      /* Buzzer - oben rechts unter SPIEL STARTEN */
-      .board-cam-mode .board-buzz-btn {
-        top: 55px;
-        bottom: auto;
-        left: auto;
-        right: 15px;
-        width: 75px;
-        height: 75px;
-        font-size: 0.65rem;
-      }
-    </style>
-
     <script src="/socket.io/socket.io.js"></script>
   </head>
 
-  <body class="jt-body board-cam-mode">
+  <body class="jt-body">
     <div id="screenFlash" class="screen-flash"></div>
 
     <div class="jt-page" id="boardPage">
-      <!-- Header: Cam links, Logo mitte - auf EINER Zeile -->
       <header class="jt-header">
-        <div id="hostCamBox" class="host-cam-box">
-          <video id="hostCamVideo" class="host-cam-video" autoplay muted playsinline></video>
-          <div class="host-cam-label">SPIELLEITER</div>
-          <button id="hostCamToggle" class="host-cam-toggle">📹</button>
-        </div>
         <img src="/images/jt-logo.png" alt="Jyn Tora Jeopardy" class="jt-logo" />
       </header>
 
@@ -285,7 +39,7 @@
       <div id="players-bar" class="players-bar"></div>
     </div>
 
-    <!-- Overlays (gleich wie board.html) -->
+    <!-- Question Overlay -->
     <div id="questionOverlay" class="question-overlay hidden">
       <div id="questionCard" class="question-card">
         <div class="question-toprow">
@@ -349,6 +103,6 @@
     <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
     <script src="/transition.js"></script>
     <script src="/board.js"></script>
-    <script src="/board-cam.js"></script>
+    <!-- KEIN board-cam.js = keine Kamera! -->
   </body>
 </html>
