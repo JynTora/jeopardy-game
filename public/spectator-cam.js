@@ -565,18 +565,18 @@ function updateBuzzerIndicator() {
 // Board
 // ===============================
 const categoriesR1 = [
-  { name: "Geographie", questions: [100,200,300,400,500].map(v => ({value:v})) },
-  { name: "Filme & Serien", questions: [100,200,300,400,500].map(v => ({value:v})) },
-  { name: "Musik", questions: [100,200,300,400,500].map(v => ({value:v})) },
-  { name: "Wer ist das?", questions: [100,200,300,400,500].map(v => ({value:v})) },
-  { name: "Schätzfragen", questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "தமிழ் சினிமா", questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "தமிழ் பண்பாடு", questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "தமிழ் உணவு", questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "யார் இது?", questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "மதிப்பீடு", questions: [100,200,300,400,500].map(v => ({value:v})) },
 ];
 const categoriesR2 = [
-  { name: "Sport", questions: [100,200,300,400,500].map(v => ({value:v})) },
-  { name: "Wissenschaft & Tech", questions: [100,200,300,400,500].map(v => ({value:v})) },
-  { name: "Allgemeinwissen", questions: [100,200,300,400,500].map(v => ({value:v})) },
-  { name: "Wer oder Was?", questions: [100,200,300,400,500].map(v => ({value:v})) },
-  { name: "Schätzfragen", questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "தமிழ் வரலாறு", questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "தமிழ்நாடு", questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "தமிழ் இலக்கியம்", questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "யார்/என்ன இது?", questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "மதிப்பீடு", questions: [100,200,300,400,500].map(v => ({value:v})) },
 ];
 
 function getCategories() { return currentRound >= 2 ? categoriesR2 : categoriesR1; }
