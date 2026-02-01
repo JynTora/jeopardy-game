@@ -572,9 +572,9 @@ const categoriesR1 = [
   { name: "மதிப்பீடு", questions: [100,200,300,400,500].map(v => ({value:v})) },
 ];
 const categoriesR2 = [
-  { name: "தமிழ் வரலாறு", questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "பொது அறிவு", questions: [100,200,300,400,500].map(v => ({value:v})) },
   { name: "தமிழ்நாடு", questions: [100,200,300,400,500].map(v => ({value:v})) },
-  { name: "தமிழ் இலக்கியம்", questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "விளையாட்டு & உலகம்", questions: [100,200,300,400,500].map(v => ({value:v})) },
   { name: "யார்/என்ன இது?", questions: [100,200,300,400,500].map(v => ({value:v})) },
   { name: "மதிப்பீடு", questions: [100,200,300,400,500].map(v => ({value:v})) },
 ];
