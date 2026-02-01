@@ -202,9 +202,9 @@ const categoriesRound1 = [
 ];
 
 const categoriesRound2 = [
-  { name: "தமிழ் வரலாறு", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
+  { name: "பொது அறிவு", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
   { name: "தமிழ்நாடு", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
-  { name: "தமிழ் இலக்கியம்", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
+  { name: "விளையாட்டு & உலகம்", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
   { name: "யார்/என்ன இது?", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
   { name: "மதிப்பீடு", questions: [{ value: 100 }, { value: 200 }, { value: 300 }, { value: 400 }, { value: 500 }] },
 ];
