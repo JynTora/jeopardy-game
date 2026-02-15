@@ -17,9 +17,8 @@ const joinStatus = document.getElementById("spectatorJoinStatus");
 // Main Page
 const mainPage = document.getElementById("spectatorMainPage");
 
-// Buzzer Indicator (oben links wie Host)
-const buzzerIndicator = document.getElementById("buzzerIndicator");
-const buzzerText = document.getElementById("buzzerText");
+// Buzzer Button (neues Design)
+const buzzerBtn = document.getElementById("spectatorBuzzBtn");
 
 // Board UI
 const boardEl = document.getElementById("board");
@@ -163,30 +162,33 @@ function setJoinStatus(msg, isError = false) {
 // Buzzer Indicator UI (oben links wie Host)
 // ===============================
 function updateBuzzerIndicator() {
-  if (!buzzerIndicator || !buzzerText) return;
+  if (!buzzerBtn) return;
 
   if (!joined) {
-    buzzerIndicator.classList.add("hidden");
+    buzzerBtn.classList.add("hidden");
     return;
   }
 
-  buzzerIndicator.classList.remove("hidden");
+  buzzerBtn.classList.remove("hidden");
 
   if (isLocked) {
-    buzzerIndicator.classList.add("buzzer-locked");
-    buzzerIndicator.classList.remove("buzzer-free");
-    buzzerText.textContent = "GESPERRT";
+    buzzerBtn.classList.add("buzzer-locked");
+    buzzerBtn.classList.remove("buzzer-active");
+    buzzerBtn.innerHTML = "BUZZER<br>GESPERRT";
+    buzzerBtn.disabled = true;
     return;
   }
 
   if (buzzingEnabled) {
-    buzzerIndicator.classList.remove("buzzer-locked");
-    buzzerIndicator.classList.add("buzzer-free");
-    buzzerText.textContent = "BUZZER FREI";
+    buzzerBtn.classList.remove("buzzer-locked");
+    buzzerBtn.classList.add("buzzer-active");
+    buzzerBtn.innerHTML = "BUZZER<br>FREI";
+    buzzerBtn.disabled = false;
   } else {
-    buzzerIndicator.classList.add("buzzer-locked");
-    buzzerIndicator.classList.remove("buzzer-free");
-    buzzerText.textContent = "BUZZER GESPERRT";
+    buzzerBtn.classList.add("buzzer-locked");
+    buzzerBtn.classList.remove("buzzer-active");
+    buzzerBtn.innerHTML = "BUZZER<br>GESPERRT";
+    buzzerBtn.disabled = true;
   }
 }
 
@@ -415,8 +417,33 @@ if (joinBtn) {
 });
 
 // ===============================
-// Buzzer Logic (Keyboard SPACE)
+// Buzzer Logic (Keyboard SPACE + Click)
 // ===============================
+function doBuzz() {
+  if (!joined || !currentRoomCode || !buzzingEnabled || isLocked) return;
+
+  // Visual feedback
+  if (buzzerBtn) {
+    buzzerBtn.classList.add("buzzer-pressed");
+    setTimeout(() => buzzerBtn.classList.remove("buzzer-pressed"), 150);
+  }
+
+  // Sound
+  sfxBuzz.currentTime = 0;
+  sfxBuzz.play().catch(() => {});
+
+  socket.emit("player-buzz", { roomCode: currentRoomCode });
+
+  buzzingEnabled = false;
+  updateBuzzerIndicator();
+}
+
+// Click Handler für Buzzer Button
+if (buzzerBtn) {
+  buzzerBtn.addEventListener("click", doBuzz);
+}
+
+// Keyboard Handler (SPACE)
 document.addEventListener("keydown", (e) => {
   if (e.code !== "Space") return;
 
@@ -424,20 +451,8 @@ document.addEventListener("keydown", (e) => {
   const isTyping = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable);
   if (isTyping) return;
 
-  if (!joined || !currentRoomCode || !buzzingEnabled || isLocked) return;
-
   e.preventDefault();
-
-  // Visual feedback
-  if (buzzerIndicator) {
-    buzzerIndicator.classList.add("buzzer-pressed");
-    setTimeout(() => buzzerIndicator.classList.remove("buzzer-pressed"), 150);
-  }
-
-  socket.emit("player-buzz", { roomCode: currentRoomCode });
-
-  buzzingEnabled = false;
-  updateBuzzerIndicator();
+  doBuzz();
 });
 
 // ===============================
