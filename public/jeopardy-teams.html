@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>JEOPARDY TEAMS – Spielmodus</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="manifest" href="/manifest.json">
+    <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
+    <link rel="stylesheet" href="/style.css" />
+    <style>
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at top left, #f59e0b, #0f172a 60%);
+        color: #f9fafb;
+      }
+
+      .mode-select {
+        background: rgba(15, 23, 42, 0.95);
+        border-radius: 28px;
+        padding: 36px 44px;
+        box-shadow: 0 28px 70px rgba(0, 0, 0, 0.7), 0 0 40px rgba(245, 158, 11, 0.15);
+        max-width: 580px;
+        width: 92%;
+        text-align: center;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+      }
+
+      .mode-select h1 {
+        font-size: 2.2rem;
+        margin: 0 0 8px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        text-shadow: 0 0 30px rgba(248, 250, 252, 0.5);
+      }
+
+      .teams-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff;
+        margin-bottom: 12px;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+      }
+
+      .mode-select .subtitle {
+        margin: 0 0 28px;
+        font-size: 1rem;
+        color: #9ca3af;
+      }
+
+      .mode-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .mode-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        padding: 28px 20px;
+        border-radius: 20px;
+        text-decoration: none;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+
+      .mode-card:hover { transform: translateY(-4px); }
+
+      .mode-card.local {
+        background: linear-gradient(135deg, #22c55e, #15803d);
+        box-shadow: 0 0 30px rgba(34, 197, 94, 0.5), 0 16px 40px rgba(0, 0, 0, 0.5);
+      }
+      .mode-card.local:hover {
+        box-shadow: 0 0 45px rgba(34, 197, 94, 0.7), 0 20px 50px rgba(0, 0, 0, 0.6);
+        border-color: rgba(134, 239, 172, 0.5);
+      }
+
+      .mode-card.online {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        box-shadow: 0 0 30px rgba(245, 158, 11, 0.5), 0 16px 40px rgba(0, 0, 0, 0.5);
+      }
+      .mode-card.online:hover {
+        box-shadow: 0 0 45px rgba(245, 158, 11, 0.7), 0 20px 50px rgba(0, 0, 0, 0.6);
+        border-color: rgba(253, 224, 71, 0.5);
+      }
+
+      .mode-icon { font-size: 2.8rem; }
+      .mode-title {
+        font-size: 1.3rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #f9fafb;
+      }
+      .mode-desc {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.4;
+      }
+
+      .mode-footer {
+        margin-top: 8px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(148, 163, 184, 0.2);
+      }
+      .mode-footer p {
+        margin: 0 0 12px;
+        font-size: 0.9rem;
+        color: #9ca3af;
+      }
+
+      .host-link {
+        display: inline-block;
+        padding: 10px 24px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 0.85rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        border: 1px solid rgba(245, 158, 11, 0.7);
+        background: rgba(245, 158, 11, 0.15);
+        color: #fcd34d;
+        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+      }
+      .host-link:hover {
+        background: rgba(245, 158, 11, 0.25);
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.4);
+        transform: translateY(-1px);
+      }
+
+      .back-link {
+        display: inline-block;
+        margin-top: 16px;
+        padding: 8px 20px;
+        border-radius: 999px;
+        text-decoration: none;
+        font-size: 0.8rem;
+        color: #9ca3af;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        transition: all 0.15s ease;
+      }
+      .back-link:hover {
+        color: #f9fafb;
+        border-color: rgba(148, 163, 184, 0.6);
+      }
+
+      /* ───────────────────────────────────────────────
+         ONLINE MODE SELECTION OVERLAY
+         ─────────────────────────────────────────────── */
+      .online-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 2000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: radial-gradient(circle at top, rgba(15, 23, 42, 0.92), rgba(2, 6, 23, 0.98));
+        backdrop-filter: blur(14px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.25s ease;
+      }
+
+      .online-overlay.is-visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .online-card {
+        width: min(520px, 92vw);
+        padding: 32px 28px;
+        border-radius: 24px;
+        background: rgba(15, 23, 42, 0.98);
+        border: 1px solid rgba(245, 158, 11, 0.4);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), 0 0 40px rgba(245, 158, 11, 0.25);
+        text-align: center;
+        transform: translateY(20px) scale(0.97);
+        transition: transform 0.25s ease;
+      }
+
+      .online-overlay.is-visible .online-card {
+        transform: translateY(0) scale(1);
+      }
+
+      .online-card h2 {
+        margin: 0 0 8px;
+        font-size: 1.5rem;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #f9fafb;
+      }
+
+      .online-card .online-subtitle {
+        margin: 0 0 24px;
+        font-size: 0.95rem;
+        color: #9ca3af;
+      }
+
+      .online-options {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+
+      .online-option {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 24px 16px;
+        border-radius: 16px;
+        text-decoration: none;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+      }
+
+      .online-option:hover {
+        transform: translateY(-3px);
+      }
+
+      /* Ohne Kamera - Teal */
+      .online-option.no-cam {
+        background: linear-gradient(135deg, #0d9488, #0f766e);
+        box-shadow: 0 0 25px rgba(20, 184, 166, 0.4), 0 14px 35px rgba(0, 0, 0, 0.5);
+      }
+      .online-option.no-cam:hover {
+        box-shadow: 0 0 40px rgba(20, 184, 166, 0.6), 0 18px 45px rgba(0, 0, 0, 0.6);
+        border-color: rgba(94, 234, 212, 0.5);
+      }
+
+      /* Mit Kamera - Purple/Pink */
+      .online-option.with-cam {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        box-shadow: 0 0 25px rgba(139, 92, 246, 0.4), 0 14px 35px rgba(0, 0, 0, 0.5);
+      }
+      .online-option.with-cam:hover {
+        box-shadow: 0 0 40px rgba(139, 92, 246, 0.6), 0 18px 45px rgba(0, 0, 0, 0.6);
+        border-color: rgba(196, 181, 253, 0.5);
+      }
+
+      .online-option-icon {
+        font-size: 2.2rem;
+      }
+
+      .online-option-title {
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #f9fafb;
+      }
+
+      .online-option-desc {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.85);
+        line-height: 1.35;
+      }
+
+      .online-option-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 999px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: rgba(255, 255, 255, 0.2);
+        color: #fff;
+      }
+
+      .online-back-btn {
+        padding: 10px 24px;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+        background: rgba(30, 41, 59, 0.8);
+        color: #e5e7eb;
+        font-size: 0.85rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+        cursor: pointer;
+        transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+      }
+
+      .online-back-btn:hover {
+        background: rgba(51, 65, 85, 0.9);
+        border-color: rgba(148, 163, 184, 0.8);
+        transform: translateY(-1px);
+      }
+
+      @media (max-width: 520px) {
+        .mode-grid { grid-template-columns: 1fr; }
+        .mode-select { padding: 28px 24px; }
+        .mode-select h1 { font-size: 1.6rem; }
+        .online-options { grid-template-columns: 1fr; }
+        .online-card { padding: 24px 20px; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="mode-select">
+      <span class="teams-badge">👥 Team-Modus</span>
+      <h1>🎯 JEOPARDY TEAMS</h1>
+      <p class="subtitle">Spielt in Teams gegeneinander!</p>
+
+      <div class="mode-grid">
+        <a href="/player-teams.html" class="mode-card local" data-transition-link>
+          <span class="mode-icon">🏠</span>
+          <span class="mode-title">Lokal</span>
+          <span class="mode-desc">
+            Alle im selben Raum.<br>
+            Host zeigt Board auf TV,<br>
+            Teams buzzern am Handy.
+          </span>
+        </a>
+
+        <div class="mode-card online" id="onlineModeBtn">
+          <span class="mode-icon">🌐</span>
+          <span class="mode-title">Online</span>
+          <span class="mode-desc">
+            Perfekt für Discord!<br>
+            Teams spielen remote<br>
+            gegeneinander.
+          </span>
+        </div>
+      </div>
+
+      <div class="mode-footer">
+        <p>Bist du der Spielleiter?</p>
+        <a href="/host-teams.html" class="host-link" data-transition-link>
+          🎛️ Host-Panel öffnen
+        </a>
+      </div>
+
+      <a href="/" class="back-link" data-transition-link>← Zurück zur Spielauswahl</a>
+    </main>
+
+    <!-- ═══════════════════════════════════════════════
+         ONLINE MODE SELECTION OVERLAY
+         ═══════════════════════════════════════════════ -->
+    <div id="onlineOverlay" class="online-overlay">
+      <div class="online-card">
+        <h2>🌐 Online Teams</h2>
+        <p class="online-subtitle">Mit oder ohne Webcam spielen?</p>
+
+        <div class="online-options">
+          <a href="/spectator-teams.html" class="online-option no-cam" data-transition-link>
+            <span class="online-option-icon">💬</span>
+            <span class="online-option-title">Ohne Kamera</span>
+            <span class="online-option-desc">
+              Für Discord/Teams Calls.<br>
+              Einfach & schnell!
+            </span>
+          </a>
+
+          <a href="/spectator-teams-cam.html" class="online-option with-cam" data-transition-link>
+            <span class="online-option-icon">📹</span>
+            <span class="online-option-title">Mit Kamera</span>
+            <span class="online-option-desc">
+              Webcams im Spiel!<br>
+              Perfekt für Streaming.
+            </span>
+            <span class="online-option-badge">🎬 YouTube / Twitch</span>
+          </a>
+        </div>
+
+        <button id="onlineBackBtn" class="online-back-btn">← Zurück</button>
+      </div>
+    </div>
+
+    <script>
+      // Online Mode Selection
+      const onlineModeBtn = document.getElementById('onlineModeBtn');
+      const onlineOverlay = document.getElementById('onlineOverlay');
+      const onlineBackBtn = document.getElementById('onlineBackBtn');
+
+      onlineModeBtn?.addEventListener('click', () => {
+        onlineOverlay?.classList.add('is-visible');
+      });
+
+      onlineBackBtn?.addEventListener('click', () => {
+        onlineOverlay?.classList.remove('is-visible');
+      });
+
+      // Close on backdrop click
+      onlineOverlay?.addEventListener('click', (e) => {
+        if (e.target === onlineOverlay) {
+          onlineOverlay.classList.remove('is-visible');
+        }
+      });
+
+      // ESC key to close
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && onlineOverlay?.classList.contains('is-visible')) {
+          onlineOverlay.classList.remove('is-visible');
+        }
+      });
+
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else if (document.exitFullscreen) {
+          document.exitFullscreen();
+        }
+      }
+    </script>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+    <script src="/transition.js"></script>
+  </body>
+</html>
