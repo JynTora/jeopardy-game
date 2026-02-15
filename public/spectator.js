@@ -600,6 +600,16 @@ if (estimateInput) {
 // ===============================
 socket.on("buzzing-status", ({ enabled }) => {
   buzzingEnabled = !!enabled;
+  
+  // Wenn Buzzer wieder freigegeben wird, grüne Markierung entfernen
+  if (enabled) {
+    activePlayerId = null;
+    activePlayerName = null;
+    renderPlayersBar();
+    updateBuzzInfo(false);
+    document.body.classList.remove("is-buzz-locked");
+  }
+  
   updateBuzzerIndicator();
 });
 
