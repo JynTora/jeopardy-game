@@ -599,10 +599,12 @@ if (estimateInput) {
 // Socket Events - Player/Buzzer
 // ===============================
 socket.on("buzzing-status", ({ enabled }) => {
+  console.log("📥 buzzing-status empfangen, enabled:", enabled);
   buzzingEnabled = !!enabled;
   
   // Wenn Buzzer wieder freigegeben wird, grüne Markierung entfernen
   if (enabled) {
+    console.log("🔄 Buzzer freigegeben - lösche grüne Markierung");
     activePlayerId = null;
     activePlayerName = null;
     renderPlayersBar();
