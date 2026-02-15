@@ -11,6 +11,220 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script defer src="/spectator.js"></script>
+
+    <style>
+      /* ===========================
+         JOIN OVERLAY - Schönes Design
+         =========================== */
+      .spectator-join-overlay {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+
+      .spectator-join-card {
+        background: rgba(30, 41, 59, 0.95);
+        border: 2px solid rgba(99, 102, 241, 0.4);
+        border-radius: 20px;
+        padding: 40px 50px;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                    0 0 40px rgba(99, 102, 241, 0.15);
+        animation: fadeInUp 0.4s ease-out;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .spectator-join-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .spectator-join-subtitle {
+        color: #94a3b8;
+        font-size: 1rem;
+        margin-bottom: 30px;
+      }
+
+      .spectator-join-form {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      }
+
+      .spectator-input {
+        width: 100%;
+        padding: 14px 18px;
+        font-size: 1.1rem;
+        border: 2px solid rgba(99, 102, 241, 0.3);
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.8);
+        color: #f8fafc;
+        text-align: center;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+      }
+
+      .spectator-input:focus {
+        outline: none;
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+      }
+
+      .spectator-input::placeholder {
+        color: #64748b;
+      }
+
+      .spectator-join-btn {
+        width: 100%;
+        padding: 16px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 10px;
+      }
+
+      .spectator-join-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+      }
+
+      .spectator-join-btn:active {
+        transform: translateY(0);
+      }
+
+      .spectator-join-status {
+        margin-top: 15px;
+        font-size: 0.9rem;
+        min-height: 24px;
+      }
+
+      .spectator-join-status.error {
+        color: #f87171;
+      }
+
+      .spectator-join-status.success {
+        color: #4ade80;
+      }
+
+      .spectator-join-overlay.hidden {
+        display: none;
+      }
+
+      /* ===========================
+         SPECTATOR BOARD - Keine Interaktion
+         =========================== */
+      .spectator-board .board-cell {
+        cursor: default !important;
+        pointer-events: none !important;
+      }
+
+      .spectator-board .board-cell:hover {
+        transform: none !important;
+        box-shadow: none !important;
+        filter: none !important;
+      }
+
+      .spectator-board .board-category {
+        cursor: default !important;
+      }
+
+      /* ===========================
+         BUZZER BUTTON - Wie bei Board
+         =========================== */
+      .spectator-buzz-btn {
+        position: fixed;
+        top: 55px;
+        right: 15px;
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        border: 3px solid rgba(34, 197, 94, 0.6);
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.3) 100%);
+        color: #4ade80;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.3;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
+      }
+
+      .spectator-buzz-btn:hover:not(:disabled) {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(34, 197, 94, 0.3);
+        border-color: rgba(34, 197, 94, 0.8);
+      }
+
+      .spectator-buzz-btn:active:not(:disabled) {
+        transform: scale(0.95);
+      }
+
+      .spectator-buzz-btn:disabled,
+      .spectator-buzz-btn.buzzer-locked {
+        border-color: rgba(239, 68, 68, 0.5);
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(185, 28, 28, 0.2) 100%);
+        color: #f87171;
+        cursor: not-allowed;
+        opacity: 0.8;
+      }
+
+      .spectator-buzz-btn.buzzer-active {
+        animation: pulse-green 1s infinite;
+        border-color: #22c55e;
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+      }
+
+      @keyframes pulse-green {
+        0%, 100% { box-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
+        50% { box-shadow: 0 0 25px rgba(34, 197, 94, 0.5); }
+      }
+
+      /* Hide old buzzer indicator */
+      .buzzer-indicator {
+        display: none !important;
+      }
+
+      /* ===========================
+         MAIN PAGE
+         =========================== */
+      .spectator-page.hidden {
+        display: none;
+      }
+    </style>
   </head>
 
   <body class="jt-body">
@@ -39,17 +253,10 @@
             placeholder="Dein Name"
             maxlength="20"
           />
-          <button id="spectatorJoinBtn" class="spectator-join-btn">Beitreten</button>
+          <button id="spectatorJoinBtn" class="spectator-join-btn">🎮 Beitreten</button>
         </div>
         <div id="spectatorJoinStatus" class="spectator-join-status"></div>
       </div>
-    </div>
-
-    <!-- ===========================
-         BUZZER INDICATOR (oben links, wie Host-Board)
-         =========================== -->
-    <div id="buzzerIndicator" class="buzzer-indicator buzzer-locked hidden">
-      <span id="buzzerText">BUZZER GESPERRT</span>
     </div>
 
     <!-- ===========================
@@ -92,6 +299,13 @@
       <!-- Spieler-Leiste unten -->
       <div id="players-bar" class="players-bar"></div>
     </div>
+
+    <!-- ===========================
+         BUZZER BUTTON (wie bei Board)
+         =========================== -->
+    <button id="spectatorBuzzBtn" class="spectator-buzz-btn buzzer-locked hidden">
+      BUZZER<br>GESPERRT
+    </button>
 
     <!-- ===========================
          Fragen-Overlay (read-only für Spectator)
