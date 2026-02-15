@@ -42,7 +42,7 @@ const questionCardEl = document.getElementById("questionCard");
 const buzzInfoEl = document.getElementById("buzzInfo");
 
 const startGameBtn = document.getElementById("startGameBtn");
-const buzzResetBtn = document.getElementById("boardBuzzResetBtn");
+const buzzResetBtn = document.getElementById("boardBuzzBtn");
 
 const estimateBoardTimerEl = document.getElementById("estimateBoardTimer");
 const turnIndicatorEl = document.getElementById("turnIndicator");
