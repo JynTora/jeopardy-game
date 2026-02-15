@@ -735,9 +735,10 @@ socket.on("spectator-question-closed", (data) => {
   // Overlay schliessen
   if (overlayEl) overlayEl.classList.add("hidden");
 
-  // Reset
+  // Reset - WICHTIG: auch renderPlayersBar aufrufen!
   activePlayerId = null;
   activePlayerName = null;
+  renderPlayersBar();  // ← NEU: Spieler-Leiste aktualisieren
   updateBuzzInfo(false);
   document.body.classList.remove("is-buzz-locked");
   closeLightbox();
@@ -749,11 +750,25 @@ socket.on("spectator-question-closed", (data) => {
 socket.on("spectator-correct", () => {
   playCorrectSound();
   flashScreen("correct");
+  // Reset active player after short delay
+  setTimeout(() => {
+    activePlayerId = null;
+    activePlayerName = null;
+    renderPlayersBar();
+    updateBuzzInfo(false);
+  }, 1500);
 });
 
 socket.on("spectator-wrong", () => {
   playWrongSound();
   flashScreen("wrong");
+  // Reset active player after short delay
+  setTimeout(() => {
+    activePlayerId = null;
+    activePlayerName = null;
+    renderPlayersBar();
+    updateBuzzInfo(false);
+  }, 1000);
 });
 
 socket.on("spectator-round-changed", ({ round }) => {
