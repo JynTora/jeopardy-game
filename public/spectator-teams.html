@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Jeopardy Teams – Spieler</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <link rel="manifest" href="/manifest.json">
+    <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
+    <link rel="stylesheet" href="style.css" />
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="/spectator-teams.js"></script>
+
+    <style>
+      /* ===========================
+         JOIN OVERLAY - Teams Style
+         =========================== */
+      .spectator-join-overlay {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(135deg, #0f172a 0%, #78350f 50%, #0f172a 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+
+      .spectator-join-card {
+        background: rgba(30, 41, 59, 0.95);
+        border: 2px solid rgba(245, 158, 11, 0.4);
+        border-radius: 20px;
+        padding: 32px 40px;
+        max-width: 440px;
+        width: 90%;
+        text-align: center;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                    0 0 40px rgba(245, 158, 11, 0.15);
+        animation: fadeInUp 0.4s ease-out;
+      }
+
+      @keyframes fadeInUp {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      .spectator-join-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #f8fafc;
+        margin-bottom: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .teams-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff;
+      }
+
+      .spectator-join-subtitle {
+        color: #94a3b8;
+        font-size: 0.95rem;
+        margin-bottom: 24px;
+      }
+
+      .spectator-join-form {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .join-step {
+        text-align: left;
+      }
+
+      .step-label {
+        display: block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #64748b;
+        margin-bottom: 8px;
+      }
+
+      .spectator-input {
+        width: 100%;
+        padding: 14px 18px;
+        font-size: 1rem;
+        border: 2px solid rgba(245, 158, 11, 0.3);
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.8);
+        color: #f8fafc;
+        text-align: center;
+        transition: all 0.2s ease;
+        box-sizing: border-box;
+      }
+
+      .spectator-input:focus {
+        outline: none;
+        border-color: #f59e0b;
+        box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+      }
+
+      .spectator-input::placeholder { color: #64748b; }
+
+      /* Team Selection */
+      .team-select-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+
+      .team-select-btn {
+        padding: 14px 12px;
+        border-radius: 12px;
+        border: 2px solid transparent;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .team-select-btn:hover { transform: translateY(-2px); }
+
+      .team-select-btn.selected {
+        border-color: #fff !important;
+        box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+      }
+
+      .team-select-btn.team-red { background: linear-gradient(135deg, #ef4444, #dc2626); }
+      .team-select-btn.team-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+      .team-select-btn.team-green { background: linear-gradient(135deg, #22c55e, #16a34a); }
+      .team-select-btn.team-purple { background: linear-gradient(135deg, #a855f7, #9333ea); }
+      .team-select-btn.team-orange { background: linear-gradient(135deg, #f97316, #ea580c); }
+      .team-select-btn.team-pink { background: linear-gradient(135deg, #ec4899, #db2777); }
+
+      .team-select-name {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #fff;
+      }
+
+      .team-select-count {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.7);
+      }
+
+      .no-teams-msg {
+        grid-column: 1 / -1;
+        padding: 20px;
+        color: #64748b;
+        font-size: 0.9rem;
+        font-style: italic;
+      }
+
+      .spectator-join-btn {
+        width: 100%;
+        padding: 16px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-top: 8px;
+      }
+
+      .spectator-join-btn:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(245, 158, 11, 0.3);
+      }
+
+      .spectator-join-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .spectator-join-status {
+        margin-top: 12px;
+        font-size: 0.9rem;
+        min-height: 24px;
+      }
+
+      .spectator-join-status.error { color: #f87171; }
+      .spectator-join-status.success { color: #4ade80; }
+
+      .spectator-join-overlay.hidden { display: none; }
+
+      /* ===========================
+         TEAMS BAR - Bottom
+         =========================== */
+      .teams-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(15, 23, 42, 0.95);
+        border-top: 1px solid rgba(245, 158, 11, 0.3);
+        padding: 12px 16px;
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        z-index: 100;
+      }
+
+      .team-card {
+        background: rgba(30, 41, 59, 0.9);
+        border-radius: 12px;
+        padding: 12px 16px;
+        min-width: 150px;
+        border: 2px solid transparent;
+        transition: all 0.2s ease;
+      }
+
+      .team-card.team-red { border-color: rgba(239, 68, 68, 0.4); }
+      .team-card.team-blue { border-color: rgba(59, 130, 246, 0.4); }
+      .team-card.team-green { border-color: rgba(34, 197, 94, 0.4); }
+      .team-card.team-purple { border-color: rgba(168, 85, 247, 0.4); }
+      .team-card.team-orange { border-color: rgba(249, 115, 22, 0.4); }
+      .team-card.team-pink { border-color: rgba(236, 72, 153, 0.4); }
+
+      .team-card.team-active {
+        box-shadow: 0 0 20px currentColor;
+        transform: scale(1.02);
+      }
+
+      .team-card-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .team-color-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+
+      .team-red .team-color-dot { background: #ef4444; }
+      .team-blue .team-color-dot { background: #3b82f6; }
+      .team-green .team-color-dot { background: #22c55e; }
+      .team-purple .team-color-dot { background: #a855f7; }
+      .team-orange .team-color-dot { background: #f97316; }
+      .team-pink .team-color-dot { background: #ec4899; }
+
+      .team-card-name {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #f8fafc;
+      }
+
+      .team-card-score {
+        font-size: 1.1rem;
+        font-weight: 800;
+        margin-bottom: 4px;
+      }
+
+      .team-red .team-card-score { color: #f87171; }
+      .team-blue .team-card-score { color: #60a5fa; }
+      .team-green .team-card-score { color: #4ade80; }
+      .team-purple .team-card-score { color: #c084fc; }
+      .team-orange .team-card-score { color: #fb923c; }
+      .team-pink .team-card-score { color: #f472b6; }
+
+      .team-card-members {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .team-member {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+      }
+
+      .member-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #22c55e;
+      }
+
+      .member-dot.offline { background: #ef4444; }
+
+      /* ===========================
+         SPECTATOR BOARD - No Interaction
+         =========================== */
+      .spectator-board .board-cell {
+        cursor: default !important;
+        pointer-events: none !important;
+      }
+
+      .spectator-board .board-cell:hover {
+        transform: none !important;
+        box-shadow: none !important;
+      }
+
+      /* ===========================
+         BUZZER BUTTON
+         =========================== */
+      .spectator-buzz-btn {
+        position: fixed;
+        top: 55px;
+        right: 15px;
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        border: 3px solid rgba(34, 197, 94, 0.6);
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.3) 100%);
+        color: #4ade80;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.3;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
+      }
+
+      .spectator-buzz-btn:hover:not(:disabled) {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(34, 197, 94, 0.3);
+      }
+
+      .spectator-buzz-btn:disabled,
+      .spectator-buzz-btn.buzzer-locked {
+        border-color: rgba(239, 68, 68, 0.5);
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(185, 28, 28, 0.2) 100%);
+        color: #f87171;
+        cursor: not-allowed;
+        opacity: 0.8;
+      }
+
+      .spectator-buzz-btn.buzzer-active {
+        animation: pulse-green 1s infinite;
+        border-color: #22c55e;
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+      }
+
+      @keyframes pulse-green {
+        0%, 100% { box-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
+        50% { box-shadow: 0 0 25px rgba(34, 197, 94, 0.5); }
+      }
+
+      /* Hide old players-bar */
+      .players-bar { display: none !important; }
+
+      /* Adjust main for teams bar */
+      .jt-main {
+        padding-bottom: 100px;
+      }
+
+      .spectator-page.hidden { display: none; }
+    </style>
+  </head>
+
+  <body class="jt-body">
+    <div id="screenFlash" class="screen-flash"></div>
+
+    <!-- ===========================
+         JOIN OVERLAY
+         =========================== -->
+    <div id="spectatorJoinOverlay" class="spectator-join-overlay">
+      <div class="spectator-join-card">
+        <div class="spectator-join-title">
+          🌐 Online Teams
+          <span class="teams-badge">TEAM</span>
+        </div>
+        <div class="spectator-join-subtitle">Tritt einem Spiel bei und wähle dein Team</div>
+        <div class="spectator-join-form">
+          <div class="join-step">
+            <span class="step-label">1. Raumcode</span>
+            <input id="spectatorRoomCode" class="spectator-input" type="text" placeholder="Raumcode (z.B. X59XC)" maxlength="10" />
+          </div>
+          <div class="join-step">
+            <span class="step-label">2. Dein Name</span>
+            <input id="spectatorName" class="spectator-input" type="text" placeholder="Dein Name" maxlength="20" />
+          </div>
+          <div class="join-step">
+            <span class="step-label">3. Team wählen</span>
+            <div id="teamSelectGrid" class="team-select-grid">
+              <div class="no-teams-msg">Code eingeben um Teams zu laden...</div>
+            </div>
+          </div>
+          <button id="spectatorJoinBtn" class="spectator-join-btn" disabled>🎮 Beitreten</button>
+        </div>
+        <div id="spectatorJoinStatus" class="spectator-join-status"></div>
+      </div>
+    </div>
+
+    <!-- ===========================
+         MAIN PAGE
+         =========================== -->
+    <div class="jt-page spectator-page hidden" id="spectatorMainPage">
+      <header class="jt-header">
+        <img src="/images/jt-logo.png" alt="Jyn Tora Jeopardy" class="jt-logo" />
+      </header>
+
+      <div class="turn-bar">
+        <div id="turnIndicator" class="turn-indicator">Warte auf Spieler…</div>
+      </div>
+
+      <div class="board-ambient-layer">
+        <span class="ambient-orb orb-1"></span>
+        <span class="ambient-orb orb-2"></span>
+        <span class="ambient-orb orb-3"></span>
+        <span class="ambient-orb orb-4"></span>
+      </div>
+
+      <main class="jt-main">
+        <div id="board" class="board-grid spectator-board"></div>
+      </main>
+    </div>
+
+    <!-- Teams Bar -->
+    <div id="teamsBar" class="teams-bar hidden"></div>
+
+    <!-- Buzzer Button -->
+    <button id="spectatorBuzzBtn" class="spectator-buzz-btn buzzer-locked hidden">
+      BUZZER<br>GESPERRT
+    </button>
+
+    <!-- Question Overlay -->
+    <div id="questionOverlay" class="question-overlay hidden">
+      <div id="questionCard" class="question-card spectator-question-card">
+        <div class="question-toprow">
+          <div id="questionPoints" class="question-points"><span class="points-inner"></span></div>
+          <div id="estimateBoardTimer" class="estimate-board-timer hidden">⏱ –</div>
+        </div>
+        <div id="questionText" class="question-text"></div>
+        <div id="qMedia" class="q-media hidden">
+          <img id="qImage" class="q-image" alt="" />
+          <div class="q-hint">Klicken zum Vergrößern</div>
+        </div>
+        <div id="answerText" class="answer-text hidden"></div>
+        <div id="estimateRevealContainer" class="estimate-reveal hidden">
+          <h3 class="estimate-reveal-title">Schätzantworten</h3>
+          <div id="estimateRevealList" class="estimate-reveal-list"></div>
+        </div>
+        <div id="buzzInfo" class="buzz-info hidden"></div>
+      </div>
+    </div>
+
+    <!-- Estimate Modal -->
+    <div id="estimateModal" class="estimate-modal hidden">
+      <div class="estimate-card">
+        <div class="estimate-header">
+          <div class="estimate-label">Schätzfrage</div>
+          <div class="estimate-timer">⏱ <span id="estimateTimer">–</span></div>
+        </div>
+        <div id="estimateQuestionText" class="estimate-question-text"></div>
+        <input id="estimateInput" class="estimate-input" type="text" inputmode="decimal" placeholder="Dein Tipp (z.B. 13,8)" />
+        <button id="sendEstimateBtn" class="estimate-send-btn">Antwort senden</button>
+        <div id="estimateStatus" class="estimate-status"></div>
+      </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox hidden">
+      <button id="lightboxClose" class="lightbox-close">×</button>
+      <img id="lightboxImg" class="lightbox-img" alt="" />
+    </div>
+
+    <script>
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else if (document.exitFullscreen) document.exitFullscreen();
+      }
+    </script>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+    <script src="/transition.js"></script>
+  </body>
+</html>
