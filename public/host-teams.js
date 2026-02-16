@@ -3,9 +3,12 @@
 
 const socket = io();
 
-// ===============================
 // DOM Elements
-// ===============================
+const hostPassModal = document.getElementById("hostPassModal");
+const hostPassInput = document.getElementById("hostPassInput");
+const hostPassOk = document.getElementById("hostPassOk");
+const hostPassCancel = document.getElementById("hostPassCancel");
+const hostPassError = document.getElementById("hostPassError");
 const roomCodeDisplay = document.getElementById("roomCodeDisplay");
 const openBoardBtn = document.getElementById("openBoardBtn");
 const openBoardCamBtn = document.getElementById("openBoardCamBtn");
@@ -13,141 +16,100 @@ const enableBuzzBtn = document.getElementById("enableBuzzBtn");
 const disableBuzzBtn = document.getElementById("disableBuzzBtn");
 const buzzerStatusText = document.getElementById("buzzerStatusText");
 const teamsGrid = document.getElementById("teamsGrid");
-const newTeamNameInput = document.getElementById("newTeamName");
+const newTeamName = document.getElementById("newTeamName");
 const addTeamBtn = document.getElementById("addTeamBtn");
 const buzzName = document.getElementById("buzzName");
 const buzzTeam = document.getElementById("buzzTeam");
 
-// Password Modal
-const hostPassModal = document.getElementById("hostPassModal");
-const hostPassInput = document.getElementById("hostPassInput");
-const hostPassError = document.getElementById("hostPassError");
-const hostPassOk = document.getElementById("hostPassOk");
-const hostPassCancel = document.getElementById("hostPassCancel");
-
-// ===============================
 // State
-// ===============================
-let currentRoomCode = null;
-let teams = {}; // { teamId: { name, color, score, members: [playerId, ...] } }
-let players = {}; // { playerId: { name, score, connected, teamId } }
+let roomCode = null;
+let teams = {};
+let players = {};
 
-// Team Farben
-const TEAM_COLORS = [
-  { id: "red", name: "Rot", hex: "#ef4444" },
-  { id: "blue", name: "Blau", hex: "#3b82f6" },
-  { id: "green", name: "Grün", hex: "#22c55e" },
-  { id: "purple", name: "Lila", hex: "#a855f7" },
-  { id: "orange", name: "Orange", hex: "#f97316" },
-  { id: "pink", name: "Pink", hex: "#ec4899" },
-];
-
+const teamColors = ["red", "blue", "green", "purple", "orange", "pink"];
 let colorIndex = 0;
 
-// ===============================
-// Password Modal Functions
-// ===============================
-function showHostPassModal() {
-  hostPassModal?.classList.remove("hidden");
-  hostPassInput?.focus();
-}
+// ================================
+// Password Modal
+// ================================
+hostPassOk?.addEventListener("click", createGame);
+hostPassCancel?.addEventListener("click", () => {
+  window.location.href = "/jeopardy-teams.html";
+});
 
-function hideHostPassModal() {
-  hostPassModal?.classList.add("hidden");
-}
+hostPassInput?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") createGame();
+});
 
-function setHostPassError(msg) {
-  if (hostPassError) hostPassError.textContent = msg || "";
-}
+function createGame() {
+  const password = hostPassInput?.value || "";
+  if (!password) {
+    hostPassError.textContent = "Bitte Passwort eingeben";
+    return;
+  }
 
-function createGameWithPassword(password) {
-  socket.emit("host-create-teams-game", { password }, (res) => {
-    if (res?.success) {
-      currentRoomCode = res.roomCode;
-      if (roomCodeDisplay) roomCodeDisplay.textContent = currentRoomCode;
-      if (openBoardBtn) openBoardBtn.disabled = false;
-      if (openBoardCamBtn) openBoardCamBtn.disabled = false;
-      hideHostPassModal();
-      console.log("Teams-Spiel erstellt:", currentRoomCode);
+  socket.emit("host-create-teams-game", { password }, (response) => {
+    if (response?.success) {
+      roomCode = response.roomCode;
+      hostPassModal?.classList.add("hidden");
+      roomCodeDisplay.textContent = roomCode;
+      openBoardBtn.disabled = false;
+      openBoardCamBtn.disabled = false;
     } else {
-      setHostPassError(res?.error || "Fehler beim Erstellen");
+      hostPassError.textContent = response?.error || "Fehler beim Erstellen";
     }
   });
 }
 
-// ===============================
-// Init: Show password modal
-// ===============================
-showHostPassModal();
-
-// Password Modal Events
-hostPassOk?.addEventListener("click", () => {
-  createGameWithPassword(hostPassInput?.value || "");
-});
-
-hostPassCancel?.addEventListener("click", () => {
-  setHostPassError("Ohne Passwort kein Zugriff.");
-});
-
-hostPassInput?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    createGameWithPassword(hostPassInput.value || "");
-  }
-});
-
-// ===============================
+// ================================
 // Board Buttons
-// ===============================
+// ================================
 openBoardBtn?.addEventListener("click", () => {
-  if (!currentRoomCode) return;
-  const url = `/board-teams.html?room=${encodeURIComponent(currentRoomCode)}`;
-  window.open(url, "_blank");
+  if (roomCode) {
+    window.open(`/board-teams.html?room=${roomCode}`, "_blank");
+  }
 });
 
 openBoardCamBtn?.addEventListener("click", () => {
-  if (!currentRoomCode) return;
-  const url = `/board-teams-cam.html?room=${encodeURIComponent(currentRoomCode)}`;
-  window.open(url, "_blank");
-});
-
-// ===============================
-// Buzzer Buttons
-// ===============================
-enableBuzzBtn?.addEventListener("click", () => {
-  if (!currentRoomCode) return;
-  socket.emit("host-set-buzzing", { roomCode: currentRoomCode, enabled: true });
-  if (buzzerStatusText) buzzerStatusText.textContent = "Buzzer aktuell freigegeben.";
-});
-
-disableBuzzBtn?.addEventListener("click", () => {
-  if (!currentRoomCode) return;
-  socket.emit("host-set-buzzing", { roomCode: currentRoomCode, enabled: false });
-  if (buzzerStatusText) buzzerStatusText.textContent = "Buzzer aktuell gesperrt.";
-});
-
-// ===============================
-// Team Management
-// ===============================
-addTeamBtn?.addEventListener("click", () => {
-  const name = newTeamNameInput?.value?.trim();
-  if (!name || !currentRoomCode) return;
-
-  const color = TEAM_COLORS[colorIndex % TEAM_COLORS.length];
-  colorIndex++;
-
-  socket.emit("teams-create-team", { roomCode: currentRoomCode, name, colorId: color.id });
-  if (newTeamNameInput) newTeamNameInput.value = "";
-});
-
-newTeamNameInput?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
-    addTeamBtn?.click();
+  if (roomCode) {
+    window.open(`/board-teams-cam.html?room=${roomCode}`, "_blank");
   }
 });
 
-// ===============================
-// Render Teams
-// ===============================
+// ================================
+// Buzzer Controls
+// ================================
+enableBuzzBtn?.addEventListener("click", () => {
+  if (roomCode) {
+    socket.emit("host-set-buzzing", { roomCode, enabled: true });
+  }
+});
+
+disableBuzzBtn?.addEventListener("click", () => {
+  if (roomCode) {
+    socket.emit("host-set-buzzing", { roomCode, enabled: false });
+  }
+});
+
+// ================================
+// Teams Management
+// ================================
+addTeamBtn?.addEventListener("click", addTeam);
+newTeamName?.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") addTeam();
+});
+
+function addTeam() {
+  const name = newTeamName?.value?.trim();
+  if (!name || !roomCode) return;
+
+  const colorId = teamColors[colorIndex % teamColors.length];
+  colorIndex++;
+
+  socket.emit("teams-create-team", { roomCode, name, colorId });
+  newTeamName.value = "";
+}
+
 function renderTeams() {
   if (!teamsGrid) return;
 
@@ -158,13 +120,13 @@ function renderTeams() {
     return;
   }
 
-  teamsGrid.innerHTML = teamEntries.map(([teamId, team]) => {
+  teamsGrid.innerHTML = teamEntries.map(([tid, team]) => {
     const members = (team.members || [])
-      .map((pid) => {
+      .map(pid => {
         const p = players[pid];
         if (!p) return null;
         const statusClass = p.connected === false ? "offline" : "";
-        return `<div class="team-member"><span class="member-status ${statusClass}"></span> ${p.name}</div>`;
+        return `<div class="team-member"><span class="member-status ${statusClass}"></span>${p.name}</div>`;
       })
       .filter(Boolean)
       .join("");
@@ -176,17 +138,15 @@ function renderTeams() {
           <span class="team-name">${team.name}</span>
         </div>
         <div class="team-score">${team.score || 0} Punkte</div>
-        <div class="team-members">
-          ${members || '<span style="color:#64748b;font-style:italic;">Keine Spieler</span>'}
-        </div>
+        <div class="team-members">${members || '<span style="color:#64748b">Keine Spieler</span>'}</div>
       </div>
     `;
   }).join("");
 }
 
-// ===============================
+// ================================
 // Socket Events
-// ===============================
+// ================================
 socket.on("teams-updated", (serverTeams) => {
   teams = serverTeams || {};
   renderTeams();
@@ -197,42 +157,24 @@ socket.on("players-updated", (serverPlayers) => {
   renderTeams();
 });
 
-socket.on("player-buzzed-first", ({ playerId, name, teamId, teamName }) => {
-  if (buzzName) buzzName.textContent = name || "—";
-  if (buzzTeam) {
-    if (teamName) {
-      buzzTeam.textContent = `Team: ${teamName}`;
-      buzzTeam.style.display = "block";
-    } else {
-      buzzTeam.style.display = "none";
-    }
+socket.on("buzzing-status", ({ enabled }) => {
+  if (buzzerStatusText) {
+    buzzerStatusText.textContent = enabled ? "Buzzer ist FREIGEGEBEN!" : "Buzzer aktuell gesperrt.";
+    buzzerStatusText.style.color = enabled ? "#4ade80" : "#94a3b8";
   }
 });
 
-socket.on("buzzing-status", ({ enabled }) => {
-  if (buzzerStatusText) {
-    buzzerStatusText.textContent = enabled ? "Buzzer aktuell freigegeben." : "Buzzer aktuell gesperrt.";
+socket.on("player-buzzed-first", ({ playerId, name, teamId, teamName }) => {
+  if (buzzName) {
+    buzzName.textContent = name || "—";
   }
-  
-  // Reset buzz display when buzzer is enabled
-  if (enabled) {
-    if (buzzName) buzzName.textContent = "—";
-    if (buzzTeam) buzzTeam.style.display = "none";
+  if (buzzTeam && teamName) {
+    buzzTeam.textContent = `Team: ${teamName}`;
+    buzzTeam.style.display = "block";
   }
 });
 
 socket.on("game-ended", () => {
   alert("Das Spiel wurde beendet.");
   window.location.href = "/jeopardy-teams.html";
-});
-
-// ===============================
-// Reconnect handling
-// ===============================
-socket.on("connect", () => {
-  console.log("Verbunden mit Server");
-});
-
-socket.on("disconnect", () => {
-  console.log("Verbindung zum Server verloren");
 });
