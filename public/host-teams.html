@@ -5,552 +5,141 @@
     <title>Host Panel – Jeopardy Teams</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="manifest" href="/manifest.json" />
-    <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
+    <script>if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');</script>
     <link rel="stylesheet" href="/style.css" />
     <script src="/socket.io/socket.io.js"></script>
+    <script src="/host-teams.js" defer></script>
     <style>
-      body {
-        margin: 0;
-        min-height: 100vh;
-        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background: radial-gradient(circle at top left, #f59e0b, #0f172a 60%);
-        color: #f9fafb;
-        padding: 20px;
-        box-sizing: border-box;
-      }
-
-      .host-container {
-        display: flex;
-        gap: 24px;
-        max-width: 1100px;
-        width: 100%;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-
-      .host-panel {
-        background: rgba(15, 23, 42, 0.95);
-        border-radius: 20px;
-        padding: 28px 32px;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(245, 158, 11, 0.1);
-        border: 1px solid rgba(245, 158, 11, 0.3);
-        flex: 1;
-        min-width: 320px;
-        max-width: 480px;
-      }
-
-      .host-panel h2 {
-        margin: 0 0 6px;
-        font-size: 1.6rem;
-        font-weight: 800;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-      }
-
-      .host-panel .subtitle {
-        margin: 0 0 20px;
-        font-size: 0.85rem;
-        color: #9ca3af;
-      }
-
-      .teams-badge {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 999px;
-        font-size: 0.65rem;
-        font-weight: 700;
-        letter-spacing: 0.1em;
-        text-transform: uppercase;
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: #fff;
-        margin-left: 8px;
-        vertical-align: middle;
-      }
-
-      .section-label {
-        display: block;
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: #94a3b8;
-        margin-bottom: 8px;
-      }
-
-      /* Room Code */
-      .room-code-box {
-        display: inline-block;
-        padding: 12px 24px;
-        border-radius: 10px;
-        background: rgba(30, 41, 59, 0.9);
-        border: 1px solid rgba(148, 163, 184, 0.3);
-        font-size: 1.8rem;
-        font-weight: 800;
-        letter-spacing: 0.2em;
-        color: #f59e0b;
-        margin-bottom: 6px;
-      }
-
-      .room-code-hint {
-        font-size: 0.8rem;
-        color: #64748b;
-        margin-bottom: 20px;
-      }
-
-      /* Buttons */
-      .btn-row {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        margin-bottom: 20px;
-      }
-
-      .open-board-btn {
-        flex: 1;
-        min-width: 140px;
-        padding: 12px 16px;
-        border: none;
-        border-radius: 10px;
-        font-size: 0.85rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.15s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-      }
-
-      .open-board-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      .open-board-btn.primary {
-        background: linear-gradient(135deg, #22c55e, #16a34a);
-        color: white;
-        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.3);
-      }
-
-      .open-board-btn.primary:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
-      }
-
-      .open-board-btn.secondary {
-        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-        color: white;
-        box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
-      }
-
-      .open-board-btn.secondary:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
-      }
-
-      .btn-hint {
-        font-size: 0.75rem;
-        color: #64748b;
-        margin-bottom: 20px;
-      }
-
-      /* Buzzer Buttons */
-      .buzzer-row {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 8px;
-      }
-
-      .buzzer-btn {
-        flex: 1;
-        padding: 10px;
-        border: none;
-        border-radius: 8px;
-        font-size: 0.8rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.15s ease;
-      }
-
-      .buzzer-btn.enable {
-        background: #22c55e;
-        color: white;
-      }
-
-      .buzzer-btn.disable {
-        background: #ef4444;
-        color: white;
-      }
-
-      .buzzer-btn:hover {
-        transform: translateY(-1px);
-      }
-
-      .buzzer-status {
-        font-size: 0.8rem;
-        color: #64748b;
-        margin-bottom: 20px;
-      }
-
-      /* Teams Section */
-      .teams-section {
-        margin-top: 20px;
-        padding-top: 20px;
-        border-top: 1px solid rgba(148, 163, 184, 0.2);
-      }
-
-      .teams-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 12px;
-        margin-bottom: 16px;
-      }
-
-      .team-card {
-        background: rgba(30, 41, 59, 0.8);
-        border-radius: 12px;
-        padding: 14px;
-        border: 2px solid transparent;
-        transition: all 0.2s ease;
-      }
-
+      .host-page { min-height: 100vh; padding: 24px; display: flex; flex-direction: column; gap: 20px; }
+      .host-header { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+      .host-title { font-size: 1.5rem; font-weight: 800; color: #fef3c7; display: flex; align-items: center; gap: 10px; }
+      .teams-badge { padding: 4px 10px; border-radius: 999px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
+      .room-code-display { background: rgba(30, 41, 59, 0.9); border: 2px solid rgba(245, 158, 11, 0.4); border-radius: 12px; padding: 12px 20px; display: flex; align-items: center; gap: 12px; }
+      .room-code-label { font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; }
+      .room-code-value { font-size: 1.4rem; font-weight: 800; color: #fbbf24; letter-spacing: 0.15em; font-family: monospace; }
+      .host-section { background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 16px; padding: 20px; }
+      .section-title { font-size: 1rem; font-weight: 700; color: #f8fafc; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+      .board-buttons { display: flex; gap: 12px; flex-wrap: wrap; }
+      .board-btn { padding: 14px 24px; border-radius: 12px; border: none; cursor: pointer; font-size: 0.95rem; font-weight: 600; transition: all 0.15s ease; }
+      .board-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+      .board-btn.primary { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
+      .board-btn.primary:hover:not(:disabled) { box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4); transform: translateY(-2px); }
+      .board-btn.secondary { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: #fff; }
+      .board-btn.secondary:hover:not(:disabled) { box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4); transform: translateY(-2px); }
+      .buzzer-controls { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+      .buzz-btn { padding: 12px 20px; border-radius: 10px; border: none; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.15s ease; }
+      .buzz-btn.enable { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; }
+      .buzz-btn.disable { background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff; }
+      .buzzer-status { font-size: 0.85rem; color: #94a3b8; }
+      .teams-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; margin-bottom: 16px; }
+      .team-card { background: rgba(15, 23, 42, 0.8); border-radius: 12px; padding: 14px; border: 2px solid transparent; }
       .team-card.team-red { border-color: rgba(239, 68, 68, 0.5); }
       .team-card.team-blue { border-color: rgba(59, 130, 246, 0.5); }
       .team-card.team-green { border-color: rgba(34, 197, 94, 0.5); }
       .team-card.team-purple { border-color: rgba(168, 85, 247, 0.5); }
       .team-card.team-orange { border-color: rgba(249, 115, 22, 0.5); }
       .team-card.team-pink { border-color: rgba(236, 72, 153, 0.5); }
-
-      .team-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 8px;
-      }
-
-      .team-color-dot {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-      }
-
+      .team-header { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+      .team-color-dot { width: 10px; height: 10px; border-radius: 50%; }
       .team-red .team-color-dot { background: #ef4444; }
       .team-blue .team-color-dot { background: #3b82f6; }
       .team-green .team-color-dot { background: #22c55e; }
       .team-purple .team-color-dot { background: #a855f7; }
       .team-orange .team-color-dot { background: #f97316; }
       .team-pink .team-color-dot { background: #ec4899; }
-
-      .team-name {
-        font-weight: 700;
-        font-size: 0.9rem;
-        color: #f8fafc;
-      }
-
-      .team-score {
-        font-size: 1.2rem;
-        font-weight: 800;
-        margin-bottom: 8px;
-      }
-
+      .team-name { font-weight: 700; color: #f8fafc; font-size: 0.95rem; }
+      .team-score { font-size: 1.2rem; font-weight: 800; margin-bottom: 8px; }
       .team-red .team-score { color: #f87171; }
       .team-blue .team-score { color: #60a5fa; }
       .team-green .team-score { color: #4ade80; }
       .team-purple .team-score { color: #c084fc; }
       .team-orange .team-score { color: #fb923c; }
       .team-pink .team-score { color: #f472b6; }
-
-      .team-members {
-        font-size: 0.75rem;
-        color: #94a3b8;
-      }
-
-      .team-member {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        padding: 2px 0;
-      }
-
-      .member-status {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #22c55e;
-      }
-
+      .team-members { font-size: 0.75rem; color: #94a3b8; }
+      .team-member { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+      .member-status { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
       .member-status.offline { background: #ef4444; }
-
-      .no-teams {
-        text-align: center;
-        padding: 20px;
-        color: #64748b;
-        font-size: 0.9rem;
-      }
-
-      /* Add Team Button */
-      .add-team-row {
-        display: flex;
-        gap: 10px;
-        margin-top: 12px;
-      }
-
-      .add-team-input {
-        flex: 1;
-        padding: 10px 14px;
-        border-radius: 8px;
-        border: 1px solid rgba(148, 163, 184, 0.3);
-        background: rgba(30, 41, 59, 0.8);
-        color: #f8fafc;
-        font-size: 0.85rem;
-      }
-
-      .add-team-input::placeholder {
-        color: #64748b;
-      }
-
-      .add-team-btn {
-        padding: 10px 16px;
-        border: none;
-        border-radius: 8px;
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-        font-weight: 600;
-        font-size: 0.85rem;
-        cursor: pointer;
-        transition: all 0.15s ease;
-      }
-
-      .add-team-btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
-      }
-
-      /* Buzzer Panel */
-      .buzzer-panel {
-        background: rgba(15, 23, 42, 0.95);
-        border-radius: 20px;
-        padding: 28px 32px;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
-        border: 1px solid rgba(59, 130, 246, 0.3);
-        min-width: 280px;
-        max-width: 340px;
-        text-align: center;
-      }
-
-      .buzzer-panel h3 {
-        margin: 0 0 20px;
-        font-size: 1.2rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        color: #60a5fa;
-      }
-
-      .buzz-display {
-        background: linear-gradient(180deg, #1e3a5f, #0f172a);
-        border-radius: 16px;
-        padding: 24px;
-        border: 2px solid rgba(59, 130, 246, 0.3);
-        margin-bottom: 20px;
-      }
-
-      .buzz-status {
-        font-size: 0.8rem;
-        color: #64748b;
-        margin-bottom: 8px;
-      }
-
-      .buzz-name {
-        font-size: 1.4rem;
-        font-weight: 800;
-        color: #f8fafc;
-        min-height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .buzz-team {
-        font-size: 0.85rem;
-        color: #94a3b8;
-        margin-top: 4px;
-      }
-
-      /* Password Modal */
-      .modal-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.8);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        z-index: 9999;
-      }
-
+      .no-teams { color: #64748b; font-style: italic; padding: 20px; text-align: center; }
+      .add-team-row { display: flex; gap: 10px; }
+      .add-team-input { flex: 1; padding: 12px 16px; border-radius: 10px; border: 1px solid rgba(148, 163, 184, 0.3); background: rgba(15, 23, 42, 0.8); color: #f8fafc; font-size: 0.9rem; }
+      .add-team-input:focus { outline: none; border-color: #f59e0b; }
+      .add-team-btn { padding: 12px 20px; border-radius: 10px; border: none; background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-weight: 600; cursor: pointer; transition: all 0.15s ease; }
+      .add-team-btn:hover { box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3); }
+      .buzz-display { background: rgba(15, 23, 42, 0.9); border: 2px solid rgba(34, 197, 94, 0.4); border-radius: 12px; padding: 16px 20px; text-align: center; }
+      .buzz-label { font-size: 0.7rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; }
+      .buzz-name { font-size: 1.3rem; font-weight: 800; color: #4ade80; }
+      .buzz-team { font-size: 0.85rem; color: #94a3b8; margin-top: 4px; }
+      .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
       .modal-overlay.hidden { display: none; }
-
-      .modal-card {
-        background: rgba(15, 23, 42, 0.98);
-        border-radius: 16px;
-        padding: 28px;
-        max-width: 340px;
-        width: 90%;
-        text-align: center;
-        border: 1px solid rgba(245, 158, 11, 0.4);
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-      }
-
-      .modal-card h3 {
-        margin: 0 0 16px;
-        font-size: 1.2rem;
-        font-weight: 700;
-      }
-
-      .modal-input {
-        width: 100%;
-        padding: 12px;
-        border-radius: 8px;
-        border: 1px solid rgba(148, 163, 184, 0.3);
-        background: rgba(30, 41, 59, 0.8);
-        color: #f8fafc;
-        font-size: 1rem;
-        text-align: center;
-        margin-bottom: 12px;
-        box-sizing: border-box;
-      }
-
-      .modal-error {
-        color: #f87171;
-        font-size: 0.85rem;
-        margin-bottom: 12px;
-        min-height: 20px;
-      }
-
-      .modal-btns {
-        display: flex;
-        gap: 10px;
-      }
-
-      .modal-btn {
-        flex: 1;
-        padding: 10px;
-        border: none;
-        border-radius: 8px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.15s ease;
-      }
-
-      .modal-btn.confirm {
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: white;
-      }
-
-      .modal-btn.cancel {
-        background: rgba(51, 65, 85, 0.8);
-        color: #94a3b8;
-      }
-
-      .back-link {
-        display: inline-block;
-        margin-top: 20px;
-        padding: 8px 20px;
-        border-radius: 999px;
-        text-decoration: none;
-        font-size: 0.8rem;
-        color: #9ca3af;
-        border: 1px solid rgba(148, 163, 184, 0.3);
-        transition: all 0.15s ease;
-      }
-
-      .back-link:hover {
-        color: #f9fafb;
-        border-color: rgba(148, 163, 184, 0.6);
-      }
-
-      @media (max-width: 700px) {
-        .host-container {
-          flex-direction: column;
-          align-items: center;
-        }
-        .host-panel, .buzzer-panel {
-          max-width: 100%;
-        }
-      }
+      .modal-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 2px solid rgba(245, 158, 11, 0.4); border-radius: 20px; padding: 32px; max-width: 400px; width: 100%; text-align: center; }
+      .modal-title { font-size: 1.4rem; font-weight: 700; color: #fef3c7; margin-bottom: 8px; }
+      .modal-subtitle { font-size: 0.9rem; color: #94a3b8; margin-bottom: 20px; }
+      .modal-input { width: 100%; padding: 14px 18px; border-radius: 12px; border: 2px solid rgba(148, 163, 184, 0.3); background: rgba(15, 23, 42, 0.8); color: #f8fafc; font-size: 1rem; text-align: center; margin-bottom: 16px; box-sizing: border-box; }
+      .modal-input:focus { outline: none; border-color: #f59e0b; }
+      .modal-buttons { display: flex; gap: 12px; }
+      .modal-btn { flex: 1; padding: 14px; border-radius: 12px; border: none; cursor: pointer; font-size: 1rem; font-weight: 600; transition: all 0.15s ease; }
+      .modal-btn.primary { background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; }
+      .modal-btn.secondary { background: rgba(51, 65, 85, 0.8); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+      .modal-error { color: #f87171; font-size: 0.85rem; margin-top: 12px; min-height: 20px; }
+      .back-link { display: inline-block; margin-top: 20px; color: #64748b; font-size: 0.85rem; text-decoration: none; }
+      .back-link:hover { color: #94a3b8; }
     </style>
   </head>
-  <body>
-    <!-- Password Modal -->
+  <body class="jt-body">
     <div id="hostPassModal" class="modal-overlay">
       <div class="modal-card">
-        <h3>🔒 Host-Passwort</h3>
-        <input type="password" id="hostPassInput" class="modal-input" placeholder="Passwort eingeben" />
+        <div class="modal-title">🔐 Host-Zugang</div>
+        <div class="modal-subtitle">Gib das Host-Passwort ein</div>
+        <input type="password" id="hostPassInput" class="modal-input" placeholder="Passwort" />
+        <div class="modal-buttons">
+          <button id="hostPassCancel" class="modal-btn secondary">Abbrechen</button>
+          <button id="hostPassOk" class="modal-btn primary">Bestätigen</button>
+        </div>
         <div id="hostPassError" class="modal-error"></div>
-        <div class="modal-btns">
-          <button id="hostPassCancel" class="modal-btn cancel">Abbrechen</button>
-          <button id="hostPassOk" class="modal-btn confirm">Bestätigen</button>
-        </div>
+        <a href="/jeopardy-teams.html" class="back-link">← Zurück</a>
       </div>
     </div>
-
-    <div class="host-container">
-      <!-- Main Panel -->
-      <div class="host-panel">
-        <h2>Host-Panel <span class="teams-badge">TEAMS</span></h2>
-        <p class="subtitle">Erzeuge einen Raumcode und verwalte das Spiel.</p>
-
-        <span class="section-label">Raumcode</span>
-        <div class="room-code-box" id="roomCodeDisplay">-----</div>
-        <p class="room-code-hint">Diesen Code gibst du deinen Spielern.</p>
-
-        <div class="btn-row">
-          <button id="openBoardBtn" class="open-board-btn primary" disabled>
-            📺 Board öffnen
-          </button>
-          <button id="openBoardCamBtn" class="open-board-btn secondary" disabled>
-            📹 Board + Kamera
-          </button>
+    <div class="host-page">
+      <header class="host-header">
+        <div class="host-title">🎮 Host Panel <span class="teams-badge">TEAMS</span></div>
+        <div class="room-code-display">
+          <span class="room-code-label">Raumcode</span>
+          <span id="roomCodeDisplay" class="room-code-value">—</span>
         </div>
-        <p class="btn-hint">Für Streaming: Board + Kamera wählen</p>
-
-        <span class="section-label">Buzzer</span>
-        <div class="buzzer-row">
-          <button id="enableBuzzBtn" class="buzzer-btn enable">Buzzer freigeben</button>
-          <button id="disableBuzzBtn" class="buzzer-btn disable">Buzzer sperren</button>
+      </header>
+      <section class="host-section">
+        <div class="section-title">📺 Board öffnen</div>
+        <div class="board-buttons">
+          <button id="openBoardBtn" class="board-btn primary" disabled>📺 Board öffnen</button>
+          <button id="openBoardCamBtn" class="board-btn secondary" disabled>📹 Board + Kamera</button>
         </div>
-        <p id="buzzerStatusText" class="buzzer-status">Buzzer aktuell gesperrt.</p>
-
-        <!-- Teams Section -->
-        <div class="teams-section">
-          <span class="section-label">Teams & Punkte</span>
-          <div id="teamsGrid" class="teams-grid">
-            <div class="no-teams">Noch keine Teams erstellt.</div>
-          </div>
-          <div class="add-team-row">
-            <input type="text" id="newTeamName" class="add-team-input" placeholder="Team-Name (z.B. Rot)" maxlength="20" />
-            <button id="addTeamBtn" class="add-team-btn">+ Team</button>
-          </div>
+      </section>
+      <section class="host-section">
+        <div class="section-title">🔔 Buzzer-Steuerung</div>
+        <div class="buzzer-controls">
+          <button id="enableBuzzBtn" class="buzz-btn enable">✓ Buzzer freigeben</button>
+          <button id="disableBuzzBtn" class="buzz-btn disable">✗ Buzzer sperren</button>
+          <span id="buzzerStatusText" class="buzzer-status">Buzzer aktuell gesperrt.</span>
         </div>
-
-        <a href="/jeopardy-teams.html" class="back-link" data-transition-link>← Zurück</a>
-      </div>
-
-      <!-- Buzzer Panel -->
-      <div class="buzzer-panel">
-        <h3>Wer war zuerst?</h3>
+      </section>
+      <section class="host-section">
+        <div class="section-title">👥 Teams</div>
+        <div id="teamsGrid" class="teams-grid"><div class="no-teams">Noch keine Teams erstellt.</div></div>
+        <div class="add-team-row">
+          <input type="text" id="newTeamName" class="add-team-input" placeholder="Neues Team erstellen..." maxlength="20" />
+          <button id="addTeamBtn" class="add-team-btn">+ Team</button>
+        </div>
+      </section>
+      <section class="host-section">
+        <div class="section-title">🚨 Wer hat gebuzzert?</div>
         <div class="buzz-display">
-          <div class="buzz-status">Noch niemand hat gebuzzert.</div>
+          <div class="buzz-label">Erster Buzzer</div>
           <div id="buzzName" class="buzz-name">—</div>
-          <div id="buzzTeam" class="buzz-team"></div>
+          <div id="buzzTeam" class="buzz-team" style="display:none;"></div>
         </div>
-      </div>
+      </section>
     </div>
-
-    <script src="/host-teams.js"></script>
-    <script src="/transition.js"></script>
+    <script>function toggleFullscreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen(); else if (document.exitFullscreen) document.exitFullscreen(); }</script>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
   </body>
 </html>
