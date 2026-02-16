@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Board + Kamera – Jeopardy Teams</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="manifest" href="/manifest.json" />
+    <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/board-teams-cam.js" type="module" defer></script>
+    <style>
+      /* ===========================
+         TEAMS BAR - Bottom (smaller for cam mode)
+         =========================== */
+      .teams-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(15, 23, 42, 0.95);
+        border-top: 2px solid rgba(168, 85, 247, 0.4);
+        padding: 10px 16px;
+        display: flex;
+        justify-content: center;
+        gap: 14px;
+        flex-wrap: wrap;
+        z-index: 100;
+      }
+
+      .team-card {
+        background: rgba(30, 41, 59, 0.9);
+        border-radius: 12px;
+        padding: 10px 16px;
+        min-width: 140px;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+      }
+
+      .team-card.team-red { border-color: rgba(239, 68, 68, 0.5); }
+      .team-card.team-blue { border-color: rgba(59, 130, 246, 0.5); }
+      .team-card.team-green { border-color: rgba(34, 197, 94, 0.5); }
+      .team-card.team-purple { border-color: rgba(168, 85, 247, 0.5); }
+      .team-card.team-orange { border-color: rgba(249, 115, 22, 0.5); }
+      .team-card.team-pink { border-color: rgba(236, 72, 153, 0.5); }
+
+      .team-card.team-active {
+        box-shadow: 0 0 20px currentColor;
+        transform: scale(1.02);
+      }
+
+      .team-card-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+      }
+
+      .team-color-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+
+      .team-red .team-color-dot { background: #ef4444; }
+      .team-blue .team-color-dot { background: #3b82f6; }
+      .team-green .team-color-dot { background: #22c55e; }
+      .team-purple .team-color-dot { background: #a855f7; }
+      .team-orange .team-color-dot { background: #f97316; }
+      .team-pink .team-color-dot { background: #ec4899; }
+
+      .team-card-name {
+        font-weight: 700;
+        font-size: 0.85rem;
+        color: #f8fafc;
+      }
+
+      .team-card-score {
+        font-size: 1.1rem;
+        font-weight: 800;
+        margin-bottom: 4px;
+      }
+
+      .team-red .team-card-score { color: #f87171; }
+      .team-blue .team-card-score { color: #60a5fa; }
+      .team-green .team-card-score { color: #4ade80; }
+      .team-purple .team-card-score { color: #c084fc; }
+      .team-orange .team-card-score { color: #fb923c; }
+      .team-pink .team-card-score { color: #f472b6; }
+
+      .team-card-members {
+        font-size: 0.65rem;
+        color: #94a3b8;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .team-member {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+      }
+
+      .member-dot {
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: #22c55e;
+      }
+
+      .member-dot.offline { background: #ef4444; }
+
+      /* Hide old players-bar */
+      .players-bar { display: none !important; }
+
+      .jt-main {
+        padding-bottom: 100px;
+      }
+
+      /* ===========================
+         CAMERA GRID - Right Side
+         =========================== */
+      .camera-grid {
+        position: fixed;
+        top: 60px;
+        right: 12px;
+        width: 200px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 500;
+      }
+
+      .camera-slot {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 4/3;
+        background: #1e293b;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 2px solid rgba(148, 163, 184, 0.3);
+      }
+
+      .camera-slot video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1);
+      }
+
+      .camera-slot-label {
+        position: absolute;
+        bottom: 4px;
+        left: 4px;
+        right: 4px;
+        padding: 4px 8px;
+        background: rgba(0, 0, 0, 0.7);
+        border-radius: 6px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #f8fafc;
+        text-align: center;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .camera-slot.team-red { border-color: rgba(239, 68, 68, 0.6); }
+      .camera-slot.team-blue { border-color: rgba(59, 130, 246, 0.6); }
+      .camera-slot.team-green { border-color: rgba(34, 197, 94, 0.6); }
+      .camera-slot.team-purple { border-color: rgba(168, 85, 247, 0.6); }
+      .camera-slot.team-orange { border-color: rgba(249, 115, 22, 0.6); }
+      .camera-slot.team-pink { border-color: rgba(236, 72, 153, 0.6); }
+
+      .camera-slot.active-buzzer {
+        border-width: 3px;
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
+        animation: pulse-camera 1s infinite;
+      }
+
+      @keyframes pulse-camera {
+        0%, 100% { box-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
+        50% { box-shadow: 0 0 25px rgba(34, 197, 94, 0.7); }
+      }
+
+      /* ===========================
+         BUZZER BUTTON (oben links)
+         =========================== */
+      .board-buzz-btn {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        width: 75px;
+        height: 75px;
+        border-radius: 50%;
+        border: 3px solid rgba(34, 197, 94, 0.6);
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.3) 100%);
+        color: #4ade80;
+        font-size: 0.6rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.2;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
+      }
+
+      .board-buzz-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+      }
+
+      /* ===========================
+         MODE BADGES
+         =========================== */
+      .mode-badges {
+        position: fixed;
+        top: 12px;
+        right: 220px;
+        display: flex;
+        gap: 8px;
+        z-index: 1000;
+      }
+
+      .mode-badge {
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .mode-badge.teams {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      }
+
+      .mode-badge.cam {
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+      }
+
+      /* Board Grid adjustment for camera sidebar */
+      .board-grid {
+        margin-right: 220px;
+      }
+
+      @media (max-width: 900px) {
+        .camera-grid {
+          width: 150px;
+        }
+        .mode-badges {
+          right: 170px;
+        }
+        .board-grid {
+          margin-right: 160px;
+        }
+      }
+    </style>
+  </head>
+  <body class="jt-body">
+    <!-- Screen Flash -->
+    <div id="screenFlash" class="screen-flash"></div>
+
+    <!-- Mode Badges -->
+    <div class="mode-badges">
+      <span class="mode-badge teams">👥 TEAMS</span>
+      <span class="mode-badge cam">📹 CAM</span>
+    </div>
+
+    <!-- Buzzer Button -->
+    <button id="boardBuzzBtn" class="board-buzz-btn">BUZZER<br>FREI</button>
+
+    <!-- Camera Grid -->
+    <div id="cameraGrid" class="camera-grid"></div>
+
+    <!-- Main Page -->
+    <div class="jt-page" id="boardPage">
+      <header class="jt-header">
+        <img src="/images/jt-logo.png" alt="Jyn Tora Jeopardy" class="jt-logo" />
+      </header>
+
+      <div class="turn-bar">
+        <div id="turnIndicator" class="turn-indicator">Warte auf Spieler…</div>
+      </div>
+
+      <div class="board-ambient-layer">
+        <span class="ambient-orb orb-1"></span>
+        <span class="ambient-orb orb-2"></span>
+        <span class="ambient-orb orb-3"></span>
+        <span class="ambient-orb orb-4"></span>
+        <span class="ambient-orb orb-5"></span>
+        <span class="ambient-orb orb-6"></span>
+      </div>
+
+      <main class="jt-main">
+        <div id="board" class="board-grid"></div>
+      </main>
+    </div>
+
+    <!-- Teams Bar -->
+    <div id="teamsBar" class="teams-bar"></div>
+
+    <!-- Question Overlay -->
+    <div id="questionOverlay" class="question-overlay hidden">
+      <div id="questionCard" class="question-card">
+        <div class="question-toprow">
+          <div id="questionPoints" class="question-points">
+            <span class="points-inner"></span>
+          </div>
+          <div id="estimateBoardTimer" class="estimate-board-timer hidden">⏱ –</div>
+        </div>
+        <div id="questionText" class="question-text"></div>
+        <div id="qMedia" class="q-media hidden">
+          <img id="qImage" class="q-image" alt="" />
+          <div class="q-hint">Klicken zum Vergrössern</div>
+        </div>
+        <div id="answerText" class="answer-text hidden"></div>
+        <div id="estimateRevealContainer" class="estimate-reveal hidden">
+          <h3 class="estimate-reveal-title">Schätzantworten</h3>
+          <div id="estimateRevealList" class="estimate-reveal-list"></div>
+        </div>
+        <div id="buzzInfo" class="buzz-info hidden"></div>
+        <div class="question-buttons">
+          <button id="showAnswerBtn" class="qbtn qbtn-answer">Antwort zeigen</button>
+          <button id="wrongBtn" class="qbtn qbtn-wrong">✗ Falsch</button>
+          <button id="correctBtn" class="qbtn qbtn-correct">✓ Richtig</button>
+          <button id="closeQuestionBtn" class="qbtn qbtn-close">Schliessen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox hidden">
+      <button id="lightboxClose" class="lightbox-close">×</button>
+      <img id="lightboxImg" class="lightbox-img" alt="" />
+    </div>
+
+    <script>
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else if (document.exitFullscreen) document.exitFullscreen();
+      }
+    </script>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+    <script src="/transition.js"></script>
+  </body>
+</html>
