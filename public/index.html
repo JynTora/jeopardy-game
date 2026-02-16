@@ -103,6 +103,20 @@
         opacity: 0.98;
       }
 
+      /* Teams-Tile Styling (Orange) */
+      .game-tile-teams {
+        background: linear-gradient(135deg, #ea580c, #f97316);
+        box-shadow:
+          0 0 24px rgba(249, 115, 22, 0.9),
+          0 18px 36px rgba(0, 0, 0, 0.85);
+      }
+
+      .game-tile-teams:hover {
+        box-shadow:
+          0 0 32px rgba(249, 115, 22, 1),
+          0 22px 44px rgba(0, 0, 0, 1);
+      }
+
       .game-tile-main {
         display: flex;
         flex-direction: column;
@@ -216,6 +230,13 @@
           <a href="jeopardy.html" class="game-tile" data-transition-link>
             <div class="game-tile-main">
               <span class="game-tile-title">JEOPARDY</span>
+            </div>
+          </a>
+
+          <!-- Spiel 2: Jeopardy Teams -->
+          <a href="jeopardy-teams.html" class="game-tile game-tile-teams" data-transition-link>
+            <div class="game-tile-main">
+              <span class="game-tile-title">JEOPARDY TEAMS</span>
             </div>
           </a>
 
