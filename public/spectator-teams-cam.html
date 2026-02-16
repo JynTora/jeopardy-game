@@ -1,0 +1,487 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Online spielen – Jeopardy Teams</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="manifest" href="/manifest.json" />
+    <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/spectator-teams.js" defer></script>
+    <style>
+      /* ===========================
+         JOIN OVERLAY
+         =========================== */
+      .join-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.95);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+        padding: 20px;
+      }
+
+      .join-overlay.hidden {
+        display: none;
+      }
+
+      .join-card {
+        width: min(400px, 100%);
+        background: radial-gradient(circle at top, #451a03, #1c1917 60%, #0c0a09 100%);
+        border-radius: 24px;
+        padding: 28px 24px 32px;
+        box-shadow: 0 30px 80px rgba(0,0,0,0.85), 0 0 30px rgba(245,158,11,0.15);
+        border: 1px solid rgba(245,158,11,0.35);
+        text-align: center;
+      }
+
+      .teams-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 999px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff;
+        margin-bottom: 12px;
+      }
+
+      .join-title {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #fef3c7;
+        margin: 0 0 20px;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+        text-align: left;
+      }
+
+      .form-label {
+        display: block;
+        font-size: 0.8rem;
+        color: #a8a29e;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 14px 16px;
+        border-radius: 12px;
+        border: 2px solid rgba(148, 163, 184, 0.3);
+        background: rgba(15, 23, 42, 0.8);
+        color: #f8fafc;
+        font-size: 1rem;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: #f59e0b;
+      }
+
+      .form-input.room-code {
+        text-transform: uppercase;
+        letter-spacing: 0.2em;
+        text-align: center;
+        font-family: monospace;
+        font-size: 1.2rem;
+      }
+
+      /* Team Selection */
+      .team-selection {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+
+      .team-option {
+        padding: 12px;
+        border-radius: 10px;
+        border: 2px solid transparent;
+        background: rgba(30, 41, 59, 0.8);
+        cursor: pointer;
+        transition: all 0.15s ease;
+        text-align: center;
+      }
+
+      .team-option:hover {
+        transform: translateY(-2px);
+      }
+
+      .team-option.selected {
+        box-shadow: 0 0 15px currentColor;
+      }
+
+      .team-option.team-red { border-color: rgba(239, 68, 68, 0.5); color: #f87171; }
+      .team-option.team-blue { border-color: rgba(59, 130, 246, 0.5); color: #60a5fa; }
+      .team-option.team-green { border-color: rgba(34, 197, 94, 0.5); color: #4ade80; }
+      .team-option.team-purple { border-color: rgba(168, 85, 247, 0.5); color: #c084fc; }
+      .team-option.team-orange { border-color: rgba(249, 115, 22, 0.5); color: #fb923c; }
+      .team-option.team-pink { border-color: rgba(236, 72, 153, 0.5); color: #f472b6; }
+
+      .team-option.selected.team-red { border-color: #ef4444; background: rgba(239, 68, 68, 0.2); }
+      .team-option.selected.team-blue { border-color: #3b82f6; background: rgba(59, 130, 246, 0.2); }
+      .team-option.selected.team-green { border-color: #22c55e; background: rgba(34, 197, 94, 0.2); }
+      .team-option.selected.team-purple { border-color: #a855f7; background: rgba(168, 85, 247, 0.2); }
+      .team-option.selected.team-orange { border-color: #f97316; background: rgba(249, 115, 22, 0.2); }
+      .team-option.selected.team-pink { border-color: #ec4899; background: rgba(236, 72, 153, 0.2); }
+
+      .team-option-name {
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+
+      .team-option-count {
+        font-size: 0.7rem;
+        opacity: 0.7;
+        margin-top: 4px;
+      }
+
+      .no-teams-msg {
+        color: #64748b;
+        font-style: italic;
+        padding: 20px;
+        grid-column: 1 / -1;
+      }
+
+      .join-btn {
+        width: 100%;
+        padding: 16px;
+        border-radius: 14px;
+        border: none;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff;
+        font-size: 1.1rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        margin-bottom: 16px;
+      }
+
+      .join-btn:hover:not(:disabled) {
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+        transform: translateY(-2px);
+      }
+
+      .join-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .error-msg {
+        color: #f87171;
+        font-size: 0.85rem;
+        min-height: 20px;
+        margin-bottom: 10px;
+      }
+
+      .back-link {
+        display: inline-block;
+        margin-top: 10px;
+        color: #78716c;
+        font-size: 0.85rem;
+        text-decoration: none;
+      }
+
+      .back-link:hover {
+        color: #d6d3d1;
+      }
+
+      /* ===========================
+         TEAMS BAR - Bottom
+         =========================== */
+      .teams-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(15, 23, 42, 0.95);
+        border-top: 2px solid rgba(245, 158, 11, 0.4);
+        padding: 12px 20px;
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        z-index: 100;
+      }
+
+      .team-card {
+        background: rgba(30, 41, 59, 0.9);
+        border-radius: 12px;
+        padding: 12px 18px;
+        min-width: 160px;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+      }
+
+      .team-card.team-red { border-color: rgba(239, 68, 68, 0.5); }
+      .team-card.team-blue { border-color: rgba(59, 130, 246, 0.5); }
+      .team-card.team-green { border-color: rgba(34, 197, 94, 0.5); }
+      .team-card.team-purple { border-color: rgba(168, 85, 247, 0.5); }
+      .team-card.team-orange { border-color: rgba(249, 115, 22, 0.5); }
+      .team-card.team-pink { border-color: rgba(236, 72, 153, 0.5); }
+
+      .team-card.team-active {
+        box-shadow: 0 0 20px currentColor;
+        transform: scale(1.05);
+      }
+
+      .team-card-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .team-color-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+
+      .team-red .team-color-dot { background: #ef4444; }
+      .team-blue .team-color-dot { background: #3b82f6; }
+      .team-green .team-color-dot { background: #22c55e; }
+      .team-purple .team-color-dot { background: #a855f7; }
+      .team-orange .team-color-dot { background: #f97316; }
+      .team-pink .team-color-dot { background: #ec4899; }
+
+      .team-card-name {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #f8fafc;
+      }
+
+      .team-card-score {
+        font-size: 1.2rem;
+        font-weight: 800;
+        margin-bottom: 4px;
+      }
+
+      .team-red .team-card-score { color: #f87171; }
+      .team-blue .team-card-score { color: #60a5fa; }
+      .team-green .team-card-score { color: #4ade80; }
+      .team-purple .team-card-score { color: #c084fc; }
+      .team-orange .team-card-score { color: #fb923c; }
+      .team-pink .team-card-score { color: #f472b6; }
+
+      .team-card-members {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .team-member {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .member-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #22c55e;
+      }
+
+      .member-dot.offline { background: #ef4444; }
+
+      /* Hide old players-bar */
+      .players-bar { display: none !important; }
+
+      .jt-main {
+        padding-bottom: 120px;
+      }
+
+      /* ===========================
+         BUZZER BUTTON (top right)
+         =========================== */
+      .spectator-buzz-btn {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        width: 85px;
+        height: 85px;
+        border-radius: 50%;
+        border: 4px solid rgba(239, 68, 68, 0.6);
+        background: linear-gradient(145deg, #dc2626, #b91c1c);
+        color: #fef2f2;
+        font-size: 0.9rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        z-index: 1000;
+        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+      }
+
+      .spectator-buzz-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+
+      .spectator-buzz-btn.free {
+        border-color: rgba(34, 197, 94, 0.8);
+        background: linear-gradient(145deg, #22c55e, #16a34a);
+        box-shadow: 0 6px 25px rgba(34, 197, 94, 0.5);
+        animation: pulse-buzz 1.5s infinite;
+      }
+
+      @keyframes pulse-buzz {
+        0%, 100% { box-shadow: 0 6px 25px rgba(34, 197, 94, 0.4); }
+        50% { box-shadow: 0 6px 35px rgba(34, 197, 94, 0.7); }
+      }
+
+      .spectator-buzz-btn.pressed {
+        border-color: rgba(251, 191, 36, 0.8);
+        background: linear-gradient(145deg, #fbbf24, #f59e0b);
+        animation: none;
+      }
+
+      /* ===========================
+         MODE BADGE
+         =========================== */
+      .mode-badge-fixed {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        padding: 6px 14px;
+        border-radius: 999px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff;
+        z-index: 1000;
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+      }
+
+      /* Board cells read-only for spectator */
+      .board-cell {
+        pointer-events: none;
+      }
+    </style>
+  </head>
+  <body class="jt-body">
+    <!-- Screen Flash -->
+    <div id="screenFlash" class="screen-flash"></div>
+
+    <!-- Join Overlay -->
+    <div id="joinOverlay" class="join-overlay">
+      <div class="join-card">
+        <span class="teams-badge">👥 TEAMS ONLINE</span>
+        <h1 class="join-title">Raum beitreten</h1>
+
+        <div class="form-group">
+          <label class="form-label">Raumcode</label>
+          <input type="text" id="roomCodeInput" class="form-input room-code" placeholder="XXXXX" maxlength="5" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Dein Name</label>
+          <input type="text" id="playerName" class="form-input" placeholder="Name eingeben..." maxlength="20" />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Team wählen</label>
+          <div id="teamSelection" class="team-selection">
+            <div class="no-teams-msg">Raumcode eingeben...</div>
+          </div>
+        </div>
+
+        <div id="errorMsg" class="error-msg"></div>
+
+        <button id="joinBtn" class="join-btn" disabled>Beitreten</button>
+
+        <a href="/jeopardy-teams.html" class="back-link">← Zurück</a>
+      </div>
+    </div>
+
+    <!-- Mode Badge -->
+    <div class="mode-badge-fixed">👥 TEAMS MODUS</div>
+
+    <!-- Buzzer Button -->
+    <button id="spectatorBuzzBtn" class="spectator-buzz-btn" disabled>BUZZ!</button>
+
+    <!-- Main Page -->
+    <div class="jt-page" id="gamePage">
+      <header class="jt-header">
+        <img src="/images/jt-logo.png" alt="Jyn Tora Jeopardy" class="jt-logo" />
+      </header>
+
+      <div class="turn-bar">
+        <div id="turnIndicator" class="turn-indicator">Warte auf Spieler…</div>
+      </div>
+
+      <div class="board-ambient-layer">
+        <span class="ambient-orb orb-1"></span>
+        <span class="ambient-orb orb-2"></span>
+        <span class="ambient-orb orb-3"></span>
+      </div>
+
+      <main class="jt-main">
+        <div id="board" class="board-grid"></div>
+      </main>
+    </div>
+
+    <!-- Teams Bar -->
+    <div id="teamsBar" class="teams-bar"></div>
+
+    <!-- Question Overlay -->
+    <div id="questionOverlay" class="question-overlay hidden">
+      <div id="questionCard" class="question-card">
+        <div class="question-toprow">
+          <div id="questionPoints" class="question-points">
+            <span class="points-inner"></span>
+          </div>
+        </div>
+        <div id="questionText" class="question-text"></div>
+        <div id="qMedia" class="q-media hidden">
+          <img id="qImage" class="q-image" alt="" />
+        </div>
+        <div id="answerText" class="answer-text hidden"></div>
+        <div id="estimateRevealContainer" class="estimate-reveal hidden">
+          <h3 class="estimate-reveal-title">Schätzantworten</h3>
+          <div id="estimateRevealList" class="estimate-reveal-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estimate Modal -->
+    <div id="estimateModal" class="estimate-modal hidden">
+      <div class="estimate-modal-card">
+        <div class="estimate-modal-title">Schätzfrage</div>
+        <div id="estimateTimer" class="estimate-timer">30</div>
+        <input type="number" id="estimateInput" class="estimate-input" placeholder="Deine Schätzung..." />
+        <button id="estimateSubmit" class="estimate-submit">Absenden</button>
+      </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox hidden">
+      <button id="lightboxClose" class="lightbox-close">×</button>
+      <img id="lightboxImg" class="lightbox-img" alt="" />
+    </div>
+
+    <script>
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else if (document.exitFullscreen) document.exitFullscreen();
+      }
+    </script>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+    <script src="/transition.js"></script>
+  </body>
+</html>
