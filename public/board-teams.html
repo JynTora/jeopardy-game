@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Board – Jeopardy Teams</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="manifest" href="/manifest.json" />
+    <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/board-teams.js" type="module" defer></script>
+    <style>
+      /* ===========================
+         TEAMS BAR - Bottom
+         =========================== */
+      .teams-bar {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(15, 23, 42, 0.95);
+        border-top: 2px solid rgba(245, 158, 11, 0.4);
+        padding: 12px 20px;
+        display: flex;
+        justify-content: center;
+        gap: 16px;
+        flex-wrap: wrap;
+        z-index: 100;
+      }
+
+      .team-card {
+        background: rgba(30, 41, 59, 0.9);
+        border-radius: 12px;
+        padding: 12px 18px;
+        min-width: 160px;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+      }
+
+      .team-card.team-red { border-color: rgba(239, 68, 68, 0.5); }
+      .team-card.team-blue { border-color: rgba(59, 130, 246, 0.5); }
+      .team-card.team-green { border-color: rgba(34, 197, 94, 0.5); }
+      .team-card.team-purple { border-color: rgba(168, 85, 247, 0.5); }
+      .team-card.team-orange { border-color: rgba(249, 115, 22, 0.5); }
+      .team-card.team-pink { border-color: rgba(236, 72, 153, 0.5); }
+
+      .team-card.team-active {
+        box-shadow: 0 0 20px currentColor;
+        transform: scale(1.05);
+      }
+
+      .team-card-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 6px;
+      }
+
+      .team-color-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+
+      .team-red .team-color-dot { background: #ef4444; }
+      .team-blue .team-color-dot { background: #3b82f6; }
+      .team-green .team-color-dot { background: #22c55e; }
+      .team-purple .team-color-dot { background: #a855f7; }
+      .team-orange .team-color-dot { background: #f97316; }
+      .team-pink .team-color-dot { background: #ec4899; }
+
+      .team-card-name {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: #f8fafc;
+      }
+
+      .team-card-score {
+        font-size: 1.2rem;
+        font-weight: 800;
+        margin-bottom: 4px;
+      }
+
+      .team-red .team-card-score { color: #f87171; }
+      .team-blue .team-card-score { color: #60a5fa; }
+      .team-green .team-card-score { color: #4ade80; }
+      .team-purple .team-card-score { color: #c084fc; }
+      .team-orange .team-card-score { color: #fb923c; }
+      .team-pink .team-card-score { color: #f472b6; }
+
+      .team-card-members {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      .team-member {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .member-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #22c55e;
+      }
+
+      .member-dot.offline { background: #ef4444; }
+
+      /* Hide old players-bar */
+      .players-bar { display: none !important; }
+
+      .jt-main {
+        padding-bottom: 120px;
+      }
+
+      /* ===========================
+         BUZZER BUTTON (oben links)
+         =========================== */
+      .board-buzz-btn {
+        position: fixed;
+        top: 12px;
+        left: 12px;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 3px solid rgba(34, 197, 94, 0.6);
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.3) 100%);
+        color: #4ade80;
+        font-size: 0.65rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        z-index: 1000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.2;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.2);
+      }
+
+      .board-buzz-btn:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+      }
+
+      /* ===========================
+         MODE BADGE
+         =========================== */
+      .mode-badge-fixed {
+        position: fixed;
+        top: 12px;
+        right: 12px;
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: #fff;
+        z-index: 1000;
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+      }
+    </style>
+  </head>
+  <body class="jt-body">
+    <!-- Screen Flash -->
+    <div id="screenFlash" class="screen-flash"></div>
+
+    <!-- Mode Badge -->
+    <div class="mode-badge-fixed">👥 TEAMS MODUS</div>
+
+    <!-- Buzzer Button -->
+    <button id="boardBuzzBtn" class="board-buzz-btn">BUZZER<br>FREI</button>
+
+    <!-- Main Page -->
+    <div class="jt-page" id="boardPage">
+      <header class="jt-header">
+        <img src="/images/jt-logo.png" alt="Jyn Tora Jeopardy" class="jt-logo" />
+      </header>
+
+      <div class="turn-bar">
+        <div id="turnIndicator" class="turn-indicator">Warte auf Spieler…</div>
+      </div>
+
+      <div class="board-ambient-layer">
+        <span class="ambient-orb orb-1"></span>
+        <span class="ambient-orb orb-2"></span>
+        <span class="ambient-orb orb-3"></span>
+        <span class="ambient-orb orb-4"></span>
+        <span class="ambient-orb orb-5"></span>
+        <span class="ambient-orb orb-6"></span>
+      </div>
+
+      <main class="jt-main">
+        <div id="board" class="board-grid"></div>
+      </main>
+    </div>
+
+    <!-- Teams Bar -->
+    <div id="teamsBar" class="teams-bar"></div>
+
+    <!-- Question Overlay -->
+    <div id="questionOverlay" class="question-overlay hidden">
+      <div id="questionCard" class="question-card">
+        <div class="question-toprow">
+          <div id="questionPoints" class="question-points">
+            <span class="points-inner"></span>
+          </div>
+          <div id="estimateBoardTimer" class="estimate-board-timer hidden">⏱ –</div>
+        </div>
+        <div id="questionText" class="question-text"></div>
+        <div id="qMedia" class="q-media hidden">
+          <img id="qImage" class="q-image" alt="" />
+          <div class="q-hint">Klicken zum Vergrössern</div>
+        </div>
+        <div id="answerText" class="answer-text hidden"></div>
+        <div id="estimateRevealContainer" class="estimate-reveal hidden">
+          <h3 class="estimate-reveal-title">Schätzantworten</h3>
+          <div id="estimateRevealList" class="estimate-reveal-list"></div>
+        </div>
+        <div id="buzzInfo" class="buzz-info hidden"></div>
+        <div class="question-buttons">
+          <button id="showAnswerBtn" class="qbtn qbtn-answer">Antwort zeigen</button>
+          <button id="wrongBtn" class="qbtn qbtn-wrong">✗ Falsch</button>
+          <button id="correctBtn" class="qbtn qbtn-correct">✓ Richtig</button>
+          <button id="closeQuestionBtn" class="qbtn qbtn-close">Schliessen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox hidden">
+      <button id="lightboxClose" class="lightbox-close">×</button>
+      <img id="lightboxImg" class="lightbox-img" alt="" />
+    </div>
+
+    <script>
+      function toggleFullscreen() {
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else if (document.exitFullscreen) document.exitFullscreen();
+      }
+    </script>
+    <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
+    <script src="/transition.js"></script>
+  </body>
+</html>
