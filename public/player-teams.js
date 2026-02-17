@@ -6,22 +6,19 @@ const socket = io();
 // ===============================
 // DOM Elements
 // ===============================
-const joinOverlay = document.getElementById("joinOverlay");
-const playerNameInput = document.getElementById("playerNameInput");
-const teamSelectGrid = document.getElementById("teamSelectGrid");
-const newTeamInput = document.getElementById("newTeamInput");
-const newTeamBtn = document.getElementById("newTeamBtn");
-const joinBtn = document.getElementById("joinBtn");
-const joinError = document.getElementById("joinError");
+const joinView          = document.getElementById("joinView");
+const playerNameInput   = document.getElementById("playerName");
+const roomCodeInput     = document.getElementById("roomCode");
+const teamSelection     = document.getElementById("teamSelection");
+const newTeamNameInput  = document.getElementById("newTeamName");
+const joinBtn           = document.getElementById("joinBtn");
+const errorMsg          = document.getElementById("errorMsg");
 
-const buzzerHeader = document.getElementById("buzzerHeader");
-const buzzerMain = document.getElementById("buzzerMain");
-const statusBar = document.getElementById("statusBar");
-const teamBadge = document.getElementById("teamBadge");
+const buzzerView        = document.getElementById("buzzerView");
 const playerNameDisplay = document.getElementById("playerNameDisplay");
-const leaveBtn = document.getElementById("leaveBtn");
-const buzzerButton = document.getElementById("buzzerButton");
-const statusText = document.getElementById("statusText");
+const playerTeamDisplay = document.getElementById("playerTeamDisplay");
+const buzzerBtn         = document.getElementById("buzzerBtn");
+const buzzerStatus      = document.getElementById("buzzerStatus");
 
 // ===============================
 // Audio
@@ -32,151 +29,165 @@ sfxBuzz.preload = "auto";
 // ===============================
 // State
 // ===============================
-let joined = false;
+let joined        = false;
 let currentTeamId = null;
-let selectedTeamId = null;
-let playerName = "";
-let playerId = null;
+let playerName    = "";
+let playerId      = null;
 let buzzingEnabled = false;
-let isLocked = false;
-let teams = {};
+let isLocked      = false;
+let teams         = {};
 
-// Team Farben
-const TEAM_COLORS = ["red", "blue", "green", "purple", "orange", "pink"];
-let colorIndex = 0;
+window.selectedTeamId = null;
 
 // ===============================
-// Team Selection UI
+// Team Selection UI (Tab: Beitreten)
 // ===============================
 function renderTeamSelection() {
-  if (!teamSelectGrid) return;
+  if (!teamSelection) return;
 
-  const teamEntries = Object.entries(teams);
+  const entries = Object.entries(teams);
 
-  if (teamEntries.length === 0) {
-    teamSelectGrid.innerHTML = '<div class="no-teams-msg">Warte auf Teams vom Host...</div>';
+  if (entries.length === 0) {
+    teamSelection.innerHTML = '<div class="no-teams-msg">Noch keine Teams vorhanden</div>';
     return;
   }
 
-  teamSelectGrid.innerHTML = teamEntries.map(([tid, team]) => {
-    const memberCount = (team.members || []).length;
-    const selectedClass = selectedTeamId === tid ? "selected" : "";
+  teamSelection.innerHTML = entries.map(([tid, team]) => {
+    const count    = (team.members || []).length;
+    const selected = window.selectedTeamId === tid ? "selected" : "";
     return `
-      <button class="team-select-btn team-${team.colorId || 'blue'} ${selectedClass}" data-team-id="${tid}">
-        <span class="team-select-name">${team.name}</span>
-        <span class="team-select-count">${memberCount} Spieler</span>
-      </button>
-    `;
+      <div class="team-option team-${team.colorId || 'blue'} ${selected}" data-team-id="${tid}">
+        <div class="team-option-name">${team.name}</div>
+        <div class="team-option-count">${count} Spieler</div>
+      </div>`;
   }).join("");
 
-  // Add click handlers
-  teamSelectGrid.querySelectorAll(".team-select-btn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      selectedTeamId = btn.dataset.teamId;
+  teamSelection.querySelectorAll(".team-option").forEach(el => {
+    el.addEventListener("click", () => {
+      window.selectedTeamId = el.dataset.teamId;
       renderTeamSelection();
-      updateJoinButton();
+      updateJoinBtn();
     });
   });
 }
 
-function updateJoinButton() {
-  if (!joinBtn) return;
-  const hasName = playerNameInput?.value?.trim().length > 0;
-  const hasTeam = selectedTeamId !== null;
-  joinBtn.disabled = !(hasName && hasTeam);
+// ===============================
+// Join Button State
+// ===============================
+function updateJoinBtn() {
+  const name = playerNameInput?.value.trim();
+  const room = roomCodeInput?.value.trim();
+  const tab  = window.getCurrentTab?.() || 'join';
+  let teamReady = false;
+
+  if (tab === 'join') {
+    teamReady = !!window.selectedTeamId;
+  } else {
+    teamReady = (newTeamNameInput?.value.trim().length > 0);
+  }
+
+  if (joinBtn) joinBtn.disabled = !(name && room && teamReady);
 }
 
+playerNameInput?.addEventListener("input", updateJoinBtn);
+roomCodeInput?.addEventListener("input", updateJoinBtn);
+newTeamNameInput?.addEventListener("input", updateJoinBtn);
+
 // ===============================
-// Event Listeners - Join
+// Join Button Click
 // ===============================
-playerNameInput?.addEventListener("input", updateJoinButton);
-
-newTeamBtn?.addEventListener("click", () => {
-  const name = newTeamInput?.value?.trim();
-  if (!name) return;
-
-  const colorId = TEAM_COLORS[colorIndex % TEAM_COLORS.length];
-  colorIndex++;
-
-  // Emit to create team (auch ohne roomCode für lokalen Modus)
-  socket.emit("teams-create-team-local", { name, colorId });
-  if (newTeamInput) newTeamInput.value = "";
-});
-
-newTeamInput?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") newTeamBtn?.click();
-});
-
 joinBtn?.addEventListener("click", () => {
-  const name = playerNameInput?.value?.trim();
-  if (!name || !selectedTeamId) return;
+  const name    = playerNameInput?.value.trim();
+  const room    = roomCodeInput?.value.trim();
+  const tab     = window.getCurrentTab?.() || 'join';
+  const color   = window.getSelectedColor?.() || 'red';
 
-  playerName = name;
-  currentTeamId = selectedTeamId;
+  if (!name || !room) return;
+  if (errorMsg) errorMsg.textContent = "";
 
-  socket.emit("player-join-teams-local", { name, teamId: currentTeamId }, (res) => {
+  if (tab === 'create') {
+    // 1. Team erstellen, dann beitreten
+    const teamName = newTeamNameInput?.value.trim();
+    if (!teamName) return;
+
+    socket.emit("teams-create-team-local", { roomCode: room, name: teamName, colorId: color }, (res) => {
+      if (!res?.success) {
+        if (errorMsg) errorMsg.textContent = res?.error || "Team konnte nicht erstellt werden";
+        return;
+      }
+      const teamId = res.teamId;
+      doJoin(name, room, teamId);
+    });
+
+  } else {
+    // Bestehendem Team beitreten
+    if (!window.selectedTeamId) return;
+    doJoin(name, room, window.selectedTeamId);
+  }
+});
+
+function doJoin(name, room, teamId) {
+  playerName    = name;
+  currentTeamId = teamId;
+
+  socket.emit("player-join-teams-local", { name, roomCode: room, teamId }, (res) => {
     if (res?.success) {
       playerId = res.playerId;
-      joined = true;
+      joined   = true;
       showBuzzerUI();
     } else {
-      if (joinError) joinError.textContent = res?.error || "Fehler beim Beitreten";
+      if (errorMsg) errorMsg.textContent = res?.error || "Fehler beim Beitreten";
     }
   });
-});
+}
 
 // ===============================
 // Show Buzzer UI
 // ===============================
 function showBuzzerUI() {
-  joinOverlay?.classList.add("hidden");
-  buzzerHeader?.classList.remove("hidden");
-  buzzerMain?.classList.remove("hidden");
-  statusBar?.classList.remove("hidden");
+  if (joinView)   joinView.classList.add("hidden");
+  if (buzzerView) buzzerView.classList.add("active");
+
+  if (playerNameDisplay) playerNameDisplay.textContent = playerName;
 
   const team = teams[currentTeamId];
-  if (teamBadge && team) {
-    teamBadge.textContent = team.name;
-    teamBadge.className = `team-badge team-${team.colorId || 'blue'}`;
-  }
-
-  if (playerNameDisplay) {
-    playerNameDisplay.textContent = playerName;
+  if (playerTeamDisplay && team) {
+    playerTeamDisplay.textContent = `Team: ${team.name}`;
+    playerTeamDisplay.style.color = teamColor(team.colorId);
   }
 
   updateBuzzerState();
+}
+
+function teamColor(colorId) {
+  const map = {
+    red: '#f87171', blue: '#60a5fa', green: '#4ade80',
+    purple: '#c084fc', orange: '#fb923c', pink: '#f472b6'
+  };
+  return map[colorId] || '#f9fafb';
 }
 
 // ===============================
 // Buzzer State
 // ===============================
 function updateBuzzerState() {
-  if (!buzzerButton) return;
+  if (!buzzerBtn) return;
 
   if (isLocked) {
-    buzzerButton.className = "buzzer-button buzzer-locked";
-    buzzerButton.disabled = true;
-    buzzerButton.innerHTML = `
-      <span class="buzzer-text">GESPERRT</span>
-      <span class="buzzer-subtext">Du bist ausgesperrt</span>
-    `;
+    buzzerBtn.className = "buzzer-btn";
+    buzzerBtn.disabled  = true;
+    if (buzzerStatus) buzzerStatus.textContent = "Du bist gesperrt";
     return;
   }
 
   if (buzzingEnabled) {
-    buzzerButton.className = "buzzer-button buzzer-free";
-    buzzerButton.disabled = false;
-    buzzerButton.innerHTML = `
-      <span class="buzzer-text">BUZZ!</span>
-      <span class="buzzer-subtext">Drücken zum Buzzern</span>
-    `;
+    buzzerBtn.className = "buzzer-btn free";
+    buzzerBtn.disabled  = false;
+    if (buzzerStatus) buzzerStatus.textContent = "Buzzer ist FREI!";
   } else {
-    buzzerButton.className = "buzzer-button buzzer-locked";
-    buzzerButton.disabled = true;
-    buzzerButton.innerHTML = `
-      <span class="buzzer-text">WARTEN</span>
-      <span class="buzzer-subtext">Buzzer gesperrt</span>
-    `;
+    buzzerBtn.className = "buzzer-btn";
+    buzzerBtn.disabled  = true;
+    if (buzzerStatus) buzzerStatus.textContent = "Warte auf Freigabe...";
   }
 }
 
@@ -186,11 +197,6 @@ function updateBuzzerState() {
 function doBuzz() {
   if (!joined || !buzzingEnabled || isLocked) return;
 
-  // Visual feedback
-  buzzerButton?.classList.add("buzzer-pressed");
-  setTimeout(() => buzzerButton?.classList.remove("buzzer-pressed"), 200);
-
-  // Sound
   sfxBuzz.currentTime = 0;
   sfxBuzz.play().catch(() => {});
 
@@ -200,29 +206,15 @@ function doBuzz() {
   updateBuzzerState();
 }
 
-buzzerButton?.addEventListener("click", doBuzz);
+buzzerBtn?.addEventListener("click", doBuzz);
 
-// Keyboard (Space)
 document.addEventListener("keydown", (e) => {
   if (e.code !== "Space") return;
   if (!joined) return;
-
   const t = e.target;
-  const isTyping = t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA");
-  if (isTyping) return;
-
+  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
   e.preventDefault();
   doBuzz();
-});
-
-// ===============================
-// Leave Button
-// ===============================
-leaveBtn?.addEventListener("click", () => {
-  if (confirm("Möchtest du das Spiel verlassen?")) {
-    socket.emit("player-leave-teams-local");
-    window.location.href = "/jeopardy-teams.html";
-  }
 });
 
 // ===============================
@@ -232,24 +224,16 @@ socket.on("teams-updated", (serverTeams) => {
   teams = serverTeams || {};
   renderTeamSelection();
 
-  // Update team badge if joined
-  if (joined && currentTeamId && teams[currentTeamId]) {
+  if (joined && currentTeamId && teams[currentTeamId] && playerTeamDisplay) {
     const team = teams[currentTeamId];
-    if (teamBadge) {
-      teamBadge.textContent = team.name;
-      teamBadge.className = `team-badge team-${team.colorId || 'blue'}`;
-    }
+    playerTeamDisplay.textContent = `Team: ${team.name}`;
+    playerTeamDisplay.style.color = teamColor(team.colorId);
   }
 });
 
 socket.on("buzzing-status", ({ enabled }) => {
   buzzingEnabled = !!enabled;
   updateBuzzerState();
-
-  if (statusText) {
-    statusText.textContent = enabled ? "Buzzer ist FREI!" : "Buzzer gesperrt";
-    statusText.className = enabled ? "status-text" : "status-text";
-  }
 });
 
 socket.on("you-are-locked", () => {
@@ -262,10 +246,9 @@ socket.on("round-reset", () => {
   updateBuzzerState();
 });
 
-socket.on("player-buzzed-first", ({ playerId: buzzedId, name, teamId, teamName }) => {
-  if (statusText) {
-    statusText.textContent = `${name} (${teamName || "Team"}) hat gebuzzert!`;
-    statusText.className = "status-text buzzed";
+socket.on("player-buzzed-first", ({ name, teamName }) => {
+  if (buzzerStatus) {
+    buzzerStatus.textContent = `${name} (${teamName || "Team"}) hat gebuzzert!`;
   }
 });
 
@@ -279,11 +262,9 @@ socket.on("game-ended", () => {
 // ===============================
 socket.on("connect", () => {
   console.log("Verbunden mit Server");
-  // Request current teams for local mode
   socket.emit("request-teams-local");
 });
 
 socket.on("disconnect", () => {
-  console.log("Verbindung verloren");
-  if (statusText) statusText.textContent = "Verbindung verloren...";
+  if (buzzerStatus) buzzerStatus.textContent = "Verbindung verloren...";
 });
