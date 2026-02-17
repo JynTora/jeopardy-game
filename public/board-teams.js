@@ -72,6 +72,8 @@ let currentQuestion = null;
 let hasAwardedOnReveal = false;
 let lockedPlayersLocal = new Set();
 let gameStarted     = false;
+let teamOrder       = [];
+let currentTeamIndex = 0;
 
 // Estimate
 let estimateAnswers = {};
@@ -241,7 +243,10 @@ startGameBtn?.addEventListener("click", () => {
   if (teamEntries.length === 0) return;
 
   gameStarted = true;
-  startGameBtn.disabled = true;
+  if (startGameBtn) startGameBtn.style.display = "none";
+  // Team-Reihenfolge für Rotation speichern
+  teamOrder = teamEntries.map(([tid]) => tid);
+  currentTeamIndex = 0;
   pickOverlay?.classList.add("visible");
   if (pickResult) { pickResult.style.display = "none"; pickResult.textContent = ""; }
   if (pickCloseBtn) pickCloseBtn.style.display = "none";
@@ -285,16 +290,9 @@ startGameBtn?.addEventListener("click", () => {
 
       // Turn Indicator updaten
       activeTeamId = winTeamId;
-      if (turnIndicatorEl) {
-        const txtNode = turnIndicatorEl.firstChild;
-        if (txtNode && txtNode.nodeType === Node.TEXT_NODE) {
-          txtNode.textContent = `${winTeam.name} beginnt! `;
-        } else {
-          turnIndicatorEl.childNodes[0]?.before(document.createTextNode(`${winTeam.name} beginnt! `));
-        }
-      }
-      renderTeamsBar();
-      socket.emit("board-turn-update", { roomCode: boardRoomCode, playerName: winTeam.name, playerId: winTeamId });
+      // Index in teamOrder setzen
+      currentTeamIndex = teamOrder.indexOf(winTeamId);
+      updateTurnIndicator();
     }
   }
   blink();
@@ -303,6 +301,35 @@ startGameBtn?.addEventListener("click", () => {
 pickCloseBtn?.addEventListener("click", () => {
   pickOverlay?.classList.remove("visible");
 });
+
+// ===============================
+// Turn Indicator
+// ===============================
+function updateTurnIndicator() {
+  if (!gameStarted || teamOrder.length === 0) return;
+  const tid = teamOrder[currentTeamIndex % teamOrder.length];
+  const team = teams[tid];
+  if (!team) return;
+  activeTeamId = tid;
+  const color = { red:'#f87171', blue:'#60a5fa', green:'#4ade80', purple:'#c084fc', orange:'#fb923c', pink:'#f472b6' }[team.colorId] || '#f9fafb';
+  if (turnIndicatorEl) {
+    // Nur den Text-Node aktualisieren, Button bleibt weg
+    const span = document.createElement("span");
+    span.style.color = color;
+    span.style.fontWeight = "800";
+    span.textContent = `${team.name} ist dran`;
+    turnIndicatorEl.innerHTML = "";
+    turnIndicatorEl.appendChild(span);
+  }
+  renderTeamsBar();
+  socket.emit("board-turn-update", { roomCode: boardRoomCode, playerName: team.name, playerId: tid });
+}
+
+function advanceTeam() {
+  if (!gameStarted || teamOrder.length === 0) return;
+  currentTeamIndex = (currentTeamIndex + 1) % teamOrder.length;
+  updateTurnIndicator();
+}
 
 // ===============================
 // Open Question
@@ -359,10 +386,8 @@ function closeQuestion() {
   renderTeamsBar();
   if (buzzInfoEl) { buzzInfoEl.textContent = ""; buzzInfoEl.classList.add("hidden"); }
   currentQuestion = null;
+  advanceTeam();
 }
-
-// ===============================
-// Lightbox
 // ===============================
 function openLightbox(src) { if (!lightboxEl || !lightboxImgEl) return; lightboxImgEl.src = src; lightboxEl.classList.remove("hidden"); }
 function closeLightbox() { lightboxEl?.classList.add("hidden"); }
