@@ -130,9 +130,17 @@
         transform: translateY(-1px);
       }
 
-      /* ───────────────────────────────────────────────
-         ONLINE MODE SELECTION OVERLAY
-         ─────────────────────────────────────────────── */
+      .back-link {
+        display: block;
+        margin-top: 16px;
+        color: #6b7280;
+        font-size: 0.85rem;
+        text-decoration: none;
+        transition: color 0.15s ease;
+      }
+      .back-link:hover { color: #d1d5db; }
+
+      /* ONLINE OVERLAY */
       .online-overlay {
         position: fixed;
         inset: 0;
@@ -203,11 +211,8 @@
         transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
       }
 
-      .online-option:hover {
-        transform: translateY(-3px);
-      }
+      .online-option:hover { transform: translateY(-3px); }
 
-      /* Ohne Kamera - Teal */
       .online-option.no-cam {
         background: linear-gradient(135deg, #0d9488, #0f766e);
         box-shadow: 0 0 25px rgba(20, 184, 166, 0.4), 0 14px 35px rgba(0, 0, 0, 0.5);
@@ -217,7 +222,6 @@
         border-color: rgba(94, 234, 212, 0.5);
       }
 
-      /* Mit Kamera - Purple/Pink */
       .online-option.with-cam {
         background: linear-gradient(135deg, #8b5cf6, #7c3aed);
         box-shadow: 0 0 25px rgba(139, 92, 246, 0.4), 0 14px 35px rgba(0, 0, 0, 0.5);
@@ -227,10 +231,7 @@
         border-color: rgba(196, 181, 253, 0.5);
       }
 
-      .online-option-icon {
-        font-size: 2.2rem;
-      }
-
+      .online-option-icon { font-size: 2.2rem; }
       .online-option-title {
         font-size: 1.1rem;
         font-weight: 700;
@@ -238,13 +239,11 @@
         text-transform: uppercase;
         color: #f9fafb;
       }
-
       .online-option-desc {
         font-size: 0.8rem;
         color: rgba(255, 255, 255, 0.85);
         line-height: 1.35;
       }
-
       .online-option-badge {
         display: inline-block;
         padding: 3px 10px;
@@ -269,7 +268,6 @@
         cursor: pointer;
         transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
       }
-
       .online-back-btn:hover {
         background: rgba(51, 65, 85, 0.9);
         border-color: rgba(148, 163, 184, 0.8);
@@ -317,12 +315,10 @@
         <a href="/host.html" class="host-link" data-transition-link>
           🎛️ Host-Panel öffnen
         </a>
+        <a href="/" class="back-link">← Zurück zur Spielauswahl</a>
       </div>
     </main>
 
-    <!-- ═══════════════════════════════════════════════
-         ONLINE MODE SELECTION OVERLAY
-         ═══════════════════════════════════════════════ -->
     <div id="onlineOverlay" class="online-overlay">
       <div class="online-card">
         <h2>🌐 Online Modus</h2>
@@ -354,7 +350,6 @@
     </div>
 
     <script>
-      // Online Mode Selection
       const onlineModeBtn = document.getElementById('onlineModeBtn');
       const onlineOverlay = document.getElementById('onlineOverlay');
       const onlineBackBtn = document.getElementById('onlineBackBtn');
@@ -362,19 +357,12 @@
       onlineModeBtn?.addEventListener('click', () => {
         onlineOverlay?.classList.add('is-visible');
       });
-
       onlineBackBtn?.addEventListener('click', () => {
         onlineOverlay?.classList.remove('is-visible');
       });
-
-      // Close on backdrop click
       onlineOverlay?.addEventListener('click', (e) => {
-        if (e.target === onlineOverlay) {
-          onlineOverlay.classList.remove('is-visible');
-        }
+        if (e.target === onlineOverlay) onlineOverlay.classList.remove('is-visible');
       });
-
-      // ESC key to close
       document.addEventListener('keydown', (e) => {
         if (e.key === 'Escape' && onlineOverlay?.classList.contains('is-visible')) {
           onlineOverlay.classList.remove('is-visible');
@@ -382,11 +370,8 @@
       });
 
       function toggleFullscreen() {
-        if (!document.fullscreenElement) {
-          document.documentElement.requestFullscreen();
-        } else if (document.exitFullscreen) {
-          document.exitFullscreen();
-        }
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else if (document.exitFullscreen) document.exitFullscreen();
       }
     </script>
     <button class="fullscreen-btn" onclick="toggleFullscreen()">⛶</button>
