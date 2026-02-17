@@ -1,275 +1,363 @@
-// public/spectator-teams.js
-// Online Spieler für Jeopardy Teams Modus (ohne Kamera)
+// public/spectator-teams-cam.js
+// Online-Spieler MIT KAMERA für Jeopardy Teams Modus
 
 const socket = io();
 
-// ================================
+// ===============================
 // DOM Elements
-// ================================
-const joinOverlay = document.getElementById("joinOverlay");
-const roomCodeInput = document.getElementById("roomCodeInput");
-const playerNameInput = document.getElementById("playerName");
-const teamSelection = document.getElementById("teamSelection");
-const joinBtn = document.getElementById("joinBtn");
-const errorMsg = document.getElementById("errorMsg");
-const spectatorBuzzBtn = document.getElementById("spectatorBuzzBtn");
-const boardEl = document.getElementById("board");
-const teamsBar = document.getElementById("teamsBar");
-const turnIndicatorEl = document.getElementById("turnIndicator");
-const overlayEl = document.getElementById("questionOverlay");
-const questionPointsInnerEl = document.querySelector("#questionPoints .points-inner");
-const questionTextEl = document.getElementById("questionText");
-const answerTextEl = document.getElementById("answerText");
-const qMediaEl = document.getElementById("qMedia");
-const qImageEl = document.getElementById("qImage");
-const lightboxEl = document.getElementById("lightbox");
-const lightboxImgEl = document.getElementById("lightboxImg");
-const lightboxCloseEl = document.getElementById("lightboxClose");
-const estimateModal = document.getElementById("estimateModal");
-const estimateTimer = document.getElementById("estimateTimer");
-const estimateInput = document.getElementById("estimateInput");
-const estimateSubmit = document.getElementById("estimateSubmit");
-const estimateRevealContainer = document.getElementById("estimateRevealContainer");
-const estimateRevealList = document.getElementById("estimateRevealList");
+// ===============================
+const joinPage          = document.getElementById("joinPage");
+const roomCodeInput     = document.getElementById("spectatorRoomCode");
+const nameInput         = document.getElementById("spectatorName");
+const teamSelectGrid    = document.getElementById("teamSelectGrid");
+const joinBtn           = document.getElementById("spectatorJoinBtn");
+const joinStatus        = document.getElementById("spectatorJoinStatus");
 
-// ================================
+const mainPage          = document.getElementById("spectatorMainPage");
+const teamsBar          = document.getElementById("teamsBar");
+const buzzerBtn         = document.getElementById("spectatorBuzzBtn");
+const boardEl           = document.getElementById("board");
+const turnIndicatorEl   = document.getElementById("turnIndicator");
+
+// Kamera
+const localVideoJoin    = document.getElementById("localVideoJoin");
+const localVideoPip     = document.getElementById("localVideoPip");
+const camPip            = document.getElementById("camPip");
+const camPlaceholder    = document.getElementById("camPlaceholder");
+const camPipLabel       = document.getElementById("camPipLabel");
+
+// Question
+const overlayEl                = document.getElementById("questionOverlay");
+const questionCardEl           = document.getElementById("questionCard");
+const questionPointsInnerEl    = document.querySelector("#questionPoints .points-inner");
+const questionTextEl           = document.getElementById("questionText");
+const answerTextEl             = document.getElementById("answerText");
+const buzzInfoEl               = document.getElementById("buzzInfo");
+const qMediaEl                 = document.getElementById("qMedia");
+const qImageEl                 = document.getElementById("qImage");
+const lightboxEl               = document.getElementById("lightbox");
+const lightboxImgEl            = document.getElementById("lightboxImg");
+const lightboxCloseEl          = document.getElementById("lightboxClose");
+const estimateRevealContainer  = document.getElementById("estimateRevealContainer");
+const estimateRevealList       = document.getElementById("estimateRevealList");
+const estimateModal            = document.getElementById("estimateModal");
+const estimateQuestionTextEl   = document.getElementById("estimateQuestionText");
+const estimateInput            = document.getElementById("estimateInput");
+const estimateTimerEl          = document.getElementById("estimateTimer");
+const estimateStatusEl         = document.getElementById("estimateStatus");
+const sendEstimateBtn          = document.getElementById("sendEstimateBtn");
+
+// ===============================
+// Audio
+// ===============================
+const sfxBuzz    = new Audio("/sounds/buzzer-button.wav");
+const sfxCorrect = new Audio("/sounds/correct-sound.wav");
+const sfxWrong   = new Audio("/sounds/wrong-sound.wav");
+[sfxBuzz, sfxCorrect, sfxWrong].forEach(s => s.preload = "auto");
+function safePlay(s) { s.currentTime = 0; s.play().catch(() => {}); }
+
+// ===============================
 // State
-// ================================
-let roomCode = null;
-let teams = {};
-let players = {};
-let selectedTeamId = null;
-let myPlayerId = null;
-let myTeamId = null;
-let buzzingEnabled = false;
-let currentRound = 1;
-let usedCells = new Set();
+// ===============================
+let currentRoomCode  = null;
+let selectedTeamId   = null;
+let playerId         = null;
+let joined           = false;
+let buzzingEnabled   = false;
+let isLocked         = false;
+
+let teams            = {};
+let players          = {};
+let activeTeamId     = null;
+let currentRound     = 1;
+let usedCells        = new Set();
+
+// Kamera
+let localStream      = null;
+let boardSocketId    = null;
+const peerConnections = {};
+
+// Estimate
+let estimateLocked      = false;
+let estimateDeadline    = null;
 let estimateTimerInterval = null;
-let estimateLocked = false;
-let activeTeamId = null;
 
-// ================================
+// ===============================
 // Categories
-// ================================
+// ===============================
 const categoriesRound1 = [
-  { name: "தமிழ் சினிமா", questions: [{value:100},{value:200},{value:300},{value:400},{value:500}] },
-  { name: "தமிழ் பண்பாடு", questions: [{value:100},{value:200},{value:300},{value:400},{value:500}] },
-  { name: "தமிழ் உணவு", questions: [{value:100},{value:200},{value:300},{value:400},{value:500}] },
-  { name: "யார் இது?", questions: [{value:100},{value:200},{value:300},{value:400},{value:500}] },
-  { name: "மதிப்பீடு", questions: [{value:100},{value:200},{value:300},{value:400},{value:500}] },
+  { name: "தமிழ் சினிமா",       questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "தமிழ் பண்பாடு",      questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "தமிழ் உணவு",          questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "யார் இது?",           questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "மதிப்பீடு",           questions: [100,200,300,400,500].map(v => ({value:v})) },
 ];
-
 const categoriesRound2 = [
-  { name: "பொது அறிவு", questions: [{value:100},{value:200},{value:300},{value:400},{value:500}] },
-  { name: "தமிழ்நாடு", questions: [{value:100},{value:200},{value:300},{value:400},{value:500}] },
-  { name: "விளையாட்டு & உலகம்", questions: [{value:100},{value:200},{value:300},{value:400},{value:500}] },
-  { name: "யார்/என்ன இது?", questions: [{value:100},{value:200},{value:300},{value:400},{value:500}] },
-  { name: "மதிப்பீடு", questions: [{value:100},{value:200},{value:300},{value:400},{value:500}] },
+  { name: "பொது அறிவு",          questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "தமிழ்நாடு",           questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "விளையாட்டு & உலகம்", questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "யார்/என்ன இது?",      questions: [100,200,300,400,500].map(v => ({value:v})) },
+  { name: "மதிப்பீடு",           questions: [100,200,300,400,500].map(v => ({value:v})) },
 ];
 
-// ================================
+// ===============================
+// Kamera initialisieren
+// ===============================
+async function initCamera() {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    if (localVideoJoin) {
+      localVideoJoin.srcObject = localStream;
+      if (camPlaceholder) camPlaceholder.style.display = "none";
+    }
+  } catch (err) {
+    console.warn("Kamera nicht verfügbar:", err);
+    if (camPlaceholder) camPlaceholder.innerHTML = '<span class="cam-placeholder-icon">🚫</span><span>Kamera nicht erlaubt</span>';
+  }
+}
+
+function startPip(name) {
+  if (!localStream || !localVideoPip || !camPip) return;
+  localVideoPip.srcObject = localStream;
+  if (camPipLabel) camPipLabel.textContent = name || "Ich";
+  camPip.classList.add("visible");
+}
+
+// ===============================
+// WebRTC — an Board streamen
+// ===============================
+async function connectToBoard(targetSocketId) {
+  if (!localStream || !targetSocketId) return;
+  if (peerConnections[targetSocketId]) return;
+
+  const pc = new RTCPeerConnection({ iceServers: [{ urls: "stun:stun.l.google.com:19302" }] });
+  peerConnections[targetSocketId] = pc;
+
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+  pc.onicecandidate = (e) => {
+    if (e.candidate && currentRoomCode) {
+      socket.emit("webrtc-ice-candidate", {
+        roomCode: currentRoomCode,
+        targetId: targetSocketId,
+        candidate: e.candidate,
+        streamType: "player",
+        fromPlayerId: playerId,
+      });
+    }
+  };
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+  socket.emit("webrtc-offer", {
+    roomCode: currentRoomCode,
+    targetId: targetSocketId,
+    offer,
+    streamType: "player",
+    playerId,
+  });
+}
+
+// ===============================
 // Build Board
-// ================================
+// ===============================
 function buildBoard() {
   if (!boardEl) return;
   boardEl.innerHTML = "";
-
   const cats = currentRound >= 2 ? categoriesRound2 : categoriesRound1;
   const multiplier = currentRound >= 2 ? 2 : 1;
-
-  cats.forEach((cat) => {
-    const header = document.createElement("div");
-    header.className = "board-category";
-    header.textContent = cat.name;
-    boardEl.appendChild(header);
+  cats.forEach(cat => {
+    const h = document.createElement("div");
+    h.className = "board-category";
+    h.textContent = cat.name;
+    boardEl.appendChild(h);
   });
-
   for (let qi = 0; qi < 5; qi++) {
     cats.forEach((cat, ci) => {
-      const q = cat.questions[qi];
-      const cell = document.createElement("div");
+      const cell = document.createElement("button");
       cell.className = "board-cell";
-      cell.textContent = q.value * multiplier;
+      cell.textContent = cat.questions[qi].value * multiplier;
       cell.dataset.categoryIndex = ci;
       cell.dataset.questionIndex = qi;
-
-      const usedKey = `${ci}-${qi}`;
-      if (usedCells.has(usedKey)) {
-        cell.classList.add("board-cell-used");
-      }
-
+      cell.disabled = true;
+      if (usedCells.has(`${ci}-${qi}`)) cell.classList.add("board-cell-used");
       boardEl.appendChild(cell);
     });
   }
 }
 
-// ================================
-// Render Team Selection (Join)
-// ================================
+// ===============================
+// Team Selection (Join)
+// ===============================
 function renderTeamSelection() {
-  if (!teamSelection) return;
-
-  const teamEntries = Object.entries(teams);
-
-  if (teamEntries.length === 0) {
-    teamSelection.innerHTML = '<div class="no-teams-msg">Keine Teams verfügbar</div>';
+  if (!teamSelectGrid) return;
+  const entries = Object.entries(teams);
+  if (entries.length === 0) {
+    teamSelectGrid.innerHTML = '<div class="no-teams-msg">Noch keine Teams vorhanden</div>';
     return;
   }
-
-  teamSelection.innerHTML = teamEntries.map(([tid, team]) => {
-    const selected = selectedTeamId === tid ? "selected" : "";
-    const memberCount = (team.members || []).length;
-
+  teamSelectGrid.innerHTML = entries.map(([tid, team]) => {
+    const count    = (team.members || []).length;
+    const selected = (selectedTeamId === tid || window.selectedTeamId === tid) ? "selected" : "";
     return `
       <div class="team-option team-${team.colorId || 'blue'} ${selected}" data-team-id="${tid}">
         <div class="team-option-name">${team.name}</div>
-        <div class="team-option-count">${memberCount} Spieler</div>
-      </div>
-    `;
+        <div class="team-option-count">${count} Spieler</div>
+      </div>`;
   }).join("");
-
-  teamSelection.querySelectorAll(".team-option").forEach(option => {
-    option.addEventListener("click", () => {
-      selectedTeamId = option.dataset.teamId;
+  teamSelectGrid.querySelectorAll(".team-option").forEach(el => {
+    el.addEventListener("click", () => {
+      selectedTeamId = el.dataset.teamId;
+      window.selectedTeamId = el.dataset.teamId;
       renderTeamSelection();
-      checkJoinReady();
+      if (typeof window.updateJoinBtn === 'function') window.updateJoinBtn();
     });
   });
 }
 
-// ================================
-// Render Teams Bar (Game)
-// ================================
-function renderTeamsBar() {
-  if (!teamsBar) return;
-
-  const teamEntries = Object.entries(teams);
-
-  if (teamEntries.length === 0) {
-    teamsBar.innerHTML = '<div style="color:#64748b;padding:12px;">Noch keine Teams</div>';
-    return;
-  }
-
-  teamsBar.innerHTML = teamEntries.map(([tid, team]) => {
-    const isActive = activeTeamId === tid;
-    const activeClass = isActive ? "team-active" : "";
-
-    const members = (team.members || [])
-      .map(pid => {
-        const p = players[pid];
-        if (!p) return null;
-        const offlineClass = p.connected === false ? "offline" : "";
-        return `<span class="team-member"><span class="member-dot ${offlineClass}"></span>${p.name}</span>`;
-      })
-      .filter(Boolean)
-      .join("");
-
-    return `
-      <div class="team-card team-${team.colorId || 'blue'} ${activeClass}" data-team-id="${tid}">
-        <div class="team-card-header">
-          <span class="team-color-dot"></span>
-          <span class="team-card-name">${team.name}</span>
-        </div>
-        <div class="team-card-score">${team.score || 0} Punkte</div>
-        <div class="team-card-members">${members || "—"}</div>
-      </div>
-    `;
-  }).join("");
-}
-
-// ================================
-// Check Join Ready
-// ================================
-function checkJoinReady() {
+function updateJoinBtn() {
+  if (typeof window.updateJoinBtn === 'function') { window.updateJoinBtn(); return; }
   const code = roomCodeInput?.value?.trim();
-  const name = playerNameInput?.value?.trim();
-  joinBtn.disabled = !code || code.length < 5 || !name || !selectedTeamId;
+  const name = nameInput?.value?.trim();
+  if (joinBtn) joinBtn.disabled = !(code && code.length >= 3 && name && selectedTeamId);
 }
 
-roomCodeInput?.addEventListener("input", () => {
-  roomCodeInput.value = roomCodeInput.value.toUpperCase();
-  
-  const code = roomCodeInput.value.trim();
-  if (code.length === 5) {
-    socket.emit("request-teams", { roomCode: code });
+roomCodeInput?.addEventListener("input", function() {
+  this.value = this.value.toUpperCase();
+  const rc = this.value.trim();
+  if (rc.length >= 3) socket.emit("request-teams", { roomCode: rc });
+  else { teams = {}; renderTeamSelection(); }
+});
+
+// ===============================
+// Join
+// ===============================
+joinBtn?.addEventListener("click", doJoin);
+nameInput?.addEventListener("keydown", (e) => { if (e.key === "Enter" && !joinBtn?.disabled) doJoin(); });
+
+function doJoin() {
+  const rc    = roomCodeInput?.value?.trim().toUpperCase();
+  const nm    = nameInput?.value?.trim();
+  const tab   = window.getCurrentTab?.() || 'join';
+  const color = window.getSelectedColor?.() || 'red';
+
+  if (!rc || !nm) return;
+  currentRoomCode = rc;
+  if (joinStatus) joinStatus.textContent = "";
+
+  if (tab === 'create') {
+    const teamName = document.getElementById("newTeamName")?.value.trim();
+    if (!teamName) return;
+    socket.emit("teams-create-team", { roomCode: rc, name: teamName, colorId: color });
+    // Warte auf teams-updated, dann join
+    socket.once("teams-updated", () => {
+      const teamId = teamName.trim().toLowerCase().replace(/\s+/g, "-");
+      joinAsPlayer(rc, nm, teamId);
+    });
   } else {
-    teams = {};
-    renderTeamSelection();
+    if (!selectedTeamId) return;
+    joinAsPlayer(rc, nm, selectedTeamId);
   }
-  
-  checkJoinReady();
-});
+}
 
-playerNameInput?.addEventListener("input", checkJoinReady);
+function joinAsPlayer(rc, nm, teamId) {
+  socket.emit("player-join-teams", { roomCode: rc, name: nm, teamId, hasCamera: true }, (res) => {
+    if (res?.success) {
+      playerId = res.playerId;
+      joined   = true;
 
-// ================================
-// Join Game
-// ================================
-joinBtn?.addEventListener("click", joinGame);
-playerNameInput?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && !joinBtn.disabled) joinGame();
-});
+      if (joinPage)  joinPage.style.display = "none";
+      if (mainPage)  mainPage.classList.add("visible");
+      if (teamsBar)  teamsBar.style.display = "flex";
 
-function joinGame() {
-  const code = roomCodeInput?.value?.trim().toUpperCase();
-  const name = playerNameInput?.value?.trim();
-
-  if (!code || !name || !selectedTeamId) return;
-
-  roomCode = code;
-
-  socket.emit("player-join-teams", { roomCode, name, teamId: selectedTeamId, hasCamera: false }, (response) => {
-    if (response?.success) {
-      myPlayerId = response.playerId;
-      myTeamId = response.teamId;
-
-      socket.emit("spectator-join-room", { roomCode, hasCamera: false });
-
-      joinOverlay?.classList.add("hidden");
       buildBoard();
+      renderTeamsBar();
+      updateBuzzerIndicator();
+      startPip(nm);
+
+      socket.emit("spectator-join-room", { roomCode: rc, hasCamera: true });
+
+      // Kamera ans Board melden
+      if (localStream) {
+        socket.emit("cam-player-ready", { roomCode: rc, playerId: res.playerId });
+      }
     } else {
-      errorMsg.textContent = response?.error || "Fehler beim Beitreten";
+      if (joinStatus) joinStatus.textContent = res?.error || "Fehler beim Beitreten";
     }
   });
 }
 
-// ================================
-// Buzzer
-// ================================
-spectatorBuzzBtn?.addEventListener("click", buzz);
+// ===============================
+// Teams Bar
+// ===============================
+function renderTeamsBar() {
+  if (!teamsBar) return;
+  const entries = Object.entries(teams);
+  if (entries.length === 0) { teamsBar.innerHTML = ""; return; }
+  teamsBar.innerHTML = entries.map(([tid, team]) => {
+    const isActive = activeTeamId === tid;
+    const members  = (team.members || []).map(pid => {
+      const p = players[pid];
+      if (!p) return null;
+      const cls = p.connected === false ? "offline" : "";
+      return `<span class="team-member"><span class="member-dot ${cls}"></span>${p.name}</span>`;
+    }).filter(Boolean).join("");
+    return `
+      <div class="team-card team-${team.colorId || 'blue'} ${isActive ? 'team-active' : ''}">
+        <div class="team-card-header"><span class="team-color-dot"></span><span class="team-card-name">${team.name}</span></div>
+        <div class="team-card-score">${team.score || 0} Punkte</div>
+        <div class="team-card-members">${members || "—"}</div>
+      </div>`;
+  }).join("");
+}
 
-document.addEventListener("keydown", (e) => {
-  if (e.key === " " && joinOverlay?.classList.contains("hidden") && !estimateModal?.classList.contains("hidden") === false) {
-    e.preventDefault();
-    buzz();
+// ===============================
+// Buzzer
+// ===============================
+function updateBuzzerIndicator() {
+  if (!buzzerBtn) return;
+  if (!joined) { buzzerBtn.classList.add("hidden"); return; }
+  buzzerBtn.classList.remove("hidden");
+  if (isLocked || !buzzingEnabled) {
+    buzzerBtn.classList.remove("buzzer-active");
+    buzzerBtn.innerHTML = "BUZZER<br>GESPERRT";
+    buzzerBtn.disabled = true;
+  } else {
+    buzzerBtn.classList.add("buzzer-active");
+    buzzerBtn.innerHTML = "BUZZER<br>FREI";
+    buzzerBtn.disabled = false;
   }
+}
+
+function doBuzz() {
+  if (!joined || !currentRoomCode || !buzzingEnabled || isLocked) return;
+  safePlay(sfxBuzz);
+  socket.emit("player-buzz", { roomCode: currentRoomCode });
+  buzzingEnabled = false;
+  updateBuzzerIndicator();
+}
+
+buzzerBtn?.addEventListener("click", doBuzz);
+document.addEventListener("keydown", (e) => {
+  if (e.code !== "Space") return;
+  const t = e.target;
+  if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA")) return;
+  if (!joined) return;
+  e.preventDefault(); doBuzz();
 });
 
-function buzz() {
-  if (!buzzingEnabled || !roomCode) return;
-  socket.emit("player-buzz", { roomCode });
-}
-
-// ================================
+// ===============================
 // Lightbox
-// ================================
-function openLightbox(src) {
-  if (!lightboxEl || !lightboxImgEl) return;
-  lightboxImgEl.src = src;
-  lightboxEl.classList.remove("hidden");
-}
-
-function closeLightbox() {
-  lightboxEl?.classList.add("hidden");
-}
-
+// ===============================
+function openLightbox(src) { if (!lightboxEl) return; lightboxImgEl.src = src; lightboxEl.classList.remove("hidden"); }
+function closeLightbox()   { lightboxEl?.classList.add("hidden"); }
 lightboxCloseEl?.addEventListener("click", closeLightbox);
 lightboxEl?.addEventListener("click", (e) => { if (e.target === lightboxEl) closeLightbox(); });
 qImageEl?.addEventListener("click", () => { if (qImageEl.src) openLightbox(qImageEl.src); });
 
-// ================================
-// Screen Flash
-// ================================
+// ===============================
+// Flash
+// ===============================
 function flashScreen(type) {
   const flash = document.getElementById("screenFlash");
   if (!flash) return;
@@ -279,62 +367,40 @@ function flashScreen(type) {
   setTimeout(() => flash.classList.remove("flash-correct", "flash-wrong"), 400);
 }
 
-// ================================
+// ===============================
 // Estimate
-// ================================
-function startEstimateTimer(sec) {
+// ===============================
+function startEstimateTimer() {
   stopEstimateTimer();
-  estimateLocked = false;
-  estimateInput.disabled = false;
-  estimateSubmit.disabled = false;
-
-  let remaining = sec;
-  const tick = () => {
-    if (estimateTimer) estimateTimer.textContent = remaining;
-    if (remaining <= 0) {
-      stopEstimateTimer();
-      submitEstimate(true);
-    }
-    remaining--;
-  };
-  tick();
-  estimateTimerInterval = setInterval(tick, 1000);
+  estimateTimerInterval = setInterval(() => {
+    if (!estimateDeadline) return;
+    const left = Math.max(0, Math.ceil((estimateDeadline - Date.now()) / 1000));
+    if (estimateTimerEl) estimateTimerEl.textContent = left;
+    if (left <= 0) stopEstimateTimer();
+  }, 250);
 }
-
 function stopEstimateTimer() {
   if (estimateTimerInterval) clearInterval(estimateTimerInterval);
   estimateTimerInterval = null;
 }
 
-function submitEstimate(timeout = false) {
-  if (estimateLocked) return;
-  estimateLocked = true;
-  estimateInput.disabled = true;
-  estimateSubmit.disabled = true;
-
+sendEstimateBtn?.addEventListener("click", () => {
+  if (estimateLocked || !currentRoomCode) return;
   const val = estimateInput?.value?.trim();
-  socket.emit("estimate-answer", {
-    roomCode,
-    value: val || null,
-    noAnswer: !val || timeout,
-  });
-
-  estimateModal?.classList.add("hidden");
-  stopEstimateTimer();
-}
-
-estimateSubmit?.addEventListener("click", () => submitEstimate(false));
-estimateInput?.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") submitEstimate(false);
+  socket.emit("estimate-answer", { roomCode: currentRoomCode, value: val });
+  estimateLocked = true;
+  if (estimateInput) estimateInput.disabled = true;
+  if (sendEstimateBtn) sendEstimateBtn.disabled = true;
+  if (estimateStatusEl) estimateStatusEl.textContent = "Antwort gesendet!";
 });
 
-// ================================
+// ===============================
 // Socket Events
-// ================================
+// ===============================
 socket.on("teams-updated", (serverTeams) => {
   teams = serverTeams || {};
-  renderTeamSelection();
-  renderTeamsBar();
+  if (!joined) renderTeamSelection();
+  else renderTeamsBar();
 });
 
 socket.on("players-updated", (serverPlayers) => {
@@ -343,104 +409,106 @@ socket.on("players-updated", (serverPlayers) => {
 });
 
 socket.on("buzzing-status", ({ enabled }) => {
-  buzzingEnabled = enabled;
-  spectatorBuzzBtn.disabled = !enabled;
-
-  if (enabled) {
-    spectatorBuzzBtn.classList.add("free");
-    spectatorBuzzBtn.classList.remove("pressed");
-  } else {
-    spectatorBuzzBtn.classList.remove("free");
-  }
+  buzzingEnabled = !!enabled;
+  if (enabled) { activeTeamId = null; renderTeamsBar(); if (buzzInfoEl) { buzzInfoEl.textContent = ""; buzzInfoEl.classList.add("hidden"); } }
+  updateBuzzerIndicator();
 });
 
-socket.on("player-buzzed-first", ({ playerId, name, teamId, teamName }) => {
-  buzzingEnabled = false;
-  spectatorBuzzBtn.disabled = true;
-  spectatorBuzzBtn.classList.remove("free");
+socket.on("you-are-locked", () => { isLocked = true; updateBuzzerIndicator(); });
+socket.on("round-reset",     () => { isLocked = false; updateBuzzerIndicator(); });
 
-  activeTeamId = teamId;
-  renderTeamsBar();
-
-  if (playerId === myPlayerId) {
-    spectatorBuzzBtn.classList.add("pressed");
-  }
-});
-
-socket.on("you-are-locked", () => {
-  spectatorBuzzBtn.disabled = true;
-  spectatorBuzzBtn.classList.remove("free");
+socket.on("player-buzzed-first", ({ name, teamId, teamName }) => {
+  activeTeamId = teamId; renderTeamsBar(); safePlay(sfxBuzz);
+  buzzingEnabled = false; updateBuzzerIndicator();
+  if (buzzInfoEl) { buzzInfoEl.textContent = `${name} (${teamName || "Team"}) hat gebuzzert!`; buzzInfoEl.classList.remove("hidden"); }
+  if (questionCardEl) questionCardEl.classList.add("question-card-buzzed");
 });
 
 socket.on("spectator-question-opened", ({ categoryIndex, questionIndex, question, value, type, imageUrl }) => {
-  if (questionPointsInnerEl) questionPointsInnerEl.textContent = value;
+  if (questionPointsInnerEl) questionPointsInnerEl.textContent = value || "";
   if (questionTextEl) questionTextEl.textContent = question || "";
-
-  if (type === "image" && imageUrl && qMediaEl && qImageEl) {
-    qImageEl.src = imageUrl;
-    qMediaEl.classList.remove("hidden");
-  } else {
-    qMediaEl?.classList.add("hidden");
-  }
-
-  answerTextEl?.classList.add("hidden");
-  estimateRevealContainer?.classList.add("hidden");
+  if (answerTextEl)   { answerTextEl.textContent = ""; answerTextEl.classList.add("hidden"); }
+  if (type === "image" && imageUrl && qMediaEl && qImageEl) { qImageEl.src = imageUrl; qMediaEl.classList.remove("hidden"); }
+  else qMediaEl?.classList.add("hidden");
+  if (buzzInfoEl) { buzzInfoEl.textContent = ""; buzzInfoEl.classList.add("hidden"); }
+  if (questionCardEl) questionCardEl.classList.remove("question-card-buzzed");
+  if (estimateRevealContainer) estimateRevealContainer.classList.add("hidden");
   overlayEl?.classList.remove("hidden");
 });
 
 socket.on("spectator-answer-shown", ({ answer }) => {
-  if (answerTextEl) {
-    answerTextEl.textContent = answer || "";
-    answerTextEl.classList.remove("hidden");
-  }
+  if (answerTextEl) { answerTextEl.textContent = answer || ""; answerTextEl.classList.remove("hidden"); }
+  closeLightbox();
 });
 
 socket.on("spectator-question-closed", ({ categoryIndex, questionIndex }) => {
-  overlayEl?.classList.add("hidden");
-  closeLightbox();
   usedCells.add(`${categoryIndex}-${questionIndex}`);
-  activeTeamId = null;
-  renderTeamsBar();
-  buildBoard();
+  const cell = boardEl?.querySelector(`[data-category-index="${categoryIndex}"][data-question-index="${questionIndex}"]`);
+  if (cell) { cell.classList.remove("board-cell-active"); cell.classList.add("board-cell-used"); }
+  overlayEl?.classList.add("hidden");
+  activeTeamId = null; renderTeamsBar();
+  if (buzzInfoEl) { buzzInfoEl.textContent = ""; buzzInfoEl.classList.add("hidden"); }
+  if (questionCardEl) questionCardEl.classList.remove("question-card-buzzed");
+  closeLightbox(); qMediaEl?.classList.add("hidden");
 });
 
-socket.on("spectator-correct", () => {
-  flashScreen("correct");
-});
+socket.on("spectator-correct", () => { safePlay(sfxCorrect); flashScreen("correct"); });
+socket.on("spectator-wrong",   () => { safePlay(sfxWrong);   flashScreen("wrong"); });
 
-socket.on("spectator-wrong", () => {
-  flashScreen("wrong");
-});
+socket.on("spectator-round-changed", ({ round }) => { currentRound = round; usedCells.clear(); buildBoard(); });
 
-socket.on("spectator-round-changed", ({ round }) => {
-  currentRound = round;
-  usedCells.clear();
-  buildBoard();
+socket.on("spectator-turn-update", ({ playerName }) => {
+  if (turnIndicatorEl && playerName) turnIndicatorEl.textContent = `⭐ ${playerName} ist dran ⭐`;
 });
 
 socket.on("estimate-question-started", ({ question, timeLimit }) => {
-  estimateInput.value = "";
+  if (!joined) return;
+  estimateLocked = false;
+  if (estimateQuestionTextEl) estimateQuestionTextEl.textContent = question || "";
+  if (estimateInput) { estimateInput.value = ""; estimateInput.disabled = false; }
+  if (sendEstimateBtn) sendEstimateBtn.disabled = false;
+  if (estimateStatusEl) estimateStatusEl.textContent = "";
+  estimateDeadline = Date.now() + (timeLimit || 30) * 1000;
+  startEstimateTimer();
   estimateModal?.classList.remove("hidden");
-  startEstimateTimer(timeLimit || 30);
 });
 
 socket.on("estimate-locked", () => {
   estimateLocked = true;
-  estimateInput.disabled = true;
-  estimateSubmit.disabled = true;
-  estimateModal?.classList.add("hidden");
+  if (estimateInput) estimateInput.disabled = true;
+  if (sendEstimateBtn) sendEstimateBtn.disabled = true;
+  if (estimateStatusEl) estimateStatusEl.textContent = "Zeit abgelaufen!";
   stopEstimateTimer();
+  estimateModal?.classList.add("hidden");
 });
 
 socket.on("spectator-estimate-reveal", ({ answers }) => {
   if (!estimateRevealContainer || !estimateRevealList) return;
-
   estimateRevealList.innerHTML = (answers || []).map(a => {
     const val = a.noAnswer ? "—" : a.value;
     return `<div class="estimate-reveal-item"><span class="estimate-name">${a.name}</span><span class="estimate-value">${val}</span></div>`;
   }).join("");
-
   estimateRevealContainer.classList.remove("hidden");
+});
+
+// ── WebRTC ──
+socket.on("board-socket-id", ({ socketId }) => {
+  boardSocketId = socketId;
+  if (joined && localStream) connectToBoard(socketId);
+});
+
+socket.on("webrtc-request-offer", ({ fromId }) => {
+  connectToBoard(fromId);
+});
+
+socket.on("webrtc-answer", async ({ fromId, answer }) => {
+  const pc = peerConnections[fromId];
+  if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
+});
+
+socket.on("webrtc-ice-candidate", async ({ fromId, candidate }) => {
+  const pc = peerConnections[fromId];
+  if (pc && candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
 });
 
 socket.on("game-ended", () => {
@@ -448,7 +516,12 @@ socket.on("game-ended", () => {
   window.location.href = "/jeopardy-teams.html";
 });
 
-// ================================
+socket.on("connect", () => {
+  const rc = roomCodeInput?.value?.trim().toUpperCase();
+  if (rc && rc.length >= 3) socket.emit("request-teams", { roomCode: rc });
+});
+
+// ===============================
 // Init
-// ================================
-buildBoard();
+// ===============================
+initCamera();
