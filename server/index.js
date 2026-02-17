@@ -114,12 +114,15 @@ io.on("connection", (socket) => {
     emitTeams(rc);
   });
 
-  socket.on("teams-create-team-local", ({ name, colorId }) => {
+  // ── GEÄNDERT: Callback + teamId zurückgeben ──
+  socket.on("teams-create-team-local", ({ name, colorId, roomCode }, callback) => {
     if (!localTeamsGame) localTeamsGame = { teams: {}, players: {}, socketToPlayerId: {}, buzzingEnabled: false, firstBuzzId: null };
     const teamId = String(name || "").trim().toLowerCase().replace(/\s+/g, "-");
-    if (!teamId || localTeamsGame.teams[teamId]) return;
+    if (!teamId) return callback?.({ success: false, error: "Kein Teamname" });
+    if (localTeamsGame.teams[teamId]) return callback?.({ success: false, error: "Team existiert bereits" });
     localTeamsGame.teams[teamId] = { name: String(name || "").trim(), colorId: colorId || "blue", score: 0, members: [] };
     io.emit("teams-updated", localTeamsGame.teams);
+    callback?.({ success: true, teamId });
   });
 
   socket.on("request-teams", ({ roomCode }) => {
@@ -167,7 +170,7 @@ io.on("connection", (socket) => {
   });
 
   // SPIELER JOIN MIT TEAM (Lokal)
-  socket.on("player-join-teams-local", ({ name, teamId }, callback) => {
+  socket.on("player-join-teams-local", ({ name, teamId, roomCode }, callback) => {
     if (!localTeamsGame) return callback?.({ success: false, error: "Kein lokales Spiel" });
     const cleanName = String(name || "").trim();
     if (!cleanName) return callback?.({ success: false, error: "Bitte Namen eingeben" });
