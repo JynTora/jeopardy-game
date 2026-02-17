@@ -2,34 +2,28 @@
 <html lang="de">
   <head>
     <meta charset="utf-8" />
-    <title>Online spielen – Jeopardy Teams</title>
+    <title>Online + Kamera – Jeopardy Teams</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="manifest" href="/manifest.json" />
     <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js');}</script>
     <link rel="stylesheet" href="/style.css" />
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/spectator-teams.js" defer></script>
+    <script src="/spectator-teams-cam.js" defer></script>
     <style>
       /* ===========================
-         JOIN OVERLAY
+         JOIN PAGE
          =========================== */
-      .join-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0, 0, 0, 0.95);
+      .player-page {
+        min-height: 100vh;
         display: flex;
         align-items: center;
         justify-content: center;
-        z-index: 2000;
         padding: 20px;
       }
+      .player-page.hidden { display: none; }
 
-      .join-overlay.hidden {
-        display: none;
-      }
-
-      .join-card {
-        width: min(400px, 100%);
+      .player-card {
+        width: min(420px, 100%);
         background: radial-gradient(circle at top, #451a03, #1c1917 60%, #0c0a09 100%);
         border-radius: 24px;
         padding: 28px 24px 32px;
@@ -51,7 +45,7 @@
         margin-bottom: 12px;
       }
 
-      .join-title {
+      .player-title {
         font-size: 1.5rem;
         font-weight: 800;
         color: #fef3c7;
@@ -80,29 +74,89 @@
         background: rgba(15, 23, 42, 0.8);
         color: #f8fafc;
         font-size: 1rem;
+        box-sizing: border-box;
+        transition: border-color 0.15s ease;
+      }
+      .form-input:focus { outline: none; border-color: #f59e0b; }
+
+      /* ── Camera Preview (Join) ── */
+      .cam-preview-join {
+        width: 100%;
+        aspect-ratio: 16/9;
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.9);
+        border: 2px solid rgba(245,158,11,0.3);
+        overflow: hidden;
+        margin-bottom: 6px;
+        position: relative;
       }
 
-      .form-input:focus {
-        outline: none;
-        border-color: #f59e0b;
+      .cam-preview-join video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1); /* mirror */
       }
 
-      .form-input.room-code {
-        text-transform: uppercase;
-        letter-spacing: 0.2em;
+      .cam-preview-label {
+        font-size: 0.7rem;
+        color: #64748b;
         text-align: center;
-        font-family: monospace;
-        font-size: 1.2rem;
+        margin-bottom: 14px;
       }
 
-      /* Team Selection */
+      .cam-placeholder {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: #64748b;
+        font-size: 0.85rem;
+      }
+
+      .cam-placeholder-icon { font-size: 2rem; }
+
+      /* ── Divider ── */
+      .section-divider {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 20px 0 14px;
+      }
+      .section-divider::before,
+      .section-divider::after { content: ''; flex: 1; height: 1px; background: rgba(245,158,11,0.2); }
+      .section-divider span { font-size: 0.75rem; color: #78716c; text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap; }
+
+      /* ── Team Tabs ── */
+      .team-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+      .team-tab {
+        padding: 10px;
+        border-radius: 10px;
+        border: 2px solid rgba(245,158,11,0.3);
+        background: transparent;
+        color: #a8a29e;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .team-tab.active { border-color: #f59e0b; background: rgba(245,158,11,0.15); color: #fef3c7; }
+
+      /* ── Team Selection ── */
       .team-selection {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 10px;
-        margin-bottom: 20px;
+        margin-bottom: 4px;
       }
-
       .team-option {
         padding: 12px;
         border-radius: 10px;
@@ -112,47 +166,41 @@
         transition: all 0.15s ease;
         text-align: center;
       }
+      .team-option:hover { transform: translateY(-2px); }
+      .team-option.selected { box-shadow: 0 0 15px currentColor; }
+      .team-option.team-red    { border-color: rgba(239,68,68,0.5);    color: #f87171; }
+      .team-option.team-blue   { border-color: rgba(59,130,246,0.5);   color: #60a5fa; }
+      .team-option.team-green  { border-color: rgba(34,197,94,0.5);    color: #4ade80; }
+      .team-option.team-purple { border-color: rgba(168,85,247,0.5);   color: #c084fc; }
+      .team-option.team-orange { border-color: rgba(249,115,22,0.5);   color: #fb923c; }
+      .team-option.team-pink   { border-color: rgba(236,72,153,0.5);   color: #f472b6; }
+      .team-option.selected.team-red    { border-color: #ef4444; background: rgba(239,68,68,0.2); }
+      .team-option.selected.team-blue   { border-color: #3b82f6; background: rgba(59,130,246,0.2); }
+      .team-option.selected.team-green  { border-color: #22c55e; background: rgba(34,197,94,0.2); }
+      .team-option.selected.team-purple { border-color: #a855f7; background: rgba(168,85,247,0.2); }
+      .team-option.selected.team-orange { border-color: #f97316; background: rgba(249,115,22,0.2); }
+      .team-option.selected.team-pink   { border-color: #ec4899; background: rgba(236,72,153,0.2); }
+      .team-option-name  { font-weight: 700; font-size: 0.9rem; }
+      .team-option-count { font-size: 0.7rem; opacity: 0.7; margin-top: 4px; }
+      .no-teams-msg { color: #64748b; font-style: italic; padding: 16px; grid-column: 1/-1; font-size: 0.85rem; }
 
-      .team-option:hover {
-        transform: translateY(-2px);
-      }
+      #createTeamSection { display: none; }
+      #createTeamSection.visible { display: block; }
+      #joinTeamSection.hidden { display: none; }
 
-      .team-option.selected {
-        box-shadow: 0 0 15px currentColor;
-      }
+      /* ── Color Picker ── */
+      .color-picker { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 6px; }
+      .color-dot { width: 36px; height: 36px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: all 0.15s ease; }
+      .color-dot:hover { transform: scale(1.15); }
+      .color-dot.selected { border-color: #fff; box-shadow: 0 0 12px currentColor; transform: scale(1.15); }
+      .color-dot[data-color="red"]    { background: #ef4444; color: #ef4444; }
+      .color-dot[data-color="blue"]   { background: #3b82f6; color: #3b82f6; }
+      .color-dot[data-color="green"]  { background: #22c55e; color: #22c55e; }
+      .color-dot[data-color="purple"] { background: #a855f7; color: #a855f7; }
+      .color-dot[data-color="orange"] { background: #f97316; color: #f97316; }
+      .color-dot[data-color="pink"]   { background: #ec4899; color: #ec4899; }
 
-      .team-option.team-red { border-color: rgba(239, 68, 68, 0.5); color: #f87171; }
-      .team-option.team-blue { border-color: rgba(59, 130, 246, 0.5); color: #60a5fa; }
-      .team-option.team-green { border-color: rgba(34, 197, 94, 0.5); color: #4ade80; }
-      .team-option.team-purple { border-color: rgba(168, 85, 247, 0.5); color: #c084fc; }
-      .team-option.team-orange { border-color: rgba(249, 115, 22, 0.5); color: #fb923c; }
-      .team-option.team-pink { border-color: rgba(236, 72, 153, 0.5); color: #f472b6; }
-
-      .team-option.selected.team-red { border-color: #ef4444; background: rgba(239, 68, 68, 0.2); }
-      .team-option.selected.team-blue { border-color: #3b82f6; background: rgba(59, 130, 246, 0.2); }
-      .team-option.selected.team-green { border-color: #22c55e; background: rgba(34, 197, 94, 0.2); }
-      .team-option.selected.team-purple { border-color: #a855f7; background: rgba(168, 85, 247, 0.2); }
-      .team-option.selected.team-orange { border-color: #f97316; background: rgba(249, 115, 22, 0.2); }
-      .team-option.selected.team-pink { border-color: #ec4899; background: rgba(236, 72, 153, 0.2); }
-
-      .team-option-name {
-        font-weight: 700;
-        font-size: 0.9rem;
-      }
-
-      .team-option-count {
-        font-size: 0.7rem;
-        opacity: 0.7;
-        margin-top: 4px;
-      }
-
-      .no-teams-msg {
-        color: #64748b;
-        font-style: italic;
-        padding: 20px;
-        grid-column: 1 / -1;
-      }
-
+      /* ── Buttons ── */
       .join-btn {
         width: 100%;
         padding: 16px;
@@ -164,46 +212,70 @@
         font-weight: 700;
         cursor: pointer;
         transition: all 0.15s ease;
-        margin-bottom: 16px;
+        margin-top: 16px;
+        margin-bottom: 12px;
+      }
+      .join-btn:hover:not(:disabled) { box-shadow: 0 8px 25px rgba(245,158,11,0.4); transform: translateY(-2px); }
+      .join-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+      .error-msg { color: #f87171; font-size: 0.85rem; min-height: 20px; margin-top: 8px; }
+
+      .back-link { display: inline-block; margin-top: 8px; color: #78716c; font-size: 0.85rem; text-decoration: none; transition: color 0.15s ease; }
+      .back-link:hover { color: #d6d3d1; }
+
+      /* ===========================
+         MAIN GAME PAGE
+         =========================== */
+      .spectator-main { display: none; }
+      .spectator-main.visible { display: block; }
+
+      /* ===========================
+         CAM PREVIEW (in-game)
+         Kleines Bild oben links,
+         unter dem Buzzer-Button
+         =========================== */
+      .cam-pip {
+        position: fixed;
+        bottom: 130px; /* über der Teams-Bar */
+        left: 12px;
+        width: 140px;
+        height: 90px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 2px solid rgba(245,158,11,0.5);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+        background: #0f172a;
+        z-index: 500;
+        display: none;
       }
 
-      .join-btn:hover:not(:disabled) {
-        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
-        transform: translateY(-2px);
+      .cam-pip.visible { display: block; }
+
+      .cam-pip video {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transform: scaleX(-1);
       }
 
-      .join-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      .error-msg {
-        color: #f87171;
-        font-size: 0.85rem;
-        min-height: 20px;
-        margin-bottom: 10px;
-      }
-
-      .back-link {
-        display: inline-block;
-        margin-top: 10px;
-        color: #78716c;
-        font-size: 0.85rem;
-        text-decoration: none;
-      }
-
-      .back-link:hover {
-        color: #d6d3d1;
+      .cam-pip-label {
+        position: absolute;
+        bottom: 4px;
+        left: 0;
+        right: 0;
+        text-align: center;
+        font-size: 0.6rem;
+        color: rgba(255,255,255,0.7);
+        background: rgba(0,0,0,0.4);
+        padding: 2px 0;
       }
 
       /* ===========================
-         TEAMS BAR - Bottom
+         TEAMS BAR
          =========================== */
       .teams-bar {
         position: fixed;
-        bottom: 0;
-        left: 0;
-        right: 0;
+        bottom: 0; left: 0; right: 0;
         background: rgba(15, 23, 42, 0.95);
         border-top: 2px solid rgba(245, 158, 11, 0.4);
         padding: 12px 20px;
@@ -222,250 +294,239 @@
         border: 2px solid transparent;
         transition: all 0.3s ease;
       }
-
-      .team-card.team-red { border-color: rgba(239, 68, 68, 0.5); }
-      .team-card.team-blue { border-color: rgba(59, 130, 246, 0.5); }
-      .team-card.team-green { border-color: rgba(34, 197, 94, 0.5); }
-      .team-card.team-purple { border-color: rgba(168, 85, 247, 0.5); }
-      .team-card.team-orange { border-color: rgba(249, 115, 22, 0.5); }
-      .team-card.team-pink { border-color: rgba(236, 72, 153, 0.5); }
-
-      .team-card.team-active {
-        box-shadow: 0 0 20px currentColor;
-        transform: scale(1.05);
-      }
-
-      .team-card-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 6px;
-      }
-
-      .team-color-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-      }
-
-      .team-red .team-color-dot { background: #ef4444; }
-      .team-blue .team-color-dot { background: #3b82f6; }
-      .team-green .team-color-dot { background: #22c55e; }
+      .team-card.team-red    { border-color: rgba(239,68,68,0.5); }
+      .team-card.team-blue   { border-color: rgba(59,130,246,0.5); }
+      .team-card.team-green  { border-color: rgba(34,197,94,0.5); }
+      .team-card.team-purple { border-color: rgba(168,85,247,0.5); }
+      .team-card.team-orange { border-color: rgba(249,115,22,0.5); }
+      .team-card.team-pink   { border-color: rgba(236,72,153,0.5); }
+      .team-card.team-active { transform: scale(1.05); }
+      .team-card.team-active.team-red    { border-color: #ef4444; box-shadow: 0 0 20px rgba(239,68,68,0.5); }
+      .team-card.team-active.team-blue   { border-color: #3b82f6; box-shadow: 0 0 20px rgba(59,130,246,0.5); }
+      .team-card.team-active.team-green  { border-color: #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.5); }
+      .team-card.team-active.team-purple { border-color: #a855f7; box-shadow: 0 0 20px rgba(168,85,247,0.5); }
+      .team-card.team-active.team-orange { border-color: #f97316; box-shadow: 0 0 20px rgba(249,115,22,0.5); }
+      .team-card.team-active.team-pink   { border-color: #ec4899; box-shadow: 0 0 20px rgba(236,72,153,0.5); }
+      .team-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+      .team-color-dot { width: 10px; height: 10px; border-radius: 50%; }
+      .team-red    .team-color-dot { background: #ef4444; }
+      .team-blue   .team-color-dot { background: #3b82f6; }
+      .team-green  .team-color-dot { background: #22c55e; }
       .team-purple .team-color-dot { background: #a855f7; }
       .team-orange .team-color-dot { background: #f97316; }
-      .team-pink .team-color-dot { background: #ec4899; }
-
-      .team-card-name {
-        font-weight: 700;
-        font-size: 0.9rem;
-        color: #f8fafc;
-      }
-
-      .team-card-score {
-        font-size: 1.2rem;
-        font-weight: 800;
-        margin-bottom: 4px;
-      }
-
-      .team-red .team-card-score { color: #f87171; }
-      .team-blue .team-card-score { color: #60a5fa; }
-      .team-green .team-card-score { color: #4ade80; }
+      .team-pink   .team-color-dot { background: #ec4899; }
+      .team-card-name  { font-weight: 700; font-size: 0.9rem; color: #f8fafc; }
+      .team-card-score { font-size: 1.2rem; font-weight: 800; margin-bottom: 4px; }
+      .team-red    .team-card-score { color: #f87171; }
+      .team-blue   .team-card-score { color: #60a5fa; }
+      .team-green  .team-card-score { color: #4ade80; }
       .team-purple .team-card-score { color: #c084fc; }
       .team-orange .team-card-score { color: #fb923c; }
-      .team-pink .team-card-score { color: #f472b6; }
-
-      .team-card-members {
-        font-size: 0.7rem;
-        color: #94a3b8;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-      }
-
-      .team-member {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-
-      .member-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #22c55e;
-      }
-
+      .team-pink   .team-card-score { color: #f472b6; }
+      .team-card-members { font-size: 0.7rem; color: #94a3b8; display: flex; flex-wrap: wrap; gap: 6px; }
+      .team-member { display: flex; align-items: center; gap: 4px; }
+      .member-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
       .member-dot.offline { background: #ef4444; }
 
-      /* Hide old players-bar */
       .players-bar { display: none !important; }
-
-      .jt-main {
-        padding-bottom: 120px;
-      }
+      .jt-main { padding-bottom: 120px; }
 
       /* ===========================
-         BUZZER BUTTON (top right)
+         BUZZER BUTTON
          =========================== */
       .spectator-buzz-btn {
         position: fixed;
         top: 12px;
         right: 12px;
-        width: 85px;
-        height: 85px;
+        width: 80px;
+        height: 80px;
         border-radius: 50%;
-        border: 4px solid rgba(239, 68, 68, 0.6);
-        background: linear-gradient(145deg, #dc2626, #b91c1c);
-        color: #fef2f2;
-        font-size: 0.9rem;
-        font-weight: 800;
+        border: 3px solid rgba(239,68,68,0.6);
+        background: linear-gradient(145deg, rgba(239,68,68,0.2), rgba(185,28,28,0.3));
+        color: #f87171;
+        font-size: 0.65rem;
+        font-weight: 700;
         text-transform: uppercase;
         cursor: pointer;
         transition: all 0.15s ease;
         z-index: 1000;
-        box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.2;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(239,68,68,0.2);
       }
-
-      .spectator-buzz-btn:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
+      .spectator-buzz-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+      .spectator-buzz-btn.buzzer-active {
+        border-color: rgba(34,197,94,0.8);
+        background: linear-gradient(145deg, rgba(34,197,94,0.25), rgba(22,163,74,0.35));
+        color: #4ade80;
+        box-shadow: 0 4px 20px rgba(34,197,94,0.3);
+        animation: pulse-green 1.5s infinite;
       }
-
-      .spectator-buzz-btn.free {
-        border-color: rgba(34, 197, 94, 0.8);
-        background: linear-gradient(145deg, #22c55e, #16a34a);
-        box-shadow: 0 6px 25px rgba(34, 197, 94, 0.5);
-        animation: pulse-buzz 1.5s infinite;
+      @keyframes pulse-green {
+        0%, 100% { box-shadow: 0 4px 15px rgba(34,197,94,0.3); }
+        50%       { box-shadow: 0 4px 30px rgba(34,197,94,0.6); }
       }
-
-      @keyframes pulse-buzz {
-        0%, 100% { box-shadow: 0 6px 25px rgba(34, 197, 94, 0.4); }
-        50% { box-shadow: 0 6px 35px rgba(34, 197, 94, 0.7); }
-      }
-
-      .spectator-buzz-btn.pressed {
-        border-color: rgba(251, 191, 36, 0.8);
-        background: linear-gradient(145deg, #fbbf24, #f59e0b);
-        animation: none;
-      }
-
-      /* ===========================
-         MODE BADGE
-         =========================== */
-      .mode-badge-fixed {
-        position: fixed;
-        top: 12px;
-        left: 12px;
-        padding: 6px 14px;
-        border-radius: 999px;
-        font-size: 0.65rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
-        background: linear-gradient(135deg, #f59e0b, #d97706);
-        color: #fff;
-        z-index: 1000;
-        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-      }
-
-      /* Board cells read-only for spectator */
-      .board-cell {
-        pointer-events: none;
-      }
+      .spectator-buzz-btn.hidden { display: none; }
     </style>
   </head>
   <body class="jt-body">
-    <!-- Screen Flash -->
     <div id="screenFlash" class="screen-flash"></div>
 
-    <!-- Join Overlay -->
-    <div id="joinOverlay" class="join-overlay">
-      <div class="join-card">
-        <span class="teams-badge">👥 TEAMS ONLINE</span>
-        <h1 class="join-title">Raum beitreten</h1>
+    <!-- ===========================
+         JOIN PAGE
+         =========================== -->
+    <div id="joinPage" class="player-page">
+      <div class="player-card">
+        <span class="teams-badge">📹 TEAMS ONLINE + CAM</span>
+
+        <h1 class="player-title">Mitspielen</h1>
+
+        <!-- Kamera-Vorschau -->
+        <div class="form-group">
+          <label class="form-label">Kamera-Vorschau</label>
+          <div class="cam-preview-join">
+            <div class="cam-placeholder" id="camPlaceholder">
+              <span class="cam-placeholder-icon">📷</span>
+              <span>Kamera wird geladen...</span>
+            </div>
+            <video id="localVideoJoin" autoplay muted playsinline></video>
+          </div>
+          <div class="cam-preview-label">Deine Kamera (nur für dich sichtbar)</div>
+        </div>
 
         <div class="form-group">
           <label class="form-label">Raumcode</label>
-          <input type="text" id="roomCodeInput" class="form-input room-code" placeholder="XXXXX" maxlength="5" />
+          <input type="text" id="spectatorRoomCode" class="form-input"
+                 placeholder="z.B. AB12C"
+                 maxlength="8"
+                 autocomplete="off"
+                 style="text-transform:uppercase;letter-spacing:0.1em;font-weight:700;" />
         </div>
 
         <div class="form-group">
           <label class="form-label">Dein Name</label>
-          <input type="text" id="playerName" class="form-input" placeholder="Name eingeben..." maxlength="20" />
+          <input type="text" id="spectatorName" class="form-input" placeholder="Name eingeben..." maxlength="20" />
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Team wählen</label>
-          <div id="teamSelection" class="team-selection">
+        <div class="section-divider"><span>Team</span></div>
+
+        <!-- Tabs: Beitreten / Erstellen -->
+        <div class="team-tabs">
+          <button class="team-tab active" id="tabJoin"   onclick="switchTab('join')">🙋 Beitreten</button>
+          <button class="team-tab"        id="tabCreate" onclick="switchTab('create')">➕ Erstellen</button>
+        </div>
+
+        <!-- Bestehende Teams -->
+        <div id="joinTeamSection">
+          <div id="teamSelectGrid" class="team-selection">
             <div class="no-teams-msg">Raumcode eingeben...</div>
           </div>
         </div>
 
-        <div id="errorMsg" class="error-msg"></div>
+        <!-- Neues Team erstellen -->
+        <div id="createTeamSection">
+          <div class="form-group">
+            <label class="form-label">Teamname</label>
+            <input type="text" id="newTeamName" class="form-input" placeholder="z.B. Team Alpha..." maxlength="20" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Teamfarbe</label>
+            <div class="color-picker">
+              <div class="color-dot selected" data-color="red"    onclick="selectColor(this)"></div>
+              <div class="color-dot"          data-color="blue"   onclick="selectColor(this)"></div>
+              <div class="color-dot"          data-color="green"  onclick="selectColor(this)"></div>
+              <div class="color-dot"          data-color="purple" onclick="selectColor(this)"></div>
+              <div class="color-dot"          data-color="orange" onclick="selectColor(this)"></div>
+              <div class="color-dot"          data-color="pink"   onclick="selectColor(this)"></div>
+            </div>
+          </div>
+        </div>
 
-        <button id="joinBtn" class="join-btn" disabled>Beitreten</button>
+        <div id="spectatorJoinStatus" class="error-msg"></div>
+
+        <button id="spectatorJoinBtn" class="join-btn" disabled>Beitreten</button>
 
         <a href="/jeopardy-teams.html" class="back-link">← Zurück</a>
       </div>
     </div>
 
-    <!-- Mode Badge -->
-    <div class="mode-badge-fixed">👥 TEAMS MODUS</div>
+    <!-- ===========================
+         MAIN GAME PAGE
+         =========================== -->
+    <div id="spectatorMainPage" class="spectator-main">
 
-    <!-- Buzzer Button -->
-    <button id="spectatorBuzzBtn" class="spectator-buzz-btn" disabled>BUZZ!</button>
+      <!-- Buzzer Button -->
+      <button id="spectatorBuzzBtn" class="spectator-buzz-btn buzzer-locked hidden">
+        BUZZER<br>GESPERRT
+      </button>
 
-    <!-- Main Page -->
-    <div class="jt-page" id="gamePage">
-      <header class="jt-header">
-        <img src="/images/jt-logo.png" alt="Jyn Tora Jeopardy" class="jt-logo" />
-      </header>
-
-      <div class="turn-bar">
-        <div id="turnIndicator" class="turn-indicator">Warte auf Spieler…</div>
+      <!-- Kamera PiP (in-game) -->
+      <div id="camPip" class="cam-pip">
+        <video id="localVideoPip" autoplay muted playsinline></video>
+        <div class="cam-pip-label" id="camPipLabel">Ich</div>
       </div>
 
-      <div class="board-ambient-layer">
-        <span class="ambient-orb orb-1"></span>
-        <span class="ambient-orb orb-2"></span>
-        <span class="ambient-orb orb-3"></span>
-      </div>
+      <div class="jt-page">
+        <header class="jt-header">
+          <img src="/images/jt-logo.png" alt="Jyn Tora Jeopardy" class="jt-logo" />
+        </header>
 
-      <main class="jt-main">
-        <div id="board" class="board-grid"></div>
-      </main>
+        <div class="turn-bar">
+          <div id="turnIndicator" class="turn-indicator">Warte auf Spieler…</div>
+        </div>
+
+        <div class="board-ambient-layer">
+          <span class="ambient-orb orb-1"></span>
+          <span class="ambient-orb orb-2"></span>
+          <span class="ambient-orb orb-3"></span>
+          <span class="ambient-orb orb-4"></span>
+        </div>
+
+        <main class="jt-main">
+          <div id="board" class="board-grid"></div>
+        </main>
+      </div>
     </div>
 
     <!-- Teams Bar -->
-    <div id="teamsBar" class="teams-bar"></div>
+    <div id="teamsBar" class="teams-bar" style="display:none;"></div>
 
     <!-- Question Overlay -->
     <div id="questionOverlay" class="question-overlay hidden">
       <div id="questionCard" class="question-card">
         <div class="question-toprow">
-          <div id="questionPoints" class="question-points">
-            <span class="points-inner"></span>
-          </div>
+          <div id="questionPoints" class="question-points"><span class="points-inner"></span></div>
+          <div id="estimateBoardTimer" class="estimate-board-timer hidden">⏱ –</div>
         </div>
         <div id="questionText" class="question-text"></div>
         <div id="qMedia" class="q-media hidden">
           <img id="qImage" class="q-image" alt="" />
+          <div class="q-hint">Klicken zum Vergrössern</div>
         </div>
         <div id="answerText" class="answer-text hidden"></div>
         <div id="estimateRevealContainer" class="estimate-reveal hidden">
           <h3 class="estimate-reveal-title">Schätzantworten</h3>
           <div id="estimateRevealList" class="estimate-reveal-list"></div>
         </div>
+        <div id="buzzInfo" class="buzz-info hidden"></div>
       </div>
     </div>
 
     <!-- Estimate Modal -->
     <div id="estimateModal" class="estimate-modal hidden">
-      <div class="estimate-modal-card">
-        <div class="estimate-modal-title">Schätzfrage</div>
-        <div id="estimateTimer" class="estimate-timer">30</div>
-        <input type="number" id="estimateInput" class="estimate-input" placeholder="Deine Schätzung..." />
-        <button id="estimateSubmit" class="estimate-submit">Absenden</button>
+      <div class="estimate-card">
+        <div class="estimate-header">
+          <div class="estimate-label">Schätzfrage</div>
+          <div class="estimate-timer">⏱ <span id="estimateTimer">–</span></div>
+        </div>
+        <div id="estimateQuestionText" class="estimate-question-text"></div>
+        <input id="estimateInput" class="estimate-input" type="text" inputmode="decimal" placeholder="Dein Tipp..." />
+        <button id="sendEstimateBtn" class="estimate-send-btn">Antwort senden</button>
+        <div id="estimateStatus" class="estimate-status"></div>
       </div>
     </div>
 
@@ -476,6 +537,49 @@
     </div>
 
     <script>
+      let currentTab   = 'join';
+      let selectedColor = 'red';
+
+      function switchTab(tab) {
+        currentTab = tab;
+        document.getElementById('tabJoin').classList.toggle('active', tab === 'join');
+        document.getElementById('tabCreate').classList.toggle('active', tab === 'create');
+        document.getElementById('joinTeamSection').classList.toggle('hidden', tab === 'create');
+        document.getElementById('createTeamSection').classList.toggle('visible', tab === 'create');
+        document.querySelectorAll('.team-option').forEach(o => o.classList.remove('selected'));
+        window.selectedTeamId = null;
+        updateJoinBtn();
+      }
+
+      function selectColor(el) {
+        document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedColor = el.dataset.color;
+      }
+
+      function updateJoinBtn() {
+        const name = document.getElementById('spectatorName')?.value.trim();
+        const room = document.getElementById('spectatorRoomCode')?.value.trim();
+        let teamReady = false;
+        if (currentTab === 'join') {
+          teamReady = !!window.selectedTeamId;
+        } else {
+          const tname = document.getElementById('newTeamName')?.value.trim();
+          teamReady = !!(tname && tname.length > 0);
+        }
+        document.getElementById('spectatorJoinBtn').disabled = !(name && room && teamReady);
+      }
+
+      document.getElementById('spectatorName')?.addEventListener('input', updateJoinBtn);
+      document.getElementById('spectatorRoomCode')?.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+        updateJoinBtn();
+      });
+      document.getElementById('newTeamName')?.addEventListener('input', updateJoinBtn);
+
+      window.getCurrentTab    = () => currentTab;
+      window.getSelectedColor = () => selectedColor;
+
       function toggleFullscreen() {
         if (!document.fullscreenElement) document.documentElement.requestFullscreen();
         else if (document.exitFullscreen) document.exitFullscreen();
