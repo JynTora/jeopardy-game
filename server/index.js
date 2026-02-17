@@ -114,15 +114,31 @@ io.on("connection", (socket) => {
     emitTeams(rc);
   });
 
-  // ── GEÄNDERT: Callback + teamId zurückgeben ──
+  // ── FIX: Callback + roomCode-basiertes emit ──
   socket.on("teams-create-team-local", ({ name, colorId, roomCode }, callback) => {
-    if (!localTeamsGame) localTeamsGame = { teams: {}, players: {}, socketToPlayerId: {}, buzzingEnabled: false, firstBuzzId: null };
-    const teamId = String(name || "").trim().toLowerCase().replace(/\s+/g, "-");
-    if (!teamId) return callback?.({ success: false, error: "Kein Teamname" });
-    if (localTeamsGame.teams[teamId]) return callback?.({ success: false, error: "Team existiert bereits" });
-    localTeamsGame.teams[teamId] = { name: String(name || "").trim(), colorId: colorId || "blue", score: 0, members: [] };
-    io.emit("teams-updated", localTeamsGame.teams);
-    callback?.({ success: true, teamId });
+    const rc = normRoomCode(roomCode);
+    // Lokales Spiel nutzt entweder den Room oder localTeamsGame als Fallback
+    const game = rc && games[rc] ? games[rc] : null;
+
+    if (game) {
+      // Room-basierter Modus (Host hat Spiel erstellt)
+      ensureTeams(game);
+      const teamId = String(name || "").trim().toLowerCase().replace(/\s+/g, "-");
+      if (!teamId) return callback?.({ success: false, error: "Kein Teamname" });
+      if (game.teams[teamId]) return callback?.({ success: false, error: "Team existiert bereits" });
+      game.teams[teamId] = { name: String(name || "").trim(), colorId: colorId || "blue", score: 0, members: [] };
+      io.to(rc).emit("teams-updated", game.teams);
+      callback?.({ success: true, teamId });
+    } else {
+      // Fallback: localTeamsGame (kein Host-Raum)
+      if (!localTeamsGame) localTeamsGame = { teams: {}, players: {}, socketToPlayerId: {}, buzzingEnabled: false, firstBuzzId: null };
+      const teamId = String(name || "").trim().toLowerCase().replace(/\s+/g, "-");
+      if (!teamId) return callback?.({ success: false, error: "Kein Teamname" });
+      if (localTeamsGame.teams[teamId]) return callback?.({ success: false, error: "Team existiert bereits" });
+      localTeamsGame.teams[teamId] = { name: String(name || "").trim(), colorId: colorId || "blue", score: 0, members: [] };
+      io.emit("teams-updated", localTeamsGame.teams);
+      callback?.({ success: true, teamId });
+    }
   });
 
   socket.on("request-teams", ({ roomCode }) => {
@@ -133,9 +149,16 @@ io.on("connection", (socket) => {
     socket.emit("teams-updated", game.teams);
   });
 
-  socket.on("request-teams-local", () => {
-    if (!localTeamsGame) localTeamsGame = { teams: {}, players: {}, socketToPlayerId: {}, buzzingEnabled: false, firstBuzzId: null };
-    socket.emit("teams-updated", localTeamsGame.teams);
+  socket.on("request-teams-local", ({ roomCode } = {}) => {
+    const rc = normRoomCode(roomCode);
+    const game = rc && games[rc] ? games[rc] : null;
+    if (game) {
+      ensureTeams(game);
+      socket.emit("teams-updated", game.teams);
+    } else {
+      if (!localTeamsGame) localTeamsGame = { teams: {}, players: {}, socketToPlayerId: {}, buzzingEnabled: false, firstBuzzId: null };
+      socket.emit("teams-updated", localTeamsGame.teams);
+    }
   });
 
   // SPIELER JOIN MIT TEAM (Online)
@@ -169,34 +192,65 @@ io.on("connection", (socket) => {
     callback?.({ success: true, playerId, teamId });
   });
 
-  // SPIELER JOIN MIT TEAM (Lokal)
+  // ── FIX: Spieler joinen jetzt den Socket-Room ──
   socket.on("player-join-teams-local", ({ name, teamId, roomCode }, callback) => {
-    if (!localTeamsGame) return callback?.({ success: false, error: "Kein lokales Spiel" });
-    const cleanName = String(name || "").trim();
-    if (!cleanName) return callback?.({ success: false, error: "Bitte Namen eingeben" });
-    if (!teamId || !localTeamsGame.teams[teamId]) return callback?.({ success: false, error: "Team nicht gefunden" });
-    const playerId = playerKeyFromName(cleanName);
-    localTeamsGame.players[playerId] = { name: cleanName, score: 0, connected: true, socketId: socket.id, teamId };
-    if (!localTeamsGame.teams[teamId].members.includes(playerId)) localTeamsGame.teams[teamId].members.push(playerId);
-    localTeamsGame.socketToPlayerId[socket.id] = playerId;
-    socket.data.playerId = playerId; socket.data.teamId = teamId; socket.data.isLocalTeams = true;
-    io.emit("teams-updated", localTeamsGame.teams);
-    io.emit("players-updated", localTeamsGame.players);
-    callback?.({ success: true, playerId, teamId });
+    const rc = normRoomCode(roomCode);
+    const game = rc && games[rc] ? games[rc] : null;
+
+    if (game) {
+      // Room-basierter lokaler Modus
+      ensureLockedPlayers(game); ensureTeams(game);
+      const cleanName = String(name || "").trim();
+      if (!cleanName) return callback?.({ success: false, error: "Bitte Namen eingeben" });
+      if (!teamId || !game.teams[teamId]) return callback?.({ success: false, error: "Team nicht gefunden" });
+      const playerId = playerKeyFromName(cleanName);
+      game.players[playerId] = { name: cleanName, score: 0, connected: true, socketId: socket.id, teamId };
+      if (!game.teams[teamId].members.includes(playerId)) game.teams[teamId].members.push(playerId);
+      game.socketToPlayerId[socket.id] = playerId;
+      socket.data.roomCode = rc; socket.data.playerId = playerId; socket.data.teamId = teamId; socket.data.isLocalTeams = true;
+      socket.join(rc); // ← ENTSCHEIDEND: Spieler ist jetzt im Room
+      updateTeamScores(game);
+      io.to(rc).emit("teams-updated", game.teams);
+      io.to(rc).emit("players-updated", game.players);
+      if (game.lockedPlayers.has(playerId)) socket.emit("you-are-locked");
+      callback?.({ success: true, playerId, teamId });
+    } else {
+      // Fallback: localTeamsGame
+      if (!localTeamsGame) return callback?.({ success: false, error: "Kein lokales Spiel" });
+      const cleanName = String(name || "").trim();
+      if (!cleanName) return callback?.({ success: false, error: "Bitte Namen eingeben" });
+      if (!teamId || !localTeamsGame.teams[teamId]) return callback?.({ success: false, error: "Team nicht gefunden" });
+      const playerId = playerKeyFromName(cleanName);
+      localTeamsGame.players[playerId] = { name: cleanName, score: 0, connected: true, socketId: socket.id, teamId };
+      if (!localTeamsGame.teams[teamId].members.includes(playerId)) localTeamsGame.teams[teamId].members.push(playerId);
+      localTeamsGame.socketToPlayerId[socket.id] = playerId;
+      socket.data.playerId = playerId; socket.data.teamId = teamId; socket.data.isLocalTeams = true;
+      io.emit("teams-updated", localTeamsGame.teams);
+      io.emit("players-updated", localTeamsGame.players);
+      callback?.({ success: true, playerId, teamId });
+    }
   });
 
-  // BUZZER FÜR TEAMS (Lokal)
+  // ── FIX: Buzzer nutzt jetzt Room wenn verfügbar ──
   socket.on("player-buzz-teams-local", ({ teamId }) => {
-    if (!localTeamsGame || !localTeamsGame.buzzingEnabled || localTeamsGame.firstBuzzId) return;
-    const playerId = localTeamsGame.socketToPlayerId[socket.id];
+    const rc = socket.data.roomCode;
+    const game = rc && games[rc] ? games[rc] : localTeamsGame;
+    if (!game || !game.buzzingEnabled || game.firstBuzzId) return;
+    const playerId = game.socketToPlayerId?.[socket.id] || socket.data.playerId;
     if (!playerId) return;
-    const player = localTeamsGame.players[playerId];
+    const player = game.players?.[playerId];
     if (!player) return;
-    const team = localTeamsGame.teams[teamId];
-    localTeamsGame.firstBuzzId = playerId;
-    localTeamsGame.buzzingEnabled = false;
-    io.emit("player-buzzed-first", { playerId, name: player.name, teamId, teamName: team?.name || "" });
-    io.emit("buzzing-status", { enabled: false });
+    const team = game.teams?.[teamId];
+    game.firstBuzzId = playerId;
+    game.buzzingEnabled = false;
+    const payload = { playerId, name: player.name, teamId, teamName: team?.name || "" };
+    if (rc && games[rc]) {
+      io.to(rc).emit("player-buzzed-first", payload);
+      io.to(rc).emit("buzzing-status", { enabled: false });
+    } else {
+      io.emit("player-buzzed-first", payload);
+      io.emit("buzzing-status", { enabled: false });
+    }
   });
 
   // SPIELER JOIN (Normal)
@@ -444,13 +498,12 @@ io.on("connection", (socket) => {
     for (const [rc, game] of Object.entries(games)) { if (game.boardSocketId === socket.id) game.boardSocketId = null; }
     for (const [rc, game] of Object.entries(games)) { ensureSpectators(game); game.spectators.delete(socket.id); }
     if (socket.data.isLocalTeams && localTeamsGame) {
-      const playerId = localTeamsGame.socketToPlayerId[socket.id];
+      const playerId = localTeamsGame.socketToPlayerId?.[socket.id];
       if (playerId && localTeamsGame.players[playerId]) {
         localTeamsGame.players[playerId].connected = false;
         delete localTeamsGame.socketToPlayerId[socket.id];
         io.emit("players-updated", localTeamsGame.players);
       }
-      return;
     }
     const rc = socket.data.roomCode;
     const pid = socket.data.playerId;
