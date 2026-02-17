@@ -19,7 +19,7 @@
       }
 
       .player-card {
-        width: min(400px, 100%);
+        width: min(420px, 100%);
         background: radial-gradient(circle at top, #451a03, #1c1917 60%, #0c0a09 100%);
         border-radius: 24px;
         padding: 28px 24px 32px;
@@ -70,6 +70,8 @@
         background: rgba(15, 23, 42, 0.8);
         color: #f8fafc;
         font-size: 1rem;
+        box-sizing: border-box;
+        transition: border-color 0.15s ease;
       }
 
       .form-input:focus {
@@ -77,12 +79,61 @@
         border-color: #f59e0b;
       }
 
-      /* Team Selection */
+      /* ── Divider ── */
+      .section-divider {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 20px 0 14px;
+      }
+      .section-divider::before,
+      .section-divider::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: rgba(245,158,11,0.2);
+      }
+      .section-divider span {
+        font-size: 0.75rem;
+        color: #78716c;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        white-space: nowrap;
+      }
+
+      /* ── Team Toggle Tabs ── */
+      .team-tabs {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .team-tab {
+        padding: 10px;
+        border-radius: 10px;
+        border: 2px solid rgba(245,158,11,0.3);
+        background: transparent;
+        color: #a8a29e;
+        font-size: 0.85rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        letter-spacing: 0.03em;
+      }
+
+      .team-tab.active {
+        border-color: #f59e0b;
+        background: rgba(245,158,11,0.15);
+        color: #fef3c7;
+      }
+
+      /* ── Existing Teams ── */
       .team-selection {
         display: grid;
         grid-template-columns: 1fr 1fr;
         gap: 10px;
-        margin-bottom: 20px;
+        margin-bottom: 4px;
       }
 
       .team-option {
@@ -95,46 +146,73 @@
         text-align: center;
       }
 
-      .team-option:hover {
-        transform: translateY(-2px);
-      }
+      .team-option:hover { transform: translateY(-2px); }
 
-      .team-option.selected {
-        box-shadow: 0 0 15px currentColor;
-      }
+      .team-option.selected { box-shadow: 0 0 15px currentColor; }
 
-      .team-option.team-red { border-color: rgba(239, 68, 68, 0.5); color: #f87171; }
-      .team-option.team-blue { border-color: rgba(59, 130, 246, 0.5); color: #60a5fa; }
-      .team-option.team-green { border-color: rgba(34, 197, 94, 0.5); color: #4ade80; }
-      .team-option.team-purple { border-color: rgba(168, 85, 247, 0.5); color: #c084fc; }
-      .team-option.team-orange { border-color: rgba(249, 115, 22, 0.5); color: #fb923c; }
-      .team-option.team-pink { border-color: rgba(236, 72, 153, 0.5); color: #f472b6; }
+      .team-option.team-red    { border-color: rgba(239,68,68,0.5);    color: #f87171; }
+      .team-option.team-blue   { border-color: rgba(59,130,246,0.5);   color: #60a5fa; }
+      .team-option.team-green  { border-color: rgba(34,197,94,0.5);    color: #4ade80; }
+      .team-option.team-purple { border-color: rgba(168,85,247,0.5);   color: #c084fc; }
+      .team-option.team-orange { border-color: rgba(249,115,22,0.5);   color: #fb923c; }
+      .team-option.team-pink   { border-color: rgba(236,72,153,0.5);   color: #f472b6; }
 
-      .team-option.selected.team-red { border-color: #ef4444; background: rgba(239, 68, 68, 0.2); }
-      .team-option.selected.team-blue { border-color: #3b82f6; background: rgba(59, 130, 246, 0.2); }
-      .team-option.selected.team-green { border-color: #22c55e; background: rgba(34, 197, 94, 0.2); }
-      .team-option.selected.team-purple { border-color: #a855f7; background: rgba(168, 85, 247, 0.2); }
-      .team-option.selected.team-orange { border-color: #f97316; background: rgba(249, 115, 22, 0.2); }
-      .team-option.selected.team-pink { border-color: #ec4899; background: rgba(236, 72, 153, 0.2); }
+      .team-option.selected.team-red    { border-color: #ef4444; background: rgba(239,68,68,0.2); }
+      .team-option.selected.team-blue   { border-color: #3b82f6; background: rgba(59,130,246,0.2); }
+      .team-option.selected.team-green  { border-color: #22c55e; background: rgba(34,197,94,0.2); }
+      .team-option.selected.team-purple { border-color: #a855f7; background: rgba(168,85,247,0.2); }
+      .team-option.selected.team-orange { border-color: #f97316; background: rgba(249,115,22,0.2); }
+      .team-option.selected.team-pink   { border-color: #ec4899; background: rgba(236,72,153,0.2); }
 
-      .team-option-name {
-        font-weight: 700;
-        font-size: 0.9rem;
-      }
-
-      .team-option-count {
-        font-size: 0.7rem;
-        opacity: 0.7;
-        margin-top: 4px;
-      }
+      .team-option-name  { font-weight: 700; font-size: 0.9rem; }
+      .team-option-count { font-size: 0.7rem; opacity: 0.7; margin-top: 4px; }
 
       .no-teams-msg {
         color: #64748b;
         font-style: italic;
-        padding: 20px;
+        padding: 16px;
         grid-column: 1 / -1;
+        font-size: 0.85rem;
       }
 
+      /* ── Create Team Section ── */
+      #createTeamSection { display: none; }
+      #createTeamSection.visible { display: block; }
+      #joinTeamSection.hidden { display: none; }
+
+      .color-picker {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 8px;
+        margin-top: 6px;
+      }
+
+      .color-dot {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: 3px solid transparent;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        position: relative;
+      }
+
+      .color-dot:hover { transform: scale(1.15); }
+
+      .color-dot.selected {
+        border-color: #fff;
+        box-shadow: 0 0 12px currentColor;
+        transform: scale(1.15);
+      }
+
+      .color-dot[data-color="red"]    { background: #ef4444; color: #ef4444; }
+      .color-dot[data-color="blue"]   { background: #3b82f6; color: #3b82f6; }
+      .color-dot[data-color="green"]  { background: #22c55e; color: #22c55e; }
+      .color-dot[data-color="purple"] { background: #a855f7; color: #a855f7; }
+      .color-dot[data-color="orange"] { background: #f97316; color: #f97316; }
+      .color-dot[data-color="pink"]   { background: #ec4899; color: #ec4899; }
+
+      /* ── Buttons ── */
       .join-btn {
         width: 100%;
         padding: 16px;
@@ -146,11 +224,12 @@
         font-weight: 700;
         cursor: pointer;
         transition: all 0.15s ease;
-        margin-bottom: 16px;
+        margin-top: 16px;
+        margin-bottom: 12px;
       }
 
       .join-btn:hover:not(:disabled) {
-        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+        box-shadow: 0 8px 25px rgba(245,158,11,0.4);
         transform: translateY(-2px);
       }
 
@@ -163,43 +242,23 @@
         color: #f87171;
         font-size: 0.85rem;
         min-height: 20px;
-        margin-bottom: 10px;
+        margin-top: 8px;
       }
 
-      /* Buzzer View */
-      .buzzer-view {
-        display: none;
-      }
+      /* ── Buzzer View ── */
+      .buzzer-view { display: none; }
+      .buzzer-view.active { display: block; }
+      .join-view.hidden { display: none; }
 
-      .buzzer-view.active {
-        display: block;
-      }
-
-      .join-view.hidden {
-        display: none;
-      }
-
-      .player-info {
-        margin-bottom: 20px;
-      }
-
-      .player-name-display {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #fef3c7;
-      }
-
-      .player-team-display {
-        font-size: 0.9rem;
-        color: #a8a29e;
-        margin-top: 4px;
-      }
+      .player-info { margin-bottom: 20px; }
+      .player-name-display { font-size: 1.3rem; font-weight: 700; color: #fef3c7; }
+      .player-team-display  { font-size: 0.9rem; color: #a8a29e; margin-top: 4px; }
 
       .buzzer-btn {
         width: 200px;
         height: 200px;
         border-radius: 50%;
-        border: 6px solid rgba(239, 68, 68, 0.6);
+        border: 6px solid rgba(239,68,68,0.6);
         background: linear-gradient(145deg, #dc2626, #b91c1c);
         color: #fef2f2;
         font-size: 1.5rem;
@@ -207,51 +266,41 @@
         text-transform: uppercase;
         cursor: pointer;
         transition: all 0.15s ease;
-        box-shadow: 0 10px 40px rgba(239, 68, 68, 0.4), inset 0 -8px 20px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 10px 40px rgba(239,68,68,0.4), inset 0 -8px 20px rgba(0,0,0,0.3);
         margin: 20px auto;
         display: block;
       }
 
       .buzzer-btn:active:not(:disabled) {
         transform: scale(0.95);
-        box-shadow: 0 5px 20px rgba(239, 68, 68, 0.3), inset 0 -4px 10px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 5px 20px rgba(239,68,68,0.3), inset 0 -4px 10px rgba(0,0,0,0.3);
       }
 
-      .buzzer-btn:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-        filter: grayscale(0.5);
-      }
+      .buzzer-btn:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(0.5); }
 
       .buzzer-btn.free {
-        border-color: rgba(34, 197, 94, 0.6);
+        border-color: rgba(34,197,94,0.6);
         background: linear-gradient(145deg, #22c55e, #16a34a);
-        box-shadow: 0 10px 40px rgba(34, 197, 94, 0.4), inset 0 -8px 20px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 10px 40px rgba(34,197,94,0.4), inset 0 -8px 20px rgba(0,0,0,0.3);
         animation: pulse-green 1.5s infinite;
       }
 
       @keyframes pulse-green {
-        0%, 100% { box-shadow: 0 10px 40px rgba(34, 197, 94, 0.4), inset 0 -8px 20px rgba(0, 0, 0, 0.3); }
-        50% { box-shadow: 0 10px 60px rgba(34, 197, 94, 0.6), inset 0 -8px 20px rgba(0, 0, 0, 0.3); }
+        0%, 100% { box-shadow: 0 10px 40px rgba(34,197,94,0.4), inset 0 -8px 20px rgba(0,0,0,0.3); }
+        50%       { box-shadow: 0 10px 60px rgba(34,197,94,0.6), inset 0 -8px 20px rgba(0,0,0,0.3); }
       }
 
-      .buzzer-status {
-        font-size: 0.9rem;
-        color: #94a3b8;
-        margin-top: 16px;
-      }
+      .buzzer-status { font-size: 0.9rem; color: #94a3b8; margin-top: 16px; }
 
       .back-link {
         display: inline-block;
-        margin-top: 16px;
+        margin-top: 8px;
         color: #78716c;
         font-size: 0.85rem;
         text-decoration: none;
+        transition: color 0.15s ease;
       }
-
-      .back-link:hover {
-        color: #d6d3d1;
-      }
+      .back-link:hover { color: #d6d3d1; }
     </style>
   </head>
   <body class="jt-body">
@@ -263,15 +312,54 @@
         <div id="joinView" class="join-view">
           <h1 class="player-title">Mitspielen</h1>
 
+          <!-- Raumcode -->
+          <div class="form-group">
+            <label class="form-label">Raumcode</label>
+            <input type="text" id="roomCode" class="form-input"
+                   placeholder="z.B. AB12CD"
+                   maxlength="8"
+                   autocomplete="off"
+                   style="text-transform:uppercase;letter-spacing:0.1em;font-weight:700;" />
+          </div>
+
+          <!-- Name -->
           <div class="form-group">
             <label class="form-label">Dein Name</label>
             <input type="text" id="playerName" class="form-input" placeholder="Name eingeben..." maxlength="20" />
           </div>
 
-          <div class="form-group">
-            <label class="form-label">Team wählen</label>
+          <!-- Divider -->
+          <div class="section-divider"><span>Team</span></div>
+
+          <!-- Tabs: Beitreten / Erstellen -->
+          <div class="team-tabs">
+            <button class="team-tab active" id="tabJoin"   onclick="switchTab('join')">🙋 Beitreten</button>
+            <button class="team-tab"        id="tabCreate" onclick="switchTab('create')">➕ Erstellen</button>
+          </div>
+
+          <!-- Bestehende Teams -->
+          <div id="joinTeamSection">
             <div id="teamSelection" class="team-selection">
               <div class="no-teams-msg">Keine Teams verfügbar</div>
+            </div>
+          </div>
+
+          <!-- Neues Team erstellen -->
+          <div id="createTeamSection">
+            <div class="form-group">
+              <label class="form-label">Teamname</label>
+              <input type="text" id="newTeamName" class="form-input" placeholder="z.B. Team Alpha..." maxlength="20" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Teamfarbe</label>
+              <div class="color-picker">
+                <div class="color-dot selected" data-color="red"    onclick="selectColor(this)"></div>
+                <div class="color-dot"          data-color="blue"   onclick="selectColor(this)"></div>
+                <div class="color-dot"          data-color="green"  onclick="selectColor(this)"></div>
+                <div class="color-dot"          data-color="purple" onclick="selectColor(this)"></div>
+                <div class="color-dot"          data-color="orange" onclick="selectColor(this)"></div>
+                <div class="color-dot"          data-color="pink"   onclick="selectColor(this)"></div>
+              </div>
             </div>
           </div>
 
@@ -288,15 +376,62 @@
             <div id="playerNameDisplay" class="player-name-display">—</div>
             <div id="playerTeamDisplay" class="player-team-display">—</div>
           </div>
-
           <button id="buzzerBtn" class="buzzer-btn" disabled>BUZZ!</button>
-
           <div id="buzzerStatus" class="buzzer-status">Warte auf Freigabe...</div>
         </div>
+
       </div>
     </div>
 
     <script>
+      // ── Tab Switch ──
+      let currentTab = 'join';
+      let selectedColor = 'red';
+
+      function switchTab(tab) {
+        currentTab = tab;
+        document.getElementById('tabJoin').classList.toggle('active', tab === 'join');
+        document.getElementById('tabCreate').classList.toggle('active', tab === 'create');
+        document.getElementById('joinTeamSection').classList.toggle('hidden', tab === 'create');
+        document.getElementById('createTeamSection').classList.toggle('visible', tab === 'create');
+        // Reset selection
+        document.querySelectorAll('.team-option').forEach(o => o.classList.remove('selected'));
+        window.selectedTeamId = null;
+        updateJoinBtn();
+      }
+
+      // ── Color Picker ──
+      function selectColor(el) {
+        document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedColor = el.dataset.color;
+      }
+
+      // ── Join Button State ──
+      function updateJoinBtn() {
+        const name = document.getElementById('playerName').value.trim();
+        const room = document.getElementById('roomCode').value.trim();
+        let teamReady = false;
+        if (currentTab === 'join') {
+          teamReady = !!window.selectedTeamId;
+        } else {
+          const tname = document.getElementById('newTeamName').value.trim();
+          teamReady = tname.length > 0;
+        }
+        document.getElementById('joinBtn').disabled = !(name && room && teamReady);
+      }
+
+      document.getElementById('playerName').addEventListener('input', updateJoinBtn);
+      document.getElementById('roomCode').addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+        updateJoinBtn();
+      });
+      document.getElementById('newTeamName')?.addEventListener('input', updateJoinBtn);
+
+      // Expose for player-teams.js
+      window.getCurrentTab    = () => currentTab;
+      window.getSelectedColor = () => selectedColor;
+
       function toggleFullscreen() {
         if (!document.fullscreenElement) document.documentElement.requestFullscreen();
         else if (document.exitFullscreen) document.exitFullscreen();
