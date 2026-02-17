@@ -37,86 +37,48 @@
         transition: all 0.3s ease;
       }
 
-      .team-card.team-red { border-color: rgba(239, 68, 68, 0.5); }
-      .team-card.team-blue { border-color: rgba(59, 130, 246, 0.5); }
-      .team-card.team-green { border-color: rgba(34, 197, 94, 0.5); }
+      .team-card.team-red    { border-color: rgba(239, 68, 68, 0.5); }
+      .team-card.team-blue   { border-color: rgba(59, 130, 246, 0.5); }
+      .team-card.team-green  { border-color: rgba(34, 197, 94, 0.5); }
       .team-card.team-purple { border-color: rgba(168, 85, 247, 0.5); }
       .team-card.team-orange { border-color: rgba(249, 115, 22, 0.5); }
-      .team-card.team-pink { border-color: rgba(236, 72, 153, 0.5); }
+      .team-card.team-pink   { border-color: rgba(236, 72, 153, 0.5); }
 
-      .team-card.team-active {
-        box-shadow: 0 0 20px currentColor;
-        transform: scale(1.05);
-      }
+      .team-card.team-active { transform: scale(1.05); }
+      .team-card.team-active.team-red    { border-color: #ef4444; box-shadow: 0 0 20px rgba(239,68,68,0.5); }
+      .team-card.team-active.team-blue   { border-color: #3b82f6; box-shadow: 0 0 20px rgba(59,130,246,0.5); }
+      .team-card.team-active.team-green  { border-color: #22c55e; box-shadow: 0 0 20px rgba(34,197,94,0.5); }
+      .team-card.team-active.team-purple { border-color: #a855f7; box-shadow: 0 0 20px rgba(168,85,247,0.5); }
+      .team-card.team-active.team-orange { border-color: #f97316; box-shadow: 0 0 20px rgba(249,115,22,0.5); }
+      .team-card.team-active.team-pink   { border-color: #ec4899; box-shadow: 0 0 20px rgba(236,72,153,0.5); }
 
-      .team-card-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 6px;
-      }
-
-      .team-color-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-      }
-
-      .team-red .team-color-dot { background: #ef4444; }
-      .team-blue .team-color-dot { background: #3b82f6; }
-      .team-green .team-color-dot { background: #22c55e; }
+      .team-card-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+      .team-color-dot { width: 10px; height: 10px; border-radius: 50%; }
+      .team-red    .team-color-dot { background: #ef4444; }
+      .team-blue   .team-color-dot { background: #3b82f6; }
+      .team-green  .team-color-dot { background: #22c55e; }
       .team-purple .team-color-dot { background: #a855f7; }
       .team-orange .team-color-dot { background: #f97316; }
-      .team-pink .team-color-dot { background: #ec4899; }
+      .team-pink   .team-color-dot { background: #ec4899; }
 
-      .team-card-name {
-        font-weight: 700;
-        font-size: 0.9rem;
-        color: #f8fafc;
-      }
-
-      .team-card-score {
-        font-size: 1.2rem;
-        font-weight: 800;
-        margin-bottom: 4px;
-      }
-
-      .team-red .team-card-score { color: #f87171; }
-      .team-blue .team-card-score { color: #60a5fa; }
-      .team-green .team-card-score { color: #4ade80; }
+      .team-card-name  { font-weight: 700; font-size: 0.9rem; color: #f8fafc; }
+      .team-card-score { font-size: 1.2rem; font-weight: 800; margin-bottom: 4px; }
+      .team-red    .team-card-score { color: #f87171; }
+      .team-blue   .team-card-score { color: #60a5fa; }
+      .team-green  .team-card-score { color: #4ade80; }
       .team-purple .team-card-score { color: #c084fc; }
       .team-orange .team-card-score { color: #fb923c; }
-      .team-pink .team-card-score { color: #f472b6; }
+      .team-pink   .team-card-score { color: #f472b6; }
 
-      .team-card-members {
-        font-size: 0.7rem;
-        color: #94a3b8;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 6px;
-      }
-
-      .team-member {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-      }
-
-      .member-dot {
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #22c55e;
-      }
-
+      .team-card-members { font-size: 0.7rem; color: #94a3b8; display: flex; flex-wrap: wrap; gap: 6px; }
+      .team-member { display: flex; align-items: center; gap: 4px; }
+      .member-dot { width: 6px; height: 6px; border-radius: 50%; background: #22c55e; }
       .member-dot.offline { background: #ef4444; }
 
       /* Hide old players-bar */
       .players-bar { display: none !important; }
 
-      .jt-main {
-        padding-bottom: 120px;
-      }
+      .jt-main { padding-bottom: 120px; }
 
       /* ===========================
          BUZZER BUTTON (oben links)
@@ -152,31 +114,132 @@
       }
 
       /* ===========================
-         MODE BADGE
+         START GAME BUTTON
          =========================== */
-      .mode-badge-fixed {
-        position: fixed;
-        top: 12px;
-        right: 12px;
-        padding: 8px 16px;
+      .start-game-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 22px;
         border-radius: 999px;
-        font-size: 0.7rem;
-        font-weight: 700;
-        letter-spacing: 0.08em;
-        text-transform: uppercase;
+        border: none;
         background: linear-gradient(135deg, #f59e0b, #d97706);
         color: #fff;
-        z-index: 1000;
+        font-size: 0.9rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        transition: all 0.15s ease;
         box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+        margin-left: 12px;
+        vertical-align: middle;
       }
+
+      .start-game-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(245, 158, 11, 0.6);
+      }
+
+      .start-game-btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      /* ===========================
+         PICK ANIMATION OVERLAY
+         =========================== */
+      .pick-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 3000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(2, 6, 23, 0.92);
+        backdrop-filter: blur(10px);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s ease;
+      }
+
+      .pick-overlay.visible {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .pick-card {
+        text-align: center;
+        padding: 40px 60px;
+        border-radius: 28px;
+        background: rgba(15, 23, 42, 0.98);
+        border: 2px solid rgba(245, 158, 11, 0.4);
+        box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+        min-width: 320px;
+      }
+
+      .pick-label {
+        font-size: 0.85rem;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 16px;
+      }
+
+      .pick-name {
+        font-size: 3rem;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #f9fafb;
+        text-shadow: 0 0 30px currentColor;
+        min-height: 72px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: color 0.08s ease;
+      }
+
+      .pick-sub {
+        font-size: 1rem;
+        color: #94a3b8;
+        margin-top: 12px;
+        min-height: 24px;
+      }
+
+      .pick-result {
+        display: none;
+        margin-top: 20px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #fbbf24;
+        animation: fadeIn 0.4s ease;
+      }
+
+      @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      .pick-close-btn {
+        margin-top: 24px;
+        padding: 10px 28px;
+        border-radius: 999px;
+        border: 1px solid rgba(148,163,184,0.4);
+        background: transparent;
+        color: #94a3b8;
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: none;
+        transition: all 0.15s ease;
+      }
+
+      .pick-close-btn:hover { border-color: #94a3b8; color: #f9fafb; }
     </style>
   </head>
   <body class="jt-body">
     <!-- Screen Flash -->
     <div id="screenFlash" class="screen-flash"></div>
-
-    <!-- Mode Badge -->
-    <div class="mode-badge-fixed">👥 TEAMS MODUS</div>
 
     <!-- Buzzer Button -->
     <button id="boardBuzzBtn" class="board-buzz-btn">BUZZER<br>FREI</button>
@@ -188,7 +251,10 @@
       </header>
 
       <div class="turn-bar">
-        <div id="turnIndicator" class="turn-indicator">Warte auf Spieler…</div>
+        <div id="turnIndicator" class="turn-indicator">
+          Warte auf Spieler…
+          <button id="startGameBtn" class="start-game-btn" disabled>🎲 Spiel starten</button>
+        </div>
       </div>
 
       <div class="board-ambient-layer">
@@ -207,6 +273,17 @@
 
     <!-- Teams Bar -->
     <div id="teamsBar" class="teams-bar"></div>
+
+    <!-- Pick Animation Overlay -->
+    <div id="pickOverlay" class="pick-overlay">
+      <div class="pick-card">
+        <div class="pick-label">Welches Team beginnt?</div>
+        <div id="pickName" class="pick-name">—</div>
+        <div id="pickSub" class="pick-sub"></div>
+        <div id="pickResult" class="pick-result"></div>
+        <button id="pickCloseBtn" class="pick-close-btn">Weiter →</button>
+      </div>
+    </div>
 
     <!-- Question Overlay -->
     <div id="questionOverlay" class="question-overlay hidden">
