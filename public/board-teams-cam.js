@@ -92,9 +92,9 @@
     };
 
     pc.onicecandidate = (event) => {
-      if (event.candidate && typeof boardRoomCode !== 'undefined') {
+      if (event.candidate && window.boardRoomCode) {
         socket.emit("webrtc-ice-candidate", {
-          roomCode: boardRoomCode,
+          roomCode: window.boardRoomCode,
           targetId: socketId,
           candidate: event.candidate,
           streamType: "player"
@@ -107,8 +107,8 @@
         delete playerStreams[playerId];
         updatePlayerVideo(playerId);
         setTimeout(() => {
-          if (!playerStreams[playerId]) {
-            socket.emit("webrtc-request-offer", { roomCode: boardRoomCode, targetId: socketId });
+          if (!playerStreams[playerId] && window.boardRoomCode) {
+            socket.emit("webrtc-request-offer", { roomCode: window.boardRoomCode, targetId: socketId });
           }
         }, 2000);
       }
@@ -124,7 +124,7 @@
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       socket.emit("webrtc-answer", {
-        roomCode: boardRoomCode,
+        roomCode: window.boardRoomCode,
         targetId: socketId,
         answer: pc.localDescription,
         streamType: "player"
@@ -150,9 +150,9 @@
     }
 
     pc.onicecandidate = (event) => {
-      if (event.candidate && typeof boardRoomCode !== 'undefined') {
+      if (event.candidate && window.boardRoomCode) {
         socket.emit("webrtc-ice-candidate", {
-          roomCode: boardRoomCode,
+          roomCode: window.boardRoomCode,
           targetId: socketId,
           candidate: event.candidate,
           streamType: "host"
@@ -170,7 +170,7 @@
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
       socket.emit("webrtc-offer", {
-        roomCode: boardRoomCode,
+        roomCode: window.boardRoomCode,
         targetId: targetSocketId,
         offer: pc.localDescription,
         streamType: "host"
@@ -239,12 +239,12 @@
         return originalFn();
       }
 
-      // Verwende globale Teams/Players von board-teams.js
-      const teams = typeof window.latestTeams !== 'undefined' ? window.latestTeams : {};
-      const players = typeof window.latestPlayers !== 'undefined' ? window.latestPlayers : {};
+      // Verwende window.teams und window.players von board-teams.js
+      const teams = window.teams || {};
+      const players = window.players || {};
       const entries = Object.entries(teams);
       
-      console.log("🎨 Rendering Teams Bar:", entries.length, "Teams");
+      console.log("🎨 Rendering Teams Bar (CAM):", entries.length, "Teams");
       
       teamsBarEl.innerHTML = "";
 
@@ -254,7 +254,7 @@
       }
 
       entries.forEach(([teamId, team]) => {
-        const isActive = typeof window.activeTeamId !== 'undefined' && window.activeTeamId === teamId;
+        const isActive = window.activeTeamId === teamId;
 
         const teamGroup = document.createElement("div");
         teamGroup.className = `team-cam-group team-${team.colorId || 'blue'} ${isActive ? 'team-active' : ''}`;
@@ -285,7 +285,7 @@
 
           const card = document.createElement("div");
           card.className = "player-cam-card";
-          if (typeof window.activePlayerId !== 'undefined' && window.activePlayerId === pid) {
+          if (window.activePlayerId === pid) {
             card.classList.add("player-buzzed");
           }
 
@@ -330,7 +330,7 @@
       });
     };
 
-    console.log("✅ renderTeamsBar override");
+    console.log("✅ renderTeamsBar override (CAM)");
   }
 
   // ===============================
@@ -351,8 +351,8 @@
       socketToPlayer[socketId] = playerId;
       
       const requestStream = () => {
-        if (!playerStreams[playerId]) {
-          socket.emit("webrtc-request-offer", { roomCode: boardRoomCode, targetId: socketId });
+        if (!playerStreams[playerId] && window.boardRoomCode) {
+          socket.emit("webrtc-request-offer", { roomCode: window.boardRoomCode, targetId: socketId });
         }
       };
       requestStream();
@@ -387,26 +387,26 @@
 
     socket.on("players-updated", (players) => {
       for (const [playerId, player] of Object.entries(players)) {
-        if (player.hasCamera && player.socketId && player.connected) {
+        if (player.hasCamera && player.socketId && player.connected && window.boardRoomCode) {
           socketToPlayer[player.socketId] = playerId;
           if (!playerStreams[playerId]) {
-            socket.emit("webrtc-request-offer", { roomCode: boardRoomCode, targetId: player.socketId });
+            socket.emit("webrtc-request-offer", { roomCode: window.boardRoomCode, targetId: player.socketId });
           }
         }
       }
     });
 
     setInterval(() => {
-      if (typeof boardRoomCode !== 'undefined' && boardRoomCode) {
-        socket.emit("request-players", { roomCode: boardRoomCode });
+      if (window.boardRoomCode) {
+        socket.emit("request-players", { roomCode: window.boardRoomCode });
       }
     }, 5000);
 
     socket.on("players-list", (players) => {
       for (const [playerId, player] of Object.entries(players)) {
-        if (player.hasCamera && player.socketId && player.connected && !playerStreams[playerId]) {
+        if (player.hasCamera && player.socketId && player.connected && !playerStreams[playerId] && window.boardRoomCode) {
           socketToPlayer[player.socketId] = playerId;
-          socket.emit("webrtc-request-offer", { roomCode: boardRoomCode, targetId: player.socketId });
+          socket.emit("webrtc-request-offer", { roomCode: window.boardRoomCode, targetId: player.socketId });
         }
       }
     });
@@ -419,12 +419,12 @@
   // ===============================
   function joinWithCamMode() {
     const check = () => {
-      if (typeof boardRoomCode !== 'undefined' && boardRoomCode && typeof socket !== 'undefined') {
-        socket.emit("board-join-room", { roomCode: boardRoomCode, isCamMode: true });
+      if (window.boardRoomCode && typeof socket !== 'undefined') {
+        socket.emit("board-join-room", { roomCode: window.boardRoomCode, isCamMode: true });
         if (hostStream) {
-          socket.emit("host-cam-ready", { roomCode: boardRoomCode });
+          socket.emit("host-cam-ready", { roomCode: window.boardRoomCode });
         }
-        console.log("✅ Board Cam-Mode joined:", boardRoomCode);
+        console.log("✅ Board Cam-Mode joined:", window.boardRoomCode);
       } else {
         setTimeout(check, 200);
       }
