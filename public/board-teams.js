@@ -237,6 +237,7 @@ function renderTeamsBar() {
 
   // Aktiviere Start-Button sobald mindestens 1 Team mit Spielern da ist
   const hasPlayers = Object.values(teams).some(t => (t.members || []).length > 0);
+  console.log("🎮 Start Button Update:", { hasPlayers, gameStarted, teamsCount: Object.keys(teams).length });
   if (startGameBtn) startGameBtn.disabled = !hasPlayers || gameStarted;
 }
 
