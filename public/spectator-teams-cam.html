@@ -230,23 +230,19 @@
       .spectator-main.visible { display: block; }
 
       /* ===========================
-         CAM PREVIEW (in-game)
-         Kleines Bild oben links,
-         unter dem Buzzer-Button
+         CAM PREVIEW (in-game) - IN TEAMS BAR
          =========================== */
       .cam-pip {
-        position: fixed;
-        bottom: 130px; /* über der Teams-Bar */
-        left: 12px;
-        width: 140px;
-        height: 90px;
+        position: relative;
+        width: 80px;
+        height: 80px;
         border-radius: 10px;
         overflow: hidden;
         border: 2px solid rgba(245,158,11,0.5);
         box-shadow: 0 4px 20px rgba(0,0,0,0.6);
         background: #0f172a;
-        z-index: 500;
         display: none;
+        margin-right: 16px;
       }
 
       .cam-pip.visible { display: block; }
@@ -264,14 +260,15 @@
         left: 0;
         right: 0;
         text-align: center;
-        font-size: 0.6rem;
-        color: rgba(255,255,255,0.7);
-        background: rgba(0,0,0,0.4);
+        font-size: 0.55rem;
+        color: rgba(255,255,255,0.9);
+        background: rgba(0,0,0,0.6);
         padding: 2px 0;
+        font-weight: 700;
       }
 
       /* ===========================
-         TEAMS BAR
+         TEAMS BAR - mit Spieler-Kamera links
          =========================== */
       .teams-bar {
         position: fixed;
@@ -280,10 +277,12 @@
         border-top: 2px solid rgba(245, 158, 11, 0.4);
         padding: 12px 20px;
         display: flex;
-        justify-content: center;
+        align-items: center;
+        justify-content: flex-start;
         gap: 16px;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
         z-index: 100;
+        min-height: 104px;
       }
 
       .team-card {
@@ -349,7 +348,7 @@
         text-transform: uppercase;
         cursor: pointer;
         transition: all 0.15s ease;
-        z-index: 2000;
+        z-index: 9999 !important;
         display: flex;
         flex-direction: column;
         align-items: center;
@@ -523,12 +522,6 @@
         <div class="host-cam-view-label">SPIELLEITER</div>
       </div>
 
-      <!-- Kamera PiP (eigene Kamera) -->
-      <div id="camPip" class="cam-pip">
-        <video id="localVideoPip" autoplay muted playsinline></video>
-        <div class="cam-pip-label" id="camPipLabel">Ich</div>
-      </div>
-
       <div class="jt-page">
         <header class="jt-header">
           <img src="/images/jt-logo.png" alt="Jyn Tora Jeopardy" class="jt-logo" />
@@ -551,8 +544,14 @@
       </div>
     </div>
 
-    <!-- Teams Bar -->
-    <div id="teamsBar" class="teams-bar" style="display:none;"></div>
+    <!-- Teams Bar mit Kamera -->
+    <div id="teamsBar" class="teams-bar" style="display:none;">
+      <!-- Spieler-Kamera links in der Bar -->
+      <div id="camPip" class="cam-pip">
+        <video id="localVideoPip" autoplay muted playsinline></video>
+        <div class="cam-pip-label" id="camPipLabel">Ich</div>
+      </div>
+    </div>
 
     <!-- Question Overlay -->
     <div id="questionOverlay" class="question-overlay hidden">
