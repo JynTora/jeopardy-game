@@ -521,6 +521,55 @@ socket.on("connect", () => {
   if (rc && rc.length >= 3) socket.emit("request-teams", { roomCode: rc });
 });
 
+// ═══════════════════════════════════════════
+// HOST-STREAM EMPFANG
+// ═══════════════════════════════════════════
+const rtcConfig = {
+  iceServers: [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'turn:bamangames.metered.live:80', username: 'f0a80f469f8b8590832f8da3', credential: 'crkMbNXmiA79CgUn' }
+  ]
+};
+
+let hostPC = null;
+
+socket.on("webrtc-offer", async ({ fromId, offer, streamType }) => {
+  if (streamType !== "host") return;
+  
+  if (hostPC) try { hostPC.close(); } catch {}
+  hostPC = new RTCPeerConnection(rtcConfig);
+  
+  hostPC.ontrack = (e) => {
+    if (hostCamVideo) {
+      hostCamVideo.srcObject = e.streams[0];
+      if (hostCamView) hostCamView.classList.add("visible");
+    }
+  };
+  
+  hostPC.onicecandidate = (e) => {
+    if (e.candidate && currentRoomCode) {
+      socket.emit("webrtc-ice-candidate", { roomCode: currentRoomCode, targetId: fromId, candidate: e.candidate, streamType: "host" });
+    }
+  };
+  
+  await hostPC.setRemoteDescription(new RTCSessionDescription(offer));
+  const answer = await hostPC.createAnswer();
+  await hostPC.setLocalDescription(answer);
+  socket.emit("webrtc-answer", { roomCode: currentRoomCode, targetId: fromId, answer, streamType: "host" });
+});
+
+socket.on("webrtc-ice-candidate", async ({ candidate, streamType }) => {
+  if (streamType === "host" && hostPC && candidate) {
+    await hostPC.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
+  }
+});
+
+// Host-Stream nach Join anfordern
+socket.on("connect", () => {
+  if (joined && currentRoomCode) {
+    setTimeout(() => socket.emit("request-host-stream", { roomCode: currentRoomCode }), 1000);
+  }
+});
 // ===============================
 // Init
 // ===============================
