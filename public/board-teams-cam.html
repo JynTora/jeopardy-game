@@ -520,5 +520,41 @@
     <script src="/transition.js"></script>
     <script src="/board-teams.js"></script>
     <script src="/board-teams-cam.js"></script>
+    
+    <!-- KRITISCH: Dieses CSS MUSS am Ende sein um style.css zu überschreiben -->
+    <style>
+      /* ═══════════════════════════════════════════════════════════
+         BOARD GRID - FINALE ÜBERSCHREIBUNG - GAP 10PX ERZWINGEN
+         ═══════════════════════════════════════════════════════════ */
+      body.board-teams-cam .board-grid,
+      .board-teams-cam .board-grid,
+      #board.board-grid {
+        display: grid !important;
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+        padding: 0 15px !important;
+        margin-top: -40px !important;
+      }
+
+      body.board-teams-cam .board-cell,
+      .board-teams-cam .board-cell,
+      #board .board-cell {
+        height: 80px !important;
+        min-height: 80px !important;
+        max-height: 80px !important;
+        padding: 0 16px !important;
+        font-size: 1rem !important;
+      }
+
+      body.board-teams-cam .board-category,
+      .board-teams-cam .board-category,
+      #board .board-category {
+        height: 67px !important;
+        min-height: 67px !important;
+        max-height: 67px !important;
+        font-size: 1rem !important;
+        padding: 0 !important;
+      }
+    </style>
   </body>
 </html>
