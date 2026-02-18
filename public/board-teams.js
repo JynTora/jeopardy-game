@@ -7,7 +7,8 @@ const socket = io();
 // Get Room Code from URL
 // ===============================
 const urlParams = new URLSearchParams(window.location.search);
-const boardRoomCode = urlParams.get("room")?.toUpperCase();
+window.boardRoomCode = urlParams.get("room")?.toUpperCase();
+const boardRoomCode = window.boardRoomCode;
 
 if (!boardRoomCode) {
   alert("Kein Raumcode angegeben!");
@@ -61,8 +62,12 @@ function safePlay(sound) {
 // ===============================
 // State
 // ===============================
-let teams           = {};
-let players         = {};
+window.teams = {};
+window.players = {};
+let teams = window.teams;
+let players = window.players;
+window.activePlayerId = null;
+window.activeTeamId = null;
 let activePlayerId  = null;
 let activePlayerName = null;
 let activeTeamId    = null;
@@ -496,17 +501,23 @@ function renderEstimateReveal() {
 // Socket Events
 // ===============================
 socket.on("teams-updated", (serverTeams) => {
-  teams = serverTeams || {};
+  window.teams = serverTeams || {};
+  teams = window.teams;
   renderTeamsBar();
 });
 
 socket.on("players-updated", (serverPlayers) => {
-  players = serverPlayers || {};
+  window.players = serverPlayers || {};
+  players = window.players;
   renderTeamsBar();
 });
 
 socket.on("player-buzzed-first", ({ playerId, name, teamId, teamName }) => {
-  activePlayerId = playerId; activePlayerName = name; activeTeamId = teamId;
+  activePlayerId = playerId;
+  window.activePlayerId = playerId;
+  activePlayerName = name;
+  activeTeamId = teamId;
+  window.activeTeamId = teamId;
   renderTeamsBar(); safePlay(sfxBuzz);
   if (buzzInfoEl) { buzzInfoEl.textContent = `${name} (${teamName || "Team"}) hat gebuzzert!`; buzzInfoEl.classList.remove("hidden"); }
 });
