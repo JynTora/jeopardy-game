@@ -104,13 +104,17 @@ const categoriesRound2 = [
 // Kamera initialisieren
 // ===============================
 async function initCamera() {
+  console.log("📹 Initialisiere Kamera...");
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    console.log("✅ Kamera-Stream erhalten");
     if (localVideoJoin) {
       localVideoJoin.srcObject = localStream;
+      console.log("✅ Video-Element gesetzt");
       if (camPlaceholder) camPlaceholder.style.display = "none";
     }
   } catch (err) {
+    console.error("❌ Kamera-Fehler:", err);
     console.warn("Kamera nicht verfügbar:", err);
     if (camPlaceholder) camPlaceholder.innerHTML = '<span class="cam-placeholder-icon">🚫</span><span>Kamera nicht erlaubt</span>';
   }
@@ -219,7 +223,16 @@ function updateJoinBtn() {
   if (typeof window.updateJoinBtn === 'function') { window.updateJoinBtn(); return; }
   const code = roomCodeInput?.value?.trim();
   const name = nameInput?.value?.trim();
-  if (joinBtn) joinBtn.disabled = !(code && code.length >= 3 && name && selectedTeamId);
+  const tab = window.getCurrentTab?.() || 'join';
+  
+  if (tab === 'create') {
+    const teamName = document.getElementById("newTeamName")?.value?.trim();
+    // Bei "Erstellen": Code + Name + Teamname müssen ausgefüllt sein
+    if (joinBtn) joinBtn.disabled = !(code && code.length >= 3 && name && teamName);
+  } else {
+    // Bei "Beitreten": Code + Name + Team ausgewählt
+    if (joinBtn) joinBtn.disabled = !(code && code.length >= 3 && name && selectedTeamId);
+  }
 }
 
 roomCodeInput?.addEventListener("input", function() {
@@ -227,7 +240,16 @@ roomCodeInput?.addEventListener("input", function() {
   const rc = this.value.trim();
   if (rc.length >= 3) socket.emit("request-teams", { roomCode: rc });
   else { teams = {}; renderTeamSelection(); }
+  updateJoinBtn();
 });
+
+nameInput?.addEventListener("input", updateJoinBtn);
+
+// Team-Name input auch überwachen
+const newTeamNameInput = document.getElementById("newTeamName");
+if (newTeamNameInput) {
+  newTeamNameInput.addEventListener("input", updateJoinBtn);
+}
 
 // ===============================
 // Join
@@ -241,43 +263,49 @@ function doJoin() {
   const tab   = window.getCurrentTab?.() || 'join';
   const color = window.getSelectedColor?.() || 'red';
 
-  if (!rc || !nm) return;
+  if (!rc || !nm) {
+    console.error("❌ Raumcode oder Name fehlt");
+    return;
+  }
+  
   currentRoomCode = rc;
   if (joinStatus) joinStatus.textContent = "";
 
+  console.log("🚀 Join-Versuch:", { rc, nm, tab, color });
+
   if (tab === 'create') {
     const teamName = document.getElementById("newTeamName")?.value.trim();
-    if (!teamName) return;
+    if (!teamName) {
+      console.error("❌ Teamname fehlt");
+      return;
+    }
     
     console.log("📝 Erstelle Team:", teamName);
     
-    socket.emit("teams-create-team", { roomCode: rc, name: teamName, colorId: color }, (response) => {
-      console.log("✅ Team-Erstellen Response:", response);
-      
-      if (response?.success && response?.teamId) {
-        // Direkt mit Server-Response joinen
-        joinAsPlayer(rc, nm, response.teamId);
-      } else {
-        // Fallback: Teams laden und erstes Team joinen
-        socket.emit("request-teams", { roomCode: rc });
-        setTimeout(() => {
-          const firstTeamId = Object.keys(teams)[0];
-          if (firstTeamId) {
-            joinAsPlayer(rc, nm, firstTeamId);
-          } else {
-            if (joinStatus) joinStatus.textContent = "Fehler: Team konnte nicht erstellt werden";
-          }
-        }, 500);
-      }
-    });
+    // Team erstellen UND sofort joinen ohne auf Callback zu warten
+    socket.emit("teams-create-team", { roomCode: rc, name: teamName, colorId: color });
+    
+    // Warte kurz und join dann mit dem erstellten Team
+    setTimeout(() => {
+      // TeamID ist der lowercase name mit dashes
+      const teamId = teamName.trim().toLowerCase().replace(/\s+/g, "-");
+      console.log("🔄 Versuche Join mit teamId:", teamId);
+      joinAsPlayer(rc, nm, teamId);
+    }, 500);
+    
   } else {
-    if (!selectedTeamId) return;
+    // Bestehendes Team joinen
+    if (!selectedTeamId) {
+      console.error("❌ Kein Team ausgewählt");
+      return;
+    }
+    console.log("🔄 Joinen mit selectedTeamId:", selectedTeamId);
     joinAsPlayer(rc, nm, selectedTeamId);
   }
 }
 
 function joinAsPlayer(rc, nm, teamId) {
-  console.log("🚀 Joining als Spieler:", nm, "Team:", teamId);
+  console.log("🚀 joinAsPlayer aufgerufen:", { rc, nm, teamId });
   
   socket.emit("player-join-teams", { roomCode: rc, name: nm, teamId, hasCamera: true }, (res) => {
     console.log("📥 Join Response:", res);
@@ -285,6 +313,8 @@ function joinAsPlayer(rc, nm, teamId) {
     if (res?.success) {
       playerId = res.playerId;
       joined   = true;
+
+      console.log("✅ Join erfolgreich! PlayerId:", playerId);
 
       if (joinPage)  joinPage.style.display = "none";
       if (mainPage)  mainPage.classList.add("visible");
@@ -299,10 +329,11 @@ function joinAsPlayer(rc, nm, teamId) {
 
       // Kamera ans Board melden
       if (localStream) {
+        console.log("📹 Melde Kamera an Board");
         socket.emit("cam-player-ready", { roomCode: rc, playerId: res.playerId });
       }
       
-      console.log("✅ Successfully joined!");
+      console.log("✅ Alles gesetzt, sollte jetzt Spectator-Page sehen!");
     } else {
       console.error("❌ Join failed:", res?.error);
       if (joinStatus) joinStatus.textContent = res?.error || "Fehler beim Beitreten";
