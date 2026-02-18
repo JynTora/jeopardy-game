@@ -239,9 +239,13 @@
         return originalFn();
       }
 
-      const teams = typeof latestTeams !== 'undefined' ? latestTeams : {};
-      const players = typeof latestPlayers !== 'undefined' ? latestPlayers : {};
+      // Verwende globale Teams/Players von board-teams.js
+      const teams = typeof window.latestTeams !== 'undefined' ? window.latestTeams : {};
+      const players = typeof window.latestPlayers !== 'undefined' ? window.latestPlayers : {};
       const entries = Object.entries(teams);
+      
+      console.log("🎨 Rendering Teams Bar:", entries.length, "Teams");
+      
       teamsBarEl.innerHTML = "";
 
       if (entries.length === 0) {
@@ -250,7 +254,7 @@
       }
 
       entries.forEach(([teamId, team]) => {
-        const isActive = typeof activeTeamId !== 'undefined' && activeTeamId === teamId;
+        const isActive = typeof window.activeTeamId !== 'undefined' && window.activeTeamId === teamId;
 
         const teamGroup = document.createElement("div");
         teamGroup.className = `team-cam-group team-${team.colorId || 'blue'} ${isActive ? 'team-active' : ''}`;
@@ -281,7 +285,7 @@
 
           const card = document.createElement("div");
           card.className = "player-cam-card";
-          if (typeof activePlayerId !== 'undefined' && activePlayerId === pid) {
+          if (typeof window.activePlayerId !== 'undefined' && window.activePlayerId === pid) {
             card.classList.add("player-buzzed");
           }
 
