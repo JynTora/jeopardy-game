@@ -248,11 +248,27 @@ function doJoin() {
   if (tab === 'create') {
     const teamName = document.getElementById("newTeamName")?.value.trim();
     if (!teamName) return;
-    socket.emit("teams-create-team", { roomCode: rc, name: teamName, colorId: color });
-    // Warte auf teams-updated, dann join
-    socket.once("teams-updated", () => {
-      const teamId = teamName.trim().toLowerCase().replace(/\s+/g, "-");
-      joinAsPlayer(rc, nm, teamId);
+    
+    console.log("📝 Erstelle Team:", teamName);
+    
+    socket.emit("teams-create-team", { roomCode: rc, name: teamName, colorId: color }, (response) => {
+      console.log("✅ Team-Erstellen Response:", response);
+      
+      if (response?.success && response?.teamId) {
+        // Direkt mit Server-Response joinen
+        joinAsPlayer(rc, nm, response.teamId);
+      } else {
+        // Fallback: Teams laden und erstes Team joinen
+        socket.emit("request-teams", { roomCode: rc });
+        setTimeout(() => {
+          const firstTeamId = Object.keys(teams)[0];
+          if (firstTeamId) {
+            joinAsPlayer(rc, nm, firstTeamId);
+          } else {
+            if (joinStatus) joinStatus.textContent = "Fehler: Team konnte nicht erstellt werden";
+          }
+        }, 500);
+      }
     });
   } else {
     if (!selectedTeamId) return;
@@ -261,7 +277,11 @@ function doJoin() {
 }
 
 function joinAsPlayer(rc, nm, teamId) {
+  console.log("🚀 Joining als Spieler:", nm, "Team:", teamId);
+  
   socket.emit("player-join-teams", { roomCode: rc, name: nm, teamId, hasCamera: true }, (res) => {
+    console.log("📥 Join Response:", res);
+    
     if (res?.success) {
       playerId = res.playerId;
       joined   = true;
@@ -281,7 +301,10 @@ function joinAsPlayer(rc, nm, teamId) {
       if (localStream) {
         socket.emit("cam-player-ready", { roomCode: rc, playerId: res.playerId });
       }
+      
+      console.log("✅ Successfully joined!");
     } else {
+      console.error("❌ Join failed:", res?.error);
       if (joinStatus) joinStatus.textContent = res?.error || "Fehler beim Beitreten";
     }
   });
@@ -521,55 +544,6 @@ socket.on("connect", () => {
   if (rc && rc.length >= 3) socket.emit("request-teams", { roomCode: rc });
 });
 
-// ═══════════════════════════════════════════
-// HOST-STREAM EMPFANG
-// ═══════════════════════════════════════════
-const rtcConfig = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'turn:bamangames.metered.live:80', username: 'f0a80f469f8b8590832f8da3', credential: 'crkMbNXmiA79CgUn' }
-  ]
-};
-
-let hostPC = null;
-
-socket.on("webrtc-offer", async ({ fromId, offer, streamType }) => {
-  if (streamType !== "host") return;
-  
-  if (hostPC) try { hostPC.close(); } catch {}
-  hostPC = new RTCPeerConnection(rtcConfig);
-  
-  hostPC.ontrack = (e) => {
-    if (hostCamVideo) {
-      hostCamVideo.srcObject = e.streams[0];
-      if (hostCamView) hostCamView.classList.add("visible");
-    }
-  };
-  
-  hostPC.onicecandidate = (e) => {
-    if (e.candidate && currentRoomCode) {
-      socket.emit("webrtc-ice-candidate", { roomCode: currentRoomCode, targetId: fromId, candidate: e.candidate, streamType: "host" });
-    }
-  };
-  
-  await hostPC.setRemoteDescription(new RTCSessionDescription(offer));
-  const answer = await hostPC.createAnswer();
-  await hostPC.setLocalDescription(answer);
-  socket.emit("webrtc-answer", { roomCode: currentRoomCode, targetId: fromId, answer, streamType: "host" });
-});
-
-socket.on("webrtc-ice-candidate", async ({ candidate, streamType }) => {
-  if (streamType === "host" && hostPC && candidate) {
-    await hostPC.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
-  }
-});
-
-// Host-Stream nach Join anfordern
-socket.on("connect", () => {
-  if (joined && currentRoomCode) {
-    setTimeout(() => socket.emit("request-host-stream", { roomCode: currentRoomCode }), 1000);
-  }
-});
 // ===============================
 // Init
 // ===============================
