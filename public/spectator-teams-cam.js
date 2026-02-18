@@ -121,10 +121,8 @@ async function initCamera() {
 }
 
 function startPip(name) {
-  if (!localStream || !localVideoPip || !camPip) return;
-  localVideoPip.srcObject = localStream;
-  if (camPipLabel) camPipLabel.textContent = name || "Ich";
-  camPip.classList.add("visible");
+  // Kamera wird jetzt direkt in Team-Cards angezeigt, kein separates PiP mehr
+  console.log("📹 Kamera wird in Team-Card angezeigt:", name);
 }
 
 // ===============================
@@ -342,54 +340,95 @@ function joinAsPlayer(rc, nm, teamId) {
 }
 
 // ===============================
-// Teams Bar
+// Teams Bar mit Kameras
 // ===============================
 function renderTeamsBar() {
   if (!teamsBar) return;
   const entries = Object.entries(teams);
   
-  // Kamera-Element behalten
-  const camPipEl = document.getElementById("camPip");
+  teamsBar.innerHTML = "";
   
-  const teamCardsHTML = entries.map(([tid, team]) => {
-    const isActive = activeTeamId === tid;
-    const members  = (team.members || []).map(pid => {
-      const p = players[pid];
-      if (!p) return null;
-      const cls = p.connected === false ? "offline" : "";
-      return `<span class="team-member"><span class="member-dot ${cls}"></span>${p.name}</span>`;
-    }).filter(Boolean).join("");
-    return `
-      <div class="team-card team-${team.colorId || 'blue'} ${isActive ? 'team-active' : ''}">
-        <div class="team-card-header"><span class="team-color-dot"></span><span class="team-card-name">${team.name}</span></div>
-        <div class="team-card-score">${team.score || 0} Punkte</div>
-        <div class="team-card-members">${members || "—"}</div>
-      </div>`;
-  }).join("");
-  
-  // Nur Team-Cards neu setzen, Kamera bleibt
-  if (camPipEl && entries.length > 0) {
-    teamsBar.innerHTML = "";
-    teamsBar.appendChild(camPipEl);
-    const container = document.createElement("div");
-    container.style.display = "flex";
-    container.style.gap = "16px";
-    container.style.flex = "1";
-    container.style.justifyContent = "center";
-    container.style.flexWrap = "wrap";
-    container.innerHTML = teamCardsHTML;
-    teamsBar.appendChild(container);
-  } else if (entries.length === 0) {
-    // Kamera behalten, aber keine Teams
-    if (camPipEl) {
-      teamsBar.innerHTML = "";
-      teamsBar.appendChild(camPipEl);
-    } else {
-      teamsBar.innerHTML = "";
-    }
-  } else {
-    teamsBar.innerHTML = teamCardsHTML;
+  if (entries.length === 0) {
+    teamsBar.innerHTML = '<div style="color:#64748b;padding:12px;text-align:center;">Noch keine Teams</div>';
+    return;
   }
+  
+  entries.forEach(([tid, team]) => {
+    const isActive = activeTeamId === tid;
+    
+    const teamGroup = document.createElement("div");
+    teamGroup.className = `team-cam-group team-${team.colorId || 'blue'} ${isActive ? 'team-active' : ''}`;
+    
+    // Header
+    const header = document.createElement("div");
+    header.className = "team-cam-header";
+    
+    const nameDiv = document.createElement("div");
+    nameDiv.className = "team-cam-name";
+    nameDiv.innerHTML = `<span class="team-color-dot"></span><span>${team.name}</span>`;
+    
+    const scoreDiv = document.createElement("div");
+    scoreDiv.className = "team-cam-score";
+    scoreDiv.textContent = `${team.score || 0} Punkte`;
+    
+    header.appendChild(nameDiv);
+    header.appendChild(scoreDiv);
+    
+    // Spieler-Kameras
+    const playersDiv = document.createElement("div");
+    playersDiv.className = "team-cam-players";
+    
+    const memberIds = team.members || [];
+    memberIds.forEach(pid => {
+      const player = players[pid];
+      if (!player) return;
+      
+      const card = document.createElement("div");
+      card.className = "player-cam-card";
+      if (activePlayerId === pid) {
+        card.classList.add("player-buzzed");
+      }
+      
+      const videoWrap = document.createElement("div");
+      videoWrap.className = "player-cam-video-wrap";
+      videoWrap.id = `video-wrap-${pid}`;
+      
+      const placeholder = document.createElement("div");
+      placeholder.className = "player-cam-placeholder";
+      placeholder.textContent = (player.name?.charAt(0) || "?").toUpperCase();
+      
+      const video = document.createElement("video");
+      video.className = "player-cam-video";
+      video.id = `video-${pid}`;
+      video.autoplay = true;
+      video.muted = true;
+      video.playsInline = true;
+      
+      // Nur für den eigenen Spieler den localStream setzen
+      if (pid === playerId && localStream) {
+        video.srcObject = localStream;
+        video.style.display = "block";
+        placeholder.style.display = "none";
+      } else {
+        video.style.display = "none";
+      }
+      
+      videoWrap.appendChild(placeholder);
+      videoWrap.appendChild(video);
+      
+      const nameLabel = document.createElement("div");
+      nameLabel.className = "player-cam-name";
+      nameLabel.textContent = player.name || "?";
+      
+      card.appendChild(videoWrap);
+      card.appendChild(nameLabel);
+      playersDiv.appendChild(card);
+    });
+    
+    teamGroup.appendChild(header);
+    teamGroup.appendChild(playersDiv);
+    teamsBar.appendChild(teamGroup);
+  });
 }
 
 // ===============================
