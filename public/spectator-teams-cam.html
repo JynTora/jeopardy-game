@@ -349,6 +349,59 @@
         text-transform: uppercase;
         cursor: pointer;
         transition: all 0.15s ease;
+        z-index: 2000;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1.2;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(239,68,68,0.2);
+      }
+
+      /* ===========================
+         HOST-CAM (Spielleiter-Stream)
+         =========================== */
+      .host-cam-view {
+        position: fixed;
+        top: 100px;
+        left: 12px;
+        width: 140px;
+        border-radius: 10px;
+        overflow: hidden;
+        background: rgba(15, 23, 42, 0.95);
+        border: 2px solid rgba(251, 146, 60, 0.7);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4), 0 0 12px rgba(251, 146, 60, 0.25);
+        z-index: 500;
+        display: none;
+      }
+
+      .host-cam-view.visible { display: block; }
+
+      .host-cam-view video {
+        width: 100%;
+        aspect-ratio: 16/9;
+        object-fit: cover;
+        transform: scaleX(-1);
+        display: block;
+        background: #0f172a;
+      }
+
+      .host-cam-view-label {
+        position: absolute;
+        bottom: 4px;
+        left: 50%;
+        transform: translateX(-50%);
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: rgba(251, 146, 60, 0.9);
+        font-size: 0.5rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        color: #fff;
+        text-transform: uppercase;
+      };
+        transition: all 0.15s ease;
         z-index: 1000;
         display: flex;
         flex-direction: column;
@@ -464,7 +517,13 @@
         BUZZER<br>GESPERRT
       </button>
 
-      <!-- Kamera PiP (in-game) -->
+      <!-- Host-Kamera (Spielleiter-Stream) -->
+      <div id="hostCamView" class="host-cam-view">
+        <video id="hostCamVideo" autoplay playsinline></video>
+        <div class="host-cam-view-label">SPIELLEITER</div>
+      </div>
+
+      <!-- Kamera PiP (eigene Kamera) -->
       <div id="camPip" class="cam-pip">
         <video id="localVideoPip" autoplay muted playsinline></video>
         <div class="cam-pip-label" id="camPipLabel">Ich</div>
