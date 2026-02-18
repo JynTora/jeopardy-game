@@ -347,8 +347,11 @@ function joinAsPlayer(rc, nm, teamId) {
 function renderTeamsBar() {
   if (!teamsBar) return;
   const entries = Object.entries(teams);
-  if (entries.length === 0) { teamsBar.innerHTML = ""; return; }
-  teamsBar.innerHTML = entries.map(([tid, team]) => {
+  
+  // Kamera-Element behalten
+  const camPipEl = document.getElementById("camPip");
+  
+  const teamCardsHTML = entries.map(([tid, team]) => {
     const isActive = activeTeamId === tid;
     const members  = (team.members || []).map(pid => {
       const p = players[pid];
@@ -363,6 +366,30 @@ function renderTeamsBar() {
         <div class="team-card-members">${members || "—"}</div>
       </div>`;
   }).join("");
+  
+  // Nur Team-Cards neu setzen, Kamera bleibt
+  if (camPipEl && entries.length > 0) {
+    teamsBar.innerHTML = "";
+    teamsBar.appendChild(camPipEl);
+    const container = document.createElement("div");
+    container.style.display = "flex";
+    container.style.gap = "16px";
+    container.style.flex = "1";
+    container.style.justifyContent = "center";
+    container.style.flexWrap = "wrap";
+    container.innerHTML = teamCardsHTML;
+    teamsBar.appendChild(container);
+  } else if (entries.length === 0) {
+    // Kamera behalten, aber keine Teams
+    if (camPipEl) {
+      teamsBar.innerHTML = "";
+      teamsBar.appendChild(camPipEl);
+    } else {
+      teamsBar.innerHTML = "";
+    }
+  } else {
+    teamsBar.innerHTML = teamCardsHTML;
+  }
 }
 
 // ===============================
