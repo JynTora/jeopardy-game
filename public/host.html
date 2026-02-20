@@ -500,12 +500,19 @@
 
     function checkPassword() {
       const pw = passwordInput.value.trim();
-      socket.emit('host-authenticate', { password: pw }, (response) => {
-        if (response.success) {
+      
+      // Socket Event für dein bestehendes System
+      // Der Server gibt einen Raumcode zurück wenn Passwort korrekt ist
+      socket.emit('create-game-with-password', { password: pw }, (response) => {
+        console.log('Server Response:', response);
+        
+        if (response && response.success && response.roomCode) {
           roomCode = response.roomCode;
           roomCodeDisplay.textContent = roomCode;
           passwordModal.classList.add('hidden');
           mainPanel.classList.add('visible');
+          
+          // Join als Host
           socket.emit('host-join-room', { roomCode });
         } else {
           alert('Falsches Passwort!');
