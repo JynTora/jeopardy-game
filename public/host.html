@@ -501,21 +501,32 @@
     function checkPassword() {
       const pw = passwordInput.value.trim();
       
-      // Socket Event für dein bestehendes System
-      // Der Server gibt einen Raumcode zurück wenn Passwort korrekt ist
-      socket.emit('create-game-with-password', { password: pw }, (response) => {
-        console.log('Server Response:', response);
+      if (!pw) {
+        alert('Bitte Passwort eingeben!');
+        return;
+      }
+
+      console.log('[Host] Trying password...');
+      
+      // ✅ RICHTIGER EVENT-NAME: host-create-game
+      socket.emit('host-create-game', { password: pw }, (response) => {
+        console.log('[Host] Server Response:', response);
         
         if (response && response.success && response.roomCode) {
           roomCode = response.roomCode;
+          console.log('[Host] Login successful! Room:', roomCode);
+          
           roomCodeDisplay.textContent = roomCode;
           passwordModal.classList.add('hidden');
           mainPanel.classList.add('visible');
           
-          // Join als Host
-          socket.emit('host-join-room', { roomCode });
+          // Speichern in localStorage
+          try {
+            localStorage.setItem('jyn-jeopardy-room', roomCode);
+          } catch {}
         } else {
-          alert('Falsches Passwort!');
+          console.error('[Host] Login failed:', response);
+          alert(response?.error || 'Falsches Passwort!');
           passwordInput.value = '';
         }
       });
@@ -528,11 +539,13 @@
 
     // Buzzer freigeben/sperren
     unlockBuzzerBtn.addEventListener('click', () => {
-      socket.emit('host-unlock-buzzer', { roomCode });
+      if (!roomCode) return;
+      socket.emit('host-set-buzzing', { roomCode, enabled: true });
     });
 
     lockBuzzerBtn.addEventListener('click', () => {
-      socket.emit('host-lock-buzzer', { roomCode });
+      if (!roomCode) return;
+      socket.emit('host-set-buzzing', { roomCode, enabled: false });
     });
 
     // Socket Events
@@ -541,9 +554,9 @@
       renderPlayers();
     });
 
-    socket.on('buzzer-status', (status) => {
-      buzzerStatus.textContent = status.locked ? 'Buzzer aktuell gesperrt.' : 'Buzzer aktuell freigegeben.';
-      buzzerStatus.className = status.locked ? 'buzzer-status locked' : 'buzzer-status unlocked';
+    socket.on('buzzing-status', ({ enabled }) => {
+      buzzerStatus.textContent = enabled ? 'Buzzer aktuell freigegeben.' : 'Buzzer aktuell gesperrt.';
+      buzzerStatus.className = enabled ? 'buzzer-status unlocked' : 'buzzer-status locked';
     });
 
     socket.on('player-buzzed-first', ({ name }) => {
