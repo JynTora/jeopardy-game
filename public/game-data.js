@@ -3,7 +3,7 @@
 const GAME_DATA = {
   categoriesRound1: [
     {
-      name: "தமிழ் சினிமா",
+      name: "தமிழ் சினிமா/Tamili Kino",
       questions: [
         { value: 100, question: "\"சூப்பர் ஸ்டார்\" என்ற பட்டம் பெற்ற நடிகர் யார்?\nWelcher Schauspieler trägt den Titel \"Superstar\"?", answer: "ரஜினிகாந்த் / Rajinikanth" },
         { value: 200, question: "\"தளபதி\" என்று அன்பர்களால் அழைக்கப்படும் நடிகர் யார்?\nWelcher Schauspieler wird von Fans \"Thalapathy\" genannt?", answer: "விஜய் / Vijay" },
@@ -13,7 +13,7 @@ const GAME_DATA = {
       ]
     },
     {
-      name: "தமிழ் பண்பாடு",
+      name: "தமிழ் பண்பாடு/Tamil Kultur",
       questions: [
         { value: 100, question: "பொங்கல் பண்டிகை எந்த மாதத்தில் கொண்டாடப்படுகிறது?\nIn welchem Monat wird das Pongal-Fest gefeiert?", answer: "ஜனவரி (தை மாதம்) / Januar" },
         { value: 200, question: "தீபாவளி அன்று காலையில் முதலில் என்ன செய்வது வழக்கம்?\nWas macht man traditionell am Deepavali-Morgen zuerst?", answer: "எண்ணெய் குளியல் / Ölbad" },
@@ -23,7 +23,7 @@ const GAME_DATA = {
       ]
     },
     {
-      name: "தமிழ் உணவு",
+      name: "தமிழ் உணவு/Tamil Essen",
       questions: [
         { value: 100, question: "இட்லிக்கு பொதுவாக என்ன தொட்டுக்கொள்வோம்?\nWas isst man normalerweise zu Idli dazu?", answer: "சாம்பார் & சட்னி / Sambar & Chutney" },
         { value: 200, question: "பொங்கல் பண்டிகையில் சமைக்கப்படும் இனிப்பு உணவு எது?\nWelches süsse Gericht wird an Pongal gekocht?", answer: "சர்க்கரைப் பொங்கல் / Süsser Pongal" },
@@ -33,7 +33,7 @@ const GAME_DATA = {
       ]
     },
     {
-      name: "யார் இது?",
+      name: "யார் இது?/Wer ist das?",
       questions: [
         { value: 100, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "ரஜினிகாந்த் / Rajinikanth", imageUrl: "/images/questions/r1_wer_100.jpg" },
         { value: 200, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "ஏ.ஆர். ரஹ்மான் / A.R. Rahman", imageUrl: "/images/questions/r1_wer_200.jpg" },
@@ -43,7 +43,7 @@ const GAME_DATA = {
       ]
     },
     {
-      name: "மதிப்பீடு",
+      name: "மதிப்பீடு/ Bewertung",
       questions: [
         { value: 100, type: "estimate", timeLimit: 30, question: "தமிழ் மொழி எத்தனை ஆண்டுகள் பழமையானது?\nWie viele Jahre alt ist die tamilische Sprache?", answer: "2500" },
         { value: 200, type: "estimate", timeLimit: 30, question: "தமிழ்நாட்டின் மக்கள் தொகை எவ்வளவு கோடி?\nWie viele Crore Einwohner hat Tamil Nadu? (1 Crore = 10 Mio.)", answer: "8" },
@@ -56,7 +56,7 @@ const GAME_DATA = {
   
   categoriesRound2: [
     {
-      name: "பொது அறிவு",
+      name: "பொது அறிவு/Menschenverstand",
       questions: [
         { value: 100, question: "உலகின் மிகப்பெரிய கடல் எது?\nWelcher ist der grösste Ozean der Welt?", answer: "பசிபிக் பெருங்கடல் / Pazifik" },
         { value: 200, question: "ஐபிள் கோபுரம் எந்த நாட்டில் உள்ளது?\nIn welchem Land steht der Eiffelturm?", answer: "பிரான்ஸ் (பாரிஸ்) / Frankreich (Paris)" },
@@ -66,7 +66,7 @@ const GAME_DATA = {
       ]
     },
     {
-      name: "தமிழ்நாடு",
+      name: "தமிழ்நாடு/Tamil Nadu",
       questions: [
         { value: 100, question: "மதுரையின் புகழ்பெற்ற கோயில் எது?\nWelcher berühmte Tempel steht in Madurai?", answer: "மீனாட்சி அம்மன் கோயில் / Meenakshi Tempel" },
         { value: 200, question: "ஊட்டியின் மற்றொரு பெயர் என்ன?\nWie lautet der andere Name von Ooty?", answer: "உதகமண்டலம் / Udhagamandalam" },
@@ -76,7 +76,7 @@ const GAME_DATA = {
       ]
     },
     {
-      name: "விளையாட்டு & உலகம்",
+      name: "விளையாட்டு & உலகம்/Sport & Welt",
       questions: [
         { value: 100, question: "ஒலிம்பிக் போட்டிகள் எத்தனை ஆண்டுகளுக்கு ஒருமுறை நடைபெறும்?\nAlle wie viele Jahre finden die Olympischen Spiele statt?", answer: "4 ஆண்டுகள் / 4 Jahre" },
         { value: 200, question: "கிரிக்கெட்டில் ஒரு ஓவரில் எத்தனை பந்துகள் வீசப்படும்?\nWie viele Bälle hat ein Over im Cricket?", answer: "6" },
@@ -86,7 +86,7 @@ const GAME_DATA = {
       ]
     },
     {
-      name: "யார்/என்ன இது?",
+      name: "யார்/என்ன இது?/Wer/Was ist das?",
       questions: [
         { value: 100, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "விஜய் / Vijay", imageUrl: "/images/questions/r2_wer_100.jpg" },
         { value: 200, type: "image", question: "இது என்ன கோயில்? / Was ist das für ein Tempel?", answer: "மீனாட்சி அம்மன் கோயில் / Meenakshi Tempel", imageUrl: "/images/questions/r2_wer_200.jpg" },
@@ -96,7 +96,7 @@ const GAME_DATA = {
       ]
     },
     {
-      name: "மதிப்பீடு",
+      name: "மதிப்பீடு/auswerten",
       questions: [
         { value: 100, type: "estimate", timeLimit: 30, question: "திருக்குறளில் எத்தனை குறள்கள் உள்ளன?\nWie viele Verse enthält das Thirukkural?", answer: "1330" },
         { value: 200, type: "estimate", timeLimit: 30, question: "ஏ.ஆர். ரஹ்மான் எத்தனை படங்களுக்கு இசையமைத்துள்ளார்?\nFür wie viele Filme hat A.R. Rahman Musik komponiert? (ca.)", answer: "150" },
