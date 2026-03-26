@@ -35,11 +35,11 @@ const GAME_DATA = {
     {
       name: "யார் இது?/Wer ist das?",
       questions: [
-        { value: 100, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "ரஜினிகாந்த் / Rajinikanth", imageUrl: "/images/questions/r1_wer_100.jpg" },
-        { value: 200, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "ஏ.ஆர். ரஹ்மான் / A.R. Rahman", imageUrl: "/images/questions/r1_wer_200.jpg" },
-        { value: 300, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "லியோனல் மெஸ்ஸி / Lionel Messi", imageUrl: "/images/questions/r1_wer_300.jpg" },
-        { value: 400, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "சிவாஜி கணேசன் / Sivaji Ganesan", imageUrl: "/images/questions/r1_wer_400.jpg" },
-        { value: 500, type: "image", question: "இது என்ன இடம்? / Was ist das für ein Ort?", answer: "தாஜ் மஹால் / Taj Mahal", imageUrl: "/images/questions/r1_wer_500.jpg" }
+        { value: 100, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "ரஜினிகாந்த் / Rajinikanth", imageUrl: "/images/r1_wer_100.jpg" },
+        { value: 200, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "ஏ.ஆர். ரஹ்மான் / A.R. Rahman", imageUrl: "/images/r1_wer_200.jpg" },
+        { value: 300, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "லியோனல் மெஸ்ஸி / Lionel Messi", imageUrl: "/images/r1_wer_300.jpg" },
+        { value: 400, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "சிவாஜி கணேசன் / Sivaji Ganesan", imageUrl: "/images/r1_wer_400.jpg" },
+        { value: 500, type: "image", question: "இது என்ன இடம்? / Was ist das für ein Ort?", answer: "தாஜ் மஹால் / Taj Mahal", imageUrl: "/images/r1_wer_500.jpg" }
       ]
     },
     {
