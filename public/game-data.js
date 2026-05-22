@@ -17,7 +17,7 @@ const GAME_DATA = {
       questions: [
         { value: 100, question: "Wie nennt man die Gesamtheit aller Knochen in unserem Körper?", answer: "Skelett" },
         { value: 200, question: "Welches ist Flächenmässig das grösste Organ des menschlichen Körpers?", answer: "die Haut" },
-        { value: 300, question: "\"ஜல்லிக்கட்டு\" என்றால் என்ன?\nWas ist \"Jallikattu\"?", answer: "காளை அடக்கும் விளையாட்டு / Stierzähmung" },
+        { value: 300, question: "Wie viele Knochen hat ein erwachsener Mensch?", answer: "206" },
         { value: 400, question: "Welches dieser Organe besitzt die erstaunliche Fähigkeit, sich fast vollständig zu regenerieren, selbst wenn große Teile davon entfernt werden?", answer: "die Leber" },
         { value: 500, question: "Was passiert im Körper beim sogennanten Patellarsehnenreflex?", answer: "Das Bein schnellt nach vorn" }
       ]
@@ -35,21 +35,21 @@ const GAME_DATA = {
     {
       name: "Flaggen",
       questions: [
-        { value: 100, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "ரஜினிகாந்த் / Rajinikanth", imageUrl: "/images/r1_wer_100.jpg" },
-        { value: 200, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "ஏ.ஆர். ரஹ்மான் / A.R. Rahman", imageUrl: "/images/r1_wer_200.jpg" },
-        { value: 300, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "லியோனல் மெஸ்ஸி / Lionel Messi", imageUrl: "/images/r1_wer_300.jpg" },
-        { value: 400, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "சிவாஜி கணேசன் / Sivaji Ganesan", imageUrl: "/images/r1_wer_400.jpg" },
-        { value: 500, type: "image", question: "இது என்ன இடம்? / Was ist das für ein Ort?", answer: "தாஜ் மஹால் / Taj Mahal", imageUrl: "/images/r1_wer_500.jpg" }
+        { value: 100, type: "image", question: "Welche Flagge ist das?", answer: "Tunesien", imageUrl: "/images/r1_wer_100.jpg" },
+        { value: 200, type: "image", question: "Welche Flagge ist das?", answer: "Georgien", imageUrl: "/images/r1_wer_200.jpg" },
+        { value: 300, type: "image", question: "Welche Flagge ist das?", answer: "Pakistan", imageUrl: "/images/r1_wer_300.jpg" },
+        { value: 400, type: "image", question: "Welche Flagge ist das?", answer: "Gabun", imageUrl: "/images/r1_wer_400.jpg" },
+        { value: 500, type: "image", question: "Welche Flagge ist das?", answer: "Kambodscha", imageUrl: "/images/r1_wer_500.jpg" }
       ]
     },
     {
-      name: "மதிப்பீடு/ Bewertung",
+      name: "Schätzen",
       questions: [
-        { value: 100, type: "estimate", timeLimit: 30, question: "தமிழ் மொழி எத்தனை ஆண்டுகள் பழமையானது?\nWie viele Jahre alt ist die tamilische Sprache?", answer: "2500" },
-        { value: 200, type: "estimate", timeLimit: 30, question: "தமிழ்நாட்டின் மக்கள் தொகை எவ்வளவு கோடி?\nWie viele Crore Einwohner hat Tamil Nadu? (1 Crore = 10 Mio.)", answer: "8" },
-        { value: 300, type: "estimate", timeLimit: 30, question: "ரஜினிகாந்த் இதுவரை எத்தனை படங்களில் நடித்துள்ளார்?\nIn wie vielen Filmen hat Rajinikanth mitgespielt?", answer: "170" },
-        { value: 400, type: "estimate", timeLimit: 35, question: "உலகில் எத்தனை கோடி பேர் தமிழ் பேசுகிறார்கள்?\nWie viele Crore Menschen weltweit sprechen Tamil?", answer: "8" },
-        { value: 500, type: "estimate", timeLimit: 40, question: "சென்னையின் மக்கள் தொகை எத்தனை லட்சம்?\nWie viele Lakh Einwohner hat Chennai? (1 Lakh = 100'000)", answer: "100" }
+        { value: 100, type: "estimate", timeLimit: 30, question: "Wie viele Tasten hat ein klassisches Klavier?", answer: "88" },
+        { value: 200, type: "estimate", timeLimit: 30, question: "Wie viele Tage hat ein Schaltjahr?", answer: "366" },
+        { value: 300, type: "estimate", timeLimit: 30, question: "Wie hoch ist der Eiffelturm in Paris ungefähr in Metern?", answer: "330" },
+        { value: 400, type: "estimate", timeLimit: 35, question: "Wie viele Kilometer lang ist der Nil ungefähr", answer: "6650" },
+        { value: 500, type: "estimate", timeLimit: 40, question: "Wie viele Knochen hat ein neugeborenes Baby ungefähr?", answer: "300" }
       ]
     }
   ],
