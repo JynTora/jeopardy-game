@@ -3,13 +3,13 @@
 const GAME_DATA = {
   categoriesRound1: [
     {
-      name: "தமிழ் சினிமா/Tamili Kino",
+      name: "Zurück in die Schule",
       questions: [
-        { value: 100, question: "\"சூப்பர் ஸ்டார்\" என்ற பட்டம் பெற்ற நடிகர் யார்?\nWelcher Schauspieler trägt den Titel \"Superstar\"?", answer: "ரஜினிகாந்த் / Rajinikanth" },
-        { value: 200, question: "\"தளபதி\" என்று அன்பர்களால் அழைக்கப்படும் நடிகர் யார்?\nWelcher Schauspieler wird von Fans \"Thalapathy\" genannt?", answer: "விஜய் / Vijay" },
-        { value: 300, question: "\"பொன்னியின் செல்வன்\" திரைப்படத்தின் இயக்குநர் யார்?\nWer ist der Regisseur von \"Ponniyin Selvan\"?", answer: "மணிரத்னம் / Mani Ratnam" },
-        { value: 400, question: "ஆஸ்கர் விருது பெற்ற தமிழ் இசையமைப்பாளர் யார்?\nWelcher tamilische Komponist gewann einen Oscar?", answer: "ஏ.ஆர். ரஹ்மான் / A.R. Rahman" },
-        { value: 500, question: "\"இந்தியன்\", \"முதல்வன்\", \"அந்நியன்\" படங்களை இயக்கியவர் யார்?\nWer führte Regie bei \"Indian\", \"Mudhalvan\" und \"Anniyan\"?", answer: "ஷங்கர் / Shankar" }
+        { value: 100, question: "Welche Farbe leuchtet bei einer Ampel ganz oben?", answer: "Rot" },
+        { value: 200, question: "Nenne alle bestimmten Artikel in der Grammatik", answer: "Der Die Das" },
+        { value: 300, question: "Wie nennt man ein Wort, das das Gegenteil eines anderen Wortes bedeutet", answer: "Antonym" },
+        { value: 400, question: "Welches chemische Element ist \"NE\"?", answer: "Neon" },
+        { value: 500, question: "Wie heissen die Kraftwerke der Zelle?", answer: "Mitochondrien" }
       ]
     },
     {
