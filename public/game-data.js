@@ -23,17 +23,17 @@ const GAME_DATA = {
       ]
     },
     {
-      name: "தமிழ் உணவு/Tamil Essen",
+      name: "Gesetze",
       questions: [
         { value: 100, question: "இட்லிக்கு பொதுவாக என்ன தொட்டுக்கொள்வோம்?\nWas isst man normalerweise zu Idli dazu?", answer: "சாம்பார் & சட்னி / Sambar & Chutney" },
-        { value: 200, question: "பொங்கல் பண்டிகையில் சமைக்கப்படும் இனிப்பு உணவு எது?\nWelches süsse Gericht wird an Pongal gekocht?", answer: "சர்க்கரைப் பொங்கல் / Süsser Pongal" },
+        { value: 200, question: "Ab welchem Alter sind Deutsche gesetzlich dazu verpflichtet, einen gültigen Ausweis zu besitzen?", answer: "ab 16 Jahren" },
         { value: 300, question: "தோசை மாவு எதிலிருந்து தயாரிக்கப்படுகிறது?\nWoraus wird Dosa-Teig hergestellt?", answer: "அரிசி & உளுந்து / Reis & Urad-Dal" },
         { value: 400, question: "\"செட்டிநாடு சிக்கன்\" எந்த பகுதியின் சிறப்பு உணவு?\nAus welcher Region stammt \"Chettinad Chicken\"?", answer: "செட்டிநாடு / Chettinad" },
-        { value: 500, question: "\"பாயசம்\" செய்ய முக்கிய இனிப்புப் பொருள் என்ன?\nWas ist die wichtigste süsse Zutat für \"Payasam\"?", answer: "வெல்லம் / Jaggery (Palmzucker)" }
+        { value: 500, question: "Was ist die Grundvoraussetzung damit eine Tat als \"Notwehr\" (§ 32 StGB) gilt?", answer: "dass ein gegenwärtiger, rechtswidriger Angriff vorliegt" }
       ]
     },
     {
-      name: "யார் இது?/Wer ist das?",
+      name: "Flaggen",
       questions: [
         { value: 100, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "ரஜினிகாந்த் / Rajinikanth", imageUrl: "/images/r1_wer_100.jpg" },
         { value: 200, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "ஏ.ஆர். ரஹ்மான் / A.R. Rahman", imageUrl: "/images/r1_wer_200.jpg" },
