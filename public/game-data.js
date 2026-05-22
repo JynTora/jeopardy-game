@@ -13,13 +13,13 @@ const GAME_DATA = {
       ]
     },
     {
-      name: "தமிழ் பண்பாடு/Tamil Kultur",
+      name: "Körper & Gesundheit",
       questions: [
-        { value: 100, question: "பொங்கல் பண்டிகை எந்த மாதத்தில் கொண்டாடப்படுகிறது?\nIn welchem Monat wird das Pongal-Fest gefeiert?", answer: "ஜனவரி (தை மாதம்) / Januar" },
-        { value: 200, question: "தீபாவளி அன்று காலையில் முதலில் என்ன செய்வது வழக்கம்?\nWas macht man traditionell am Deepavali-Morgen zuerst?", answer: "எண்ணெய் குளியல் / Ölbad" },
+        { value: 100, question: "Wie nennt man die Gesamtheit aller Knochen in unserem Körper?", answer: "Skelett" },
+        { value: 200, question: "Welches ist Flächenmässig das grösste Organ des menschlichen Körpers?", answer: "die Haut" },
         { value: 300, question: "\"ஜல்லிக்கட்டு\" என்றால் என்ன?\nWas ist \"Jallikattu\"?", answer: "காளை அடக்கும் விளையாட்டு / Stierzähmung" },
-        { value: 400, question: "தமிழ் திருமணத்தில் மணமகன் மணமகளுக்கு என்ன கட்டுவான்?\nWas bindet der Bräutigam der Braut bei einer tamilischen Hochzeit um?", answer: "தாலி / Thaali (Hochzeitskette)" },
-        { value: 500, question: "தமிழ் புத்தாண்டு எந்த மாதத்தில் வருகிறது?\nIn welchem Monat ist das tamilische Neujahr?", answer: "ஏப்ரல் (சித்திரை) / April" }
+        { value: 400, question: "Welches dieser Organe besitzt die erstaunliche Fähigkeit, sich fast vollständig zu regenerieren, selbst wenn große Teile davon entfernt werden?", answer: "die Leber" },
+        { value: 500, question: "Was passiert im Körper beim sogennanten Patellarsehnenreflex?", answer: "Das Bein schnellt nach vorn" }
       ]
     },
     {
