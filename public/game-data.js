@@ -98,11 +98,11 @@ const GAME_DATA = {
     {
       name: "மதிப்பீடு/auswerten",
       questions: [
-        { value: 100, type: "estimate", timeLimit: 30, question: "திருக்குறளில் எத்தனை குறள்கள் உள்ளன?\nWie viele Verse enthält das Thirukkural?", answer: "1330" },
-        { value: 200, type: "estimate", timeLimit: 30, question: "ஏ.ஆர். ரஹ்மான் எத்தனை படங்களுக்கு இசையமைத்துள்ளார்?\nFür wie viele Filme hat A.R. Rahman Musik komponiert? (ca.)", answer: "150" },
-        { value: 300, type: "estimate", timeLimit: 30, question: "தமிழ் சினிமாவின் முதல் படம் எந்த வருடம் வெளியானது?\nIn welchem Jahr erschien der erste tamilische Film?", answer: "1931" },
-        { value: 400, type: "estimate", timeLimit: 35, question: "இலங்கையில் எத்தனை சதவீத மக்கள் தமிழர்கள்?\nWie viel Prozent der Bevölkerung Sri Lankas sind Tamilen?", answer: "15" },
-        { value: 500, type: "estimate", timeLimit: 40, question: "தமிழில் மொத்தம் எத்தனை எழுத்துக்கள் உள்ளன?\nWie viele Buchstaben hat das tamilische Alphabet?", answer: "247" }
+        { value: 100, type: "estimate", timeLimit: 30, question: "தWie viele Minuten hat ein Tag??", answer: "1440" },
+        { value: 200, type: "estimate", timeLimit: 30, question: "Wie viele Stockwerke hat der Eiffelturm für Besucher zugänglich? (ca.)", answer: "3" },
+        { value: 300, type: "estimate", timeLimit: 30, question: "Wie schnell kann ein Gepard ungefähr laufen (in km/h)?", answer: "120" },
+        { value: 400, type: "estimate", timeLimit: 35, question: "Wie viele Knochen befinden sich ungefähr allein im menschlichen Fuß?", answer: "26" },
+        { value: 500, type: "estimate", timeLimit: 40, question: "Wie viele Kilometer entfernt ist der Mond ungefähr von der Erde?", answer: "384400" }
       ]
     }
   ]
