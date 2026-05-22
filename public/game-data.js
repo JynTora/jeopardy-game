@@ -86,19 +86,19 @@ const GAME_DATA = {
       ]
     },
     {
-      name: "யார்/என்ன இது?/Wer/Was ist das?",
+      name: "Adolf Hitler",
       questions: [
-        { value: 100, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "விஜய் / Vijay", imageUrl: "/images/questions/r2_wer_100.jpg" },
-        { value: 200, type: "image", question: "இது என்ன கோயில்? / Was ist das für ein Tempel?", answer: "மீனாட்சி அம்மன் கோயில் / Meenakshi Tempel", imageUrl: "/images/questions/r2_wer_200.jpg" },
-        { value: 300, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "தனுஷ் / Dhanush", imageUrl: "/images/questions/r2_wer_300.jpg" },
-        { value: 400, type: "image", question: "இது என்ன கோயில்? / Was ist das für ein Tempel?", answer: "தஞ்சை பெரிய கோயில் / Thanjavur Big Temple", imageUrl: "/images/questions/r2_wer_400.jpg" },
-        { value: 500, type: "image", question: "இவர் யார்? / Wer ist das?", answer: "கமல்ஹாசன் / Kamal Haasan", imageUrl: "/images/questions/r2_wer_500.jpg" }
+        { value: 100, question: "Ich bin das einzige Land der Welt, das sowohl in Europa als auch in Asien liegt und Istanbul besitzt.", answer: "Was ist die Türkei?" },
+        { Value: 200, question: "Ich bin das chemische Element mit dem Symbol Au.", answer: "Was ist Gold?" },
+        { Value: 300, question: "Ich bin der Planet mit den meisten bekannten Monden in unserem Sonnensystem.", answer: "Was ist Saturn?" },
+        { Value: 400, question: "Ich bin die Programmiersprache, die nach einer britischen Comedygruppe benannt wurde.", answer: "Was ist Python?" },
+        { Value: 500, question: "Ich bin das einzige chemische Element, dessen Symbol nicht aus seinem heutigen deutschen oder englischen Namen stammt, sondern vom lateinischen „Hydrargyrum", answer: "Was ist Quecksilber?" }
       ]
     },
     {
       name: "மதிப்பீடு/auswerten",
       questions: [
-        { value: 100, type: "estimate", timeLimit: 30, question: "தWie viele Minuten hat ein Tag??", answer: "1440" },
+        { value: 100, type: "estimate", timeLimit: 30, question: "Wie viele Minuten hat ein Tag??", answer: "1440" },
         { value: 200, type: "estimate", timeLimit: 30, question: "Wie viele Stockwerke hat der Eiffelturm für Besucher zugänglich? (ca.)", answer: "3" },
         { value: 300, type: "estimate", timeLimit: 30, question: "Wie schnell kann ein Gepard ungefähr laufen (in km/h)?", answer: "120" },
         { value: 400, type: "estimate", timeLimit: 35, question: "Wie viele Knochen befinden sich ungefähr allein im menschlichen Fuß?", answer: "26" },
