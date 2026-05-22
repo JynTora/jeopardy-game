@@ -56,33 +56,33 @@ const GAME_DATA = {
   
   categoriesRound2: [
     {
-      name: "பொது அறிவு/Menschenverstand",
+      name: "Filme & Serien",
       questions: [
-        { value: 100, question: "உலகின் மிகப்பெரிய கடல் எது?\nWelcher ist der grösste Ozean der Welt?", answer: "பசிபிக் பெருங்கடல் / Pazifik" },
-        { value: 200, question: "ஐபிள் கோபுரம் எந்த நாட்டில் உள்ளது?\nIn welchem Land steht der Eiffelturm?", answer: "பிரான்ஸ் (பாரிஸ்) / Frankreich (Paris)" },
-        { value: 300, question: "ஒரு கால்பந்து அணியில் எத்தனை பேர் விளையாடுவார்கள்?\nWie viele Spieler hat eine Fussballmannschaft?", answer: "11" },
-        { value: 400, question: "பூமியிலிருந்து சந்திரனுக்குச் செல்ல முதல் மனிதன் யார்?\nWer war der erste Mensch auf dem Mond?", answer: "நீல் ஆர்ம்ஸ்ட்ராங் / Neil Armstrong" },
-        { value: 500, question: "\"மோனா லிசா\" ஓவியத்தை வரைந்தவர் யார்?\nWer hat die \"Mona Lisa\" gemalt?", answer: "லியனார்டோ டா வின்சி / Leonardo da Vinci" }
+        { value: 100, question: "Welche Zeichentrick-Familie lebt in Springfield?", answer: "Die Simpsons" },
+        { value: 200, question: "Aus was besteht das Schild von Captain America?", answer: "Vibranium" },
+        { value: 300, question: "In welches Haus überlegt der sprechende Hut Harry Potter zu stecken, entscheidet sich aber doch um?", answer: "Slytherin" },
+        { value: 400, question: "பWie lautet der Name des Gefängnisses, in dem Joker in The Dark Knight zeitweise eingesperrt ist?", answer: "Arkham Asylum" },
+        { value: 500, question: "In Squid Game tragen die Wärter Masken mit verschiedenen Symbolen, welches dieser Symbole steht für niedrigsten Rang", answer: "Kreis" }
       ]
     },
     {
-      name: "தமிழ்நாடு/Tamil Nadu",
+      name: "Erdkunde",
       questions: [
-        { value: 100, question: "மதுரையின் புகழ்பெற்ற கோயில் எது?\nWelcher berühmte Tempel steht in Madurai?", answer: "மீனாட்சி அம்மன் கோயில் / Meenakshi Tempel" },
-        { value: 200, question: "ஊட்டியின் மற்றொரு பெயர் என்ன?\nWie lautet der andere Name von Ooty?", answer: "உதகமண்டலம் / Udhagamandalam" },
-        { value: 300, question: "\"கோவில் நகரம்\" என்று அழைக்கப்படும் நகரம் எது?\nWelche Stadt wird \"Tempelstadt\" genannt?", answer: "காஞ்சிபுரம் / Kanchipuram" },
+        { value: 100, question: "Wie heisst der tiefste Punkt der Erde?", answer: "Marianengraben" },
+        { value: 200, question: "Welche Weltmetropole liegt als einzige Stadt der Welt auf 2 Kontinenten?", answer: "Istanbul" },
+        { value: 300, question: "Welche 2 Länder haben die meisten direkten Nachbarstaaten?", answer: "Russland & China (jeweils 14)" },
         { value: 400, question: "ராமேஸ்வரம் எதற்கு புகழ்பெற்றது?\nWofür ist Rameswaram berühmt?", answer: "ராமநாதசுவாமி கோயில் / Ramanathaswamy Tempel" },
         { value: 500, question: "தமிழ்நாட்டின் மிக நீளமான நதி எது?\nWelcher ist der längste Fluss in Tamil Nadu?", answer: "காவிரி / Kaveri" }
       ]
     },
     {
-      name: "விளையாட்டு & உலகம்/Sport & Welt",
+      name: "Abkürzungen",
       questions: [
         { value: 100, question: "ஒலிம்பிக் போட்டிகள் எத்தனை ஆண்டுகளுக்கு ஒருமுறை நடைபெறும்?\nAlle wie viele Jahre finden die Olympischen Spiele statt?", answer: "4 ஆண்டுகள் / 4 Jahre" },
         { value: 200, question: "கிரிக்கெட்டில் ஒரு ஓவரில் எத்தனை பந்துகள் வீசப்படும்?\nWie viele Bälle hat ein Over im Cricket?", answer: "6" },
-        { value: 300, question: "உலகின் மிக உயரமான மலை எது?\nWelcher ist der höchste Berg der Welt?", answer: "எவரெஸ்ட் / Mount Everest" },
-        { value: 400, question: "சாக்லெட் எந்த கொட்டையிலிருந்து தயாரிக்கப்படுகிறது?\nAus welcher Bohne wird Schokolade hergestellt?", answer: "கொக்கோ கொட்டை / Kakaobohne" },
-        { value: 500, question: "ஸ்விட்சர்லாந்தின் தலைநகரம் எது?\nWie heisst die Hauptstadt der Schweiz?", answer: "பெர்ன் / Bern" }
+        { value: 300, question: "Der Name der dänischen Klemmbausteine Lego ist eine Abkürzung für den dänischen Ausdruck Leg Godt. Was bedeutet das auf Deutsch?", answer: "Spiel gut" },
+        { value: 400, question: "Wofür steht PDF?", answer: "Portable Document Format" },
+        { value: 500, question: "Wofür steht ISBN (Nummer für Bücher)?", answer: "Internationale Standartbuchnummer" }
       ]
     },
     {
