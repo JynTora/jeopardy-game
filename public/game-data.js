@@ -71,15 +71,15 @@ const GAME_DATA = {
         { value: 100, question: "Wie heisst der tiefste Punkt der Erde?", answer: "Marianengraben" },
         { value: 200, question: "Welche Weltmetropole liegt als einzige Stadt der Welt auf 2 Kontinenten?", answer: "Istanbul" },
         { value: 300, question: "Welche 2 Länder haben die meisten direkten Nachbarstaaten?", answer: "Russland & China (jeweils 14)" },
-        { value: 400, question: "ராமேஸ்வரம் எதற்கு புகழ்பெற்றது?\nWofür ist Rameswaram berühmt?", answer: "ராமநாதசுவாமி கோயில் / Ramanathaswamy Tempel" },
-        { value: 500, question: "தமிழ்நாட்டின் மிக நீளமான நதி எது?\nWelcher ist der längste Fluss in Tamil Nadu?", answer: "காவிரி / Kaveri" }
+        { value: 400, question: "Welcher Fluss fließt durch die meisten Länder der Welt?", answer: "die Donau" },
+        { value: 500, question: "Was ist die Hauptstadt von Äthiopien?", answer: "Addis Abeba" }
       ]
     },
     {
       name: "Abkürzungen",
       questions: [
-        { value: 100, question: "ஒலிம்பிக் போட்டிகள் எத்தனை ஆண்டுகளுக்கு ஒருமுறை நடைபெறும்?\nAlle wie viele Jahre finden die Olympischen Spiele statt?", answer: "4 ஆண்டுகள் / 4 Jahre" },
-        { value: 200, question: "கிரிக்கெட்டில் ஒரு ஓவரில் எத்தனை பந்துகள் வீசப்படும்?\nWie viele Bälle hat ein Over im Cricket?", answer: "6" },
+        { value: 100, question: "Für was steht PKW", answer: "Personenkraftwagen" },
+        { value: 200, question: "Für was steht WLAN?", answer: "Wireless Local Area Network" },
         { value: 300, question: "Der Name der dänischen Klemmbausteine Lego ist eine Abkürzung für den dänischen Ausdruck Leg Godt. Was bedeutet das auf Deutsch?", answer: "Spiel gut" },
         { value: 400, question: "Wofür steht PDF?", answer: "Portable Document Format" },
         { value: 500, question: "Wofür steht ISBN (Nummer für Bücher)?", answer: "Internationale Standartbuchnummer" }
