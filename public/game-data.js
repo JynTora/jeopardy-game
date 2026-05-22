@@ -25,10 +25,10 @@ const GAME_DATA = {
     {
       name: "Gesetze",
       questions: [
-        { value: 100, question: "இட்லிக்கு பொதுவாக என்ன தொட்டுக்கொள்வோம்?\nWas isst man normalerweise zu Idli dazu?", answer: "சாம்பார் & சட்னி / Sambar & Chutney" },
+        { value: 100, question: "Was muss man bei der \"Rettungsgasse\" machen", answer: "bei Stau nach links/rechts fahren, damit in der Mitte eine Gasse bleibt" },
         { value: 200, question: "Ab welchem Alter sind Deutsche gesetzlich dazu verpflichtet, einen gültigen Ausweis zu besitzen?", answer: "ab 16 Jahren" },
-        { value: 300, question: "தோசை மாவு எதிலிருந்து தயாரிக்கப்படுகிறது?\nWoraus wird Dosa-Teig hergestellt?", answer: "அரிசி & உளுந்து / Reis & Urad-Dal" },
-        { value: 400, question: "\"செட்டிநாடு சிக்கன்\" எந்த பகுதியின் சிறப்பு உணவு?\nAus welcher Region stammt \"Chettinad Chicken\"?", answer: "செட்டிநாடு / Chettinad" },
+        { value: 300, question: "Wie nennt man das Recht, bei einer Aussage vor Gericht zu schweigen, damit man sich nicht selbst belastet?", answer: "Aussageverweigerungsrecht" },
+        { value: 400, question: "Wenn du Geld findest und im Fundbüro abgibst: Ab welchem Wert musst du den Fund gesetzlich melden?", answer: "ab 10 Franken" },
         { value: 500, question: "Was ist die Grundvoraussetzung damit eine Tat als \"Notwehr\" (§ 32 StGB) gilt?", answer: "dass ein gegenwärtiger, rechtswidriger Angriff vorliegt" }
       ]
     },
